@@ -357,7 +357,7 @@
   }
   function navigateWithStaff(url, name) {
     var sep = url.indexOf('?') === -1 ? '?' : '&';
-    window.location.href = url + sep + 'staff=' + encodeURIComponent(name);
+    window.location.href = url + sep + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
   }
   function goTo(el) {
     var id = el.getAttribute('data-id');

@@ -33,11 +33,13 @@
       radial-gradient(ellipse at bottom, rgba(87,184,148,0.05), transparent 55%);
     background-attachment: fixed;
   }
+
   .wrap {
     max-width: 560px;
     margin: 0 auto;
     padding: calc(28px + env(safe-area-inset-top,0)) 18px calc(40px + env(safe-area-inset-bottom,0));
   }
+
   .board-head {
     display: flex;
     justify-content: space-between;
@@ -84,12 +86,14 @@
     letter-spacing: 1px;
     margin-top: 2px;
   }
+
   .subline {
     font-size: 12px;
     color: var(--muted);
     margin: 14px 2px 18px;
     letter-spacing: 0.5px;
   }
+
   .col-heads {
     display: grid;
     grid-template-columns: 40px 1fr 96px 20px;
@@ -100,6 +104,7 @@
     letter-spacing: 2px;
     color: var(--muted2);
   }
+
   .board {
     display: flex;
     flex-direction: column;
@@ -130,6 +135,7 @@
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+
   .gate {
     font-family: 'JetBrains Mono', monospace;
     font-size: 15px;
@@ -137,6 +143,7 @@
     color: var(--muted2);
   }
   .row.active .gate { color: var(--amber); }
+
   .name-block .name {
     font-size: 16px;
     font-weight: 700;
@@ -146,6 +153,7 @@
     font-size: 11.5px;
     color: var(--muted);
   }
+
   .status {
     display: flex;
     align-items: center;
@@ -166,10 +174,13 @@
     box-shadow: 0 0 6px var(--green);
   }
   .row.active .status { color: var(--green); }
+
   .arrow { color: var(--muted2); font-size: 18px; text-align: right; }
   .row.active .arrow { color: var(--amber); }
+
   .row.pending { pointer-events: none; opacity: 0.55; }
   .row.pending .name-block .name { color: var(--muted); }
+
   .foot {
     margin-top: 20px;
     padding-top: 18px;
@@ -180,6 +191,8 @@
     text-align: center;
   }
   .foot b { color: var(--muted); }
+
+  /* ── オーバーレイ共通（名前選択／カテゴリ選択） ── */
   .staff-overlay {
     position: fixed; inset: 0;
     background: rgba(13,18,32,0.85);
@@ -238,10 +251,20 @@
     color: var(--ink);
     border-color: var(--amber);
   }
+  .staff-back {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
+
 <div class="wrap">
+
   <div class="board-head">
     <div>
       <div class="eyebrow">SIEG OPS BOARD</div>
@@ -252,54 +275,75 @@
       <div class="date" id="date">----/--/--</div>
     </div>
   </div>
+
   <div class="subline">業務ツール一覧 ｜ 使いたいメニューをタップしてください</div>
+
   <div class="col-heads">
     <div>GATE</div>
     <div>TOOL</div>
     <div style="text-align:right;">STATUS</div>
     <div></div>
   </div>
+
   <div class="board" id="board">
-    <a href="#" class="row active" data-id="keihi" data-url="https://sakusakusansan-star.github.io/keihi23/" data-staff='["福山","古川","清田"]' onclick="return goTo(this)" style="animation-delay:.05s">
+    <a href="#" class="row active" data-id="keihi" data-mode="staff" data-url="https://sakusakusansan-star.github.io/keihi23/" data-staff='["福山","古川","清田"]' onclick="return goTo(this)" style="animation-delay:.05s">
       <div class="gate">01</div>
       <div class="name-block">
         <div class="name">経費精算</div>
-        <div class="desc" data-base="領収書をAIで自動読み取り">領収書をAIで自動読み取り</div>
+        <div class="desc">領収書をAIで自動読み取り</div>
       </div>
       <div class="status"><span class="dot"></span>運行中</div>
       <div class="arrow">›</div>
     </a>
-    <a href="#" class="row active" data-id="shift" data-url="https://script.google.com/macros/s/AKfycbwx4-wjr4Qmx6zeXDXZhht-65W7veveJvaXXmC9V5MQLipOLxLoWfz-XEUBau8NZ58h/exec" data-staff='["山口","鈴木","毛利","藤本"]' onclick="return goTo(this)" style="animation-delay:.15s">
+
+    <a href="#" class="row active" data-id="shift" data-mode="category"
+       data-options='[
+         {"label":"Sieg社員","type":"link","url":"https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing"},
+         {"label":"パートナー様","type":"staff","url":"https://script.google.com/macros/s/AKfycbwx4-wjr4Qmx6zeXDXZhht-65W7veveJvaXXmC9V5MQLipOLxLoWfz-XEUBau8NZ58h/exec","staff":["山口","鈴木","毛利","藤本"]}
+       ]'
+       onclick="return goTo(this)" style="animation-delay:.15s">
       <div class="gate">02</div>
       <div class="name-block">
         <div class="name">シフト入力</div>
-        <div class="desc" data-base="スタッフのシフトを登録">スタッフのシフトを登録</div>
+        <div class="desc">スタッフのシフトを登録</div>
       </div>
       <div class="status"><span class="dot"></span>運行中</div>
       <div class="arrow">›</div>
     </a>
-    <a href="#" class="row active" data-id="commute" data-url="https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing" data-staff='["福山","清田","古川","山口"]' onclick="return goTo(this)" style="animation-delay:.25s">
+
+    <a href="#" class="row active" data-id="commute" data-mode="category"
+       data-options='[
+         {"label":"Sieg社員","type":"link","url":"https://docs.google.com/spreadsheets/d/1shpJvauT5rwKCaWH9RQBNZt3DzAA11yD5jNFUg2c6d4/edit?usp=sharing"},
+         {"label":"山口","type":"link","url":"https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing"}
+       ]'
+       onclick="return goTo(this)" style="animation-delay:.25s">
       <div class="gate">03</div>
       <div class="name-block">
         <div class="name">交通費計算</div>
-        <div class="desc" data-base="通勤距離・交通費の自動計算">通勤距離・交通費の自動計算</div>
+        <div class="desc">通勤距離・交通費の自動計算</div>
       </div>
       <div class="status"><span class="dot"></span>運行中</div>
       <div class="arrow">›</div>
     </a>
   </div>
+
   <div class="foot">
     うまく開けない場合は、リンクを長押しして<br>
     <b>「他のブラウザで開く」</b>を選んでください
   </div>
+
 </div>
+
+<!-- 選択オーバーレイ（名前選択／カテゴリ選択 兼用） -->
 <div id="staff-overlay" class="staff-overlay">
   <div class="staff-box">
-    <div class="staff-eyebrow">SELECT PASSENGER</div>
-    <div class="staff-title">あなたの名前を選んでください</div>
+    <div class="staff-eyebrow" id="ov-eyebrow">SELECT PASSENGER</div>
+    <div class="staff-title" id="ov-title">あなたの名前を選んでください</div>
     <div class="staff-buttons" id="staff-buttons"></div>
+    <div class="staff-back" id="ov-back" style="display:none;" onclick="backToCategory()">‹ 戻る</div>
   </div>
 </div>
+
 <script>
   var titleText = "Sieg 業務ポータル";
   var titleEl = document.getElementById('title');
@@ -309,6 +353,7 @@
     span.style.animationDelay = (i * 0.035) + 's';
     titleEl.appendChild(span);
   });
+
   function tick() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2,'0');
@@ -319,59 +364,115 @@
   }
   tick();
   setInterval(tick, 1000 * 15);
+
+  // 名前選択まわり(ツールごとに記憶)
   var STAFF_KEY_PREFIX = "siegStaff_";
   var pendingRow = null;
+  var pendingCategoryOptions = null;
+
   function keyFor(id) { return STAFF_KEY_PREFIX + id; }
-  function applyStoredNames() {
-    document.querySelectorAll('.row[data-id]').forEach(function(row) {
-      var id = row.getAttribute('data-id');
-      var name = localStorage.getItem(keyFor(id));
-      var descEl = row.querySelector('.desc');
-      if (name && row.classList.contains('active')) {
-        descEl.textContent = descEl.getAttribute('data-base') + '（' + name + '）';
-      }
-    });
+
+  function navigateWithStaff(url, name) {
+    var sep = url.indexOf('?') === -1 ? '?' : '&';
+    window.location.href = url + sep + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
   }
-  function openStaffOverlay(row) {
-    var list = JSON.parse(row.getAttribute('data-staff') || '[]');
+
+  function navigateDirect(url) {
+    window.location.href = url;
+  }
+
+  // ── 名前選択オーバーレイ ──
+  function openStaffOverlay(list) {
+    document.getElementById('ov-eyebrow').textContent = 'SELECT PASSENGER';
+    document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     list.forEach(function(name) {
       var btn = document.createElement('button');
       btn.className = 'staff-btn';
       btn.textContent = name;
-      btn.onclick = function() { chooseStaff(name); };
+      btn.onclick = function() { chooseStaffName(name); };
       box.appendChild(btn);
     });
+    document.getElementById('ov-back').style.display = pendingCategoryOptions ? 'block' : 'none';
     document.getElementById('staff-overlay').classList.add('show');
   }
-  function chooseStaff(name) {
+
+  function chooseStaffName(name) {
     if (!pendingRow) return;
     var id = pendingRow.getAttribute('data-id');
-    localStorage.setItem(keyFor(id), name);
+    var mode = pendingRow.getAttribute('data-mode');
     document.getElementById('staff-overlay').classList.remove('show');
-    var url = pendingRow.getAttribute('data-url');
-    pendingRow = null;
-    applyStoredNames();
-    navigateWithStaff(url, name);
-  }
-  function navigateWithStaff(url, name) {
-    var sep = url.indexOf('?') === -1 ? '?' : '&';
-    window.location.href = url + sep + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
-  }
-  function goTo(el) {
-    var id = el.getAttribute('data-id');
-    var url = el.getAttribute('data-url');
-    var name = localStorage.getItem(keyFor(id));
-    if (name) {
+
+    if (mode === 'staff') {
+      localStorage.setItem(keyFor(id), name);
+      var url = pendingRow.getAttribute('data-url');
+      pendingRow = null;
       navigateWithStaff(url, name);
-    } else {
-      pendingRow = el;
-      openStaffOverlay(el);
+    } else if (mode === 'category' && pendingCategoryOptions) {
+      var url = pendingCategoryOptions.url;
+      pendingRow = null;
+      pendingCategoryOptions = null;
+      navigateWithStaff(url, name);
+    }
+  }
+
+  // ── カテゴリ選択オーバーレイ（Sieg社員／パートナー様 等） ──
+  function openCategoryOverlay(row) {
+    var options = JSON.parse(row.getAttribute('data-options') || '[]');
+    document.getElementById('ov-eyebrow').textContent = 'SELECT CATEGORY';
+    document.getElementById('ov-title').textContent = '対象を選んでください';
+    var box = document.getElementById('staff-buttons');
+    box.innerHTML = '';
+    options.forEach(function(opt) {
+      var btn = document.createElement('button');
+      btn.className = 'staff-btn';
+      btn.textContent = opt.label;
+      btn.onclick = function() { chooseCategory(opt); };
+      box.appendChild(btn);
+    });
+    document.getElementById('ov-back').style.display = 'none';
+    document.getElementById('staff-overlay').classList.add('show');
+  }
+
+  function chooseCategory(opt) {
+    if (opt.type === 'link') {
+      document.getElementById('staff-overlay').classList.remove('show');
+      pendingRow = null;
+      pendingCategoryOptions = null;
+      navigateDirect(opt.url);
+    } else if (opt.type === 'staff') {
+      pendingCategoryOptions = opt;
+      openStaffOverlay(opt.staff);
+    }
+  }
+
+  function backToCategory() {
+    if (!pendingRow) return;
+    pendingCategoryOptions = null;
+    openCategoryOverlay(pendingRow);
+  }
+
+  function goTo(el) {
+    var mode = el.getAttribute('data-mode');
+    pendingRow = el;
+
+    if (mode === 'staff') {
+      var id = el.getAttribute('data-id');
+      var url = el.getAttribute('data-url');
+      var name = localStorage.getItem(keyFor(id));
+      if (name) {
+        pendingRow = null;
+        navigateWithStaff(url, name);
+      } else {
+        openStaffOverlay(JSON.parse(el.getAttribute('data-staff') || '[]'));
+      }
+    } else if (mode === 'category') {
+      openCategoryOverlay(el);
     }
     return false;
   }
-  applyStoredNames();
 </script>
+
 </body>
 </html>

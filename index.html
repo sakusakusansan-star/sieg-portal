@@ -44,7 +44,6 @@
     padding: calc(24px + env(safe-area-inset-top,0)) 16px calc(36px + env(safe-area-inset-bottom,0));
   }
 
-  /* ═══ ボードヘッダー ═══ */
   .board-head {
     display: flex;
     justify-content: space-between;
@@ -433,7 +432,7 @@
     <a href="#" class="row active" data-id="shift" data-mode="category"
        data-options='[
          {"label":"Sieg社員","type":"link","url":"https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing"},
-         {"label":"パートナー様","type":"staff","url":"https://script.google.com/macros/s/AKfycbwx4-wjr4Qmx6zeXDXZhht-65W7veveJvaXXmC9V5MQLipOLxLoWfz-XEUBau8NZ58h/exec","staff":["山口","鈴木","毛利","藤本"]}
+         {"label":"パートナー様","type":"staff","url":"https://sakusakusansan-star.github.io/shift-form/","staff":["山口","鈴木","毛利","藤本"]}
        ]'
        onclick="return goTo(this)" style="animation-delay:.14s">
       <div class="gate">S2<small>GATE</small></div>
@@ -486,7 +485,6 @@
 </div>
 
 <script>
-  // ═══ タイトル（スプリットフラップ） ═══
   var titleText = "Sieg 業務ポータル";
   var titleEl = document.getElementById('title');
   titleText.split('').forEach(function(ch, i) {
@@ -496,7 +494,6 @@
     titleEl.appendChild(span);
   });
 
-  // ═══ 時計・日付・挨拶 ═══
   var DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   function tick() {
     var now = new Date();
@@ -517,7 +514,6 @@
   tick();
   setInterval(tick, 1000 * 10);
 
-  // ═══ ティッカー ═══
   var TICKER_MSGS = [
     '経費精算：領収書は撮影するだけでAIが自動読み取りします',
     'シフト入力：カレンダーで開始日と終了日をタップするだけ',
@@ -526,7 +522,6 @@
   ];
   document.getElementById('ticker-track').textContent = TICKER_MSGS.join('　◆　') + '　◆　';
 
-  // ═══ ナビゲーション ═══
   var STAFF_KEY_PREFIX = "siegStaff_";
   var pendingRow = null;
   var pendingCategoryOptions = null;

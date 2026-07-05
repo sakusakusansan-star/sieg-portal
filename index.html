@@ -6,20 +6,23 @@
 <title>Sieg OPS BOARD</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink:    #0D1220;
-    --panel:  rgba(22, 29, 51, 0.6);
-    --panel2: rgba(30, 39, 68, 0.75);
-    --line:   rgba(43, 53, 96, 0.6);
-    --amber:  #E8A93D;
-    --green:  #57B894;
-    --text:   #E9ECF5;
-    --muted:  #8892AC;
-    --muted2: #5B6486;
+    --ink:      #090E1C;
+    --board:    #10182D;
+    --panel:    rgba(22, 31, 56, 0.72);
+    --panel-hi: rgba(32, 44, 78, 0.85);
+    --line:     rgba(58, 72, 118, 0.55);
+    --amber:    #F5AE3D;
+    --amber-hi: #FFD98A;
+    --amber-dp: #6E5320;
+    --green:    #4ED9A4;
+    --text:     #EDF1FA;
+    --muted:    #93A0BE;
+    --muted2:   #5E6A8C;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body {
     background: var(--ink);
     color: var(--text);
@@ -29,129 +32,202 @@
   }
   body {
     background-image:
-      radial-gradient(ellipse at top, rgba(232,169,61,0.08), transparent 60%),
-      radial-gradient(ellipse at bottom, rgba(87,184,148,0.05), transparent 55%);
+      radial-gradient(1100px 500px at 50% -10%, rgba(245,174,61,0.10), transparent 65%),
+      radial-gradient(900px 480px at 50% 115%, rgba(78,217,164,0.05), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px);
     background-attachment: fixed;
   }
 
   .wrap {
     max-width: 560px;
     margin: 0 auto;
-    padding: calc(28px + env(safe-area-inset-top,0)) 18px calc(40px + env(safe-area-inset-bottom,0));
+    padding: calc(24px + env(safe-area-inset-top,0)) 16px calc(36px + env(safe-area-inset-bottom,0));
   }
 
+  /* ═══ ボードヘッダー ═══ */
   .board-head {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     border-bottom: 2px solid var(--line);
     padding-bottom: 14px;
-    margin-bottom: 4px;
   }
   .eyebrow {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    letter-spacing: 4px;
+    letter-spacing: 5px;
     color: var(--amber);
     margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
+  .eyebrow::before {
+    content: '';
+    width: 8px; height: 8px; border-radius: 2px;
+    background: var(--amber);
+    box-shadow: 0 0 8px rgba(245,174,61,0.8);
+    animation: beacon 2.4s ease-in-out infinite;
+  }
+  @keyframes beacon { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
   .title {
     font-family: 'Zen Kaku Gothic New', sans-serif;
     font-weight: 900;
-    font-size: 26px;
+    font-size: 27px;
     letter-spacing: 1px;
     white-space: nowrap;
+    line-height: 1.1;
   }
   .title span {
     display: inline-block;
     opacity: 0;
-    transform: rotateX(90deg) translateY(4px);
-    animation: flap 0.5s cubic-bezier(.2,.7,.3,1) forwards;
+    transform: rotateX(92deg);
+    transform-origin: center 60%;
+    animation: flap 0.45s cubic-bezier(.2,.75,.3,1.05) forwards;
   }
-  @keyframes flap {
-    to { opacity: 1; transform: rotateX(0) translateY(0); }
+  @keyframes flap { to { opacity: 1; transform: rotateX(0); } }
+
+  .greet {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
   }
+
   .clock-box { text-align: right; flex-shrink: 0; padding-left: 14px; }
   .clock {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 20px;
-    font-weight: 500;
+    font-size: 26px;
+    font-weight: 700;
     color: var(--amber);
     font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 14px rgba(245,174,61,0.35);
+    line-height: 1;
   }
+  .clock .colon { animation: beacon 1s steps(1) infinite; }
   .date {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: var(--muted);
-    letter-spacing: 1px;
-    margin-top: 2px;
+    letter-spacing: 1.5px;
+    margin-top: 6px;
   }
 
-  .subline {
+  /* ═══ ティッカー ═══ */
+  .ticker {
+    margin: 12px 0 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--board);
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+  }
+  .ticker-tag {
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--ink);
+    background: var(--amber);
+    display: flex; align-items: center;
+    padding: 0 10px;
+    font-weight: 700;
+  }
+  .ticker-view { overflow: hidden; flex: 1; position: relative; height: 34px; }
+  .ticker-track {
+    position: absolute; white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    color: var(--muted);
-    margin: 14px 2px 18px;
-    letter-spacing: 0.5px;
+    color: var(--amber-hi);
+    line-height: 34px;
+    padding-left: 100%;
+    animation: ticker 26s linear infinite;
   }
+  @keyframes ticker { to { transform: translateX(-100%); } }
 
+  /* ═══ カラム見出し ═══ */
   .col-heads {
     display: grid;
-    grid-template-columns: 40px 1fr 96px 20px;
+    grid-template-columns: 44px 1fr 84px 18px;
     gap: 10px;
     padding: 0 16px 8px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
     color: var(--muted2);
   }
 
-  .board {
-    display: flex;
-    flex-direction: column;
-  }
+  /* ═══ ボード行 ═══ */
+  .board { display: flex; flex-direction: column; }
   .row {
     display: grid;
-    grid-template-columns: 40px 1fr 96px 20px;
+    grid-template-columns: 44px 1fr 84px 18px;
     align-items: center;
     gap: 10px;
-    padding: 16px;
+    padding: 18px 16px;
     margin-bottom: 10px;
     text-decoration: none;
     color: inherit;
     background: var(--panel);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-left: 3px solid var(--amber-dp);
+    border-radius: 12px;
     opacity: 0;
     animation: rise 0.5s ease forwards;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .row::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.045) 48%, transparent 62%);
+    transform: translateX(-120%);
+    pointer-events: none;
   }
   .row.active:active {
-    transform: scale(0.98);
+    transform: scale(0.975);
     border-color: var(--amber);
+    border-left-color: var(--amber);
+    background: var(--panel-hi);
   }
+  .row.active:active::after { transform: translateX(120%); transition: transform 0.5s ease; }
   @keyframes rise {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
   .gate {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 700;
-    color: var(--muted2);
+    color: var(--amber);
+    text-shadow: 0 0 10px rgba(245,174,61,0.3);
   }
-  .row.active .gate { color: var(--amber); }
+  .gate small {
+    display: block;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--muted2);
+    text-shadow: none;
+    margin-top: 2px;
+  }
 
   .name-block .name {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 3px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
   }
   .name-block .desc {
     font-size: 11.5px;
     color: var(--muted);
+    letter-spacing: 0.3px;
   }
 
   .status {
@@ -160,74 +236,105 @@
     gap: 6px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    letter-spacing: 0.5px;
     justify-content: flex-end;
-    color: var(--muted2);
+    color: var(--green);
   }
   .dot {
     width: 7px; height: 7px; border-radius: 50%;
-    background: var(--muted2);
-    flex-shrink: 0;
-  }
-  .row.active .dot {
     background: var(--green);
-    box-shadow: 0 0 6px var(--green);
+    box-shadow: 0 0 8px var(--green);
+    flex-shrink: 0;
+    animation: beacon 3s ease-in-out infinite;
   }
-  .row.active .status { color: var(--green); }
 
-  .arrow { color: var(--muted2); font-size: 18px; text-align: right; }
-  .row.active .arrow { color: var(--amber); }
+  .arrow { color: var(--amber); font-size: 20px; text-align: right; font-weight: 700; }
 
-  .row.pending { pointer-events: none; opacity: 0.55; }
-  .row.pending .name-block .name { color: var(--muted); }
-
+  /* ═══ フッター ═══ */
   .foot {
-    margin-top: 20px;
-    padding-top: 18px;
+    margin-top: 22px;
+    padding-top: 16px;
     border-top: 1px dashed var(--line);
     font-size: 11px;
     color: var(--muted2);
-    line-height: 1.8;
+    line-height: 1.9;
     text-align: center;
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    letter-spacing: 0.5px;
   }
   .foot b { color: var(--muted); }
 
-  /* ── オーバーレイ共通（名前選択／カテゴリ選択） ── */
+  /* ═══ 搭乗券オーバーレイ ═══ */
   .staff-overlay {
     position: fixed; inset: 0;
-    background: rgba(13,18,32,0.85);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(7,11,22,0.88);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 999;
-    padding: 24px;
+    padding: 22px;
   }
   .staff-overlay.show { display: flex; }
   .staff-box {
     width: 100%;
-    max-width: 340px;
-    background: var(--panel2);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    max-width: 350px;
+    background: linear-gradient(170deg, #1B2745 0%, #131C36 100%);
     border: 1px solid var(--line);
     border-radius: 16px;
-    padding: 24px 20px;
+    padding: 0;
+    overflow: hidden;
+    animation: pass-in 0.28s cubic-bezier(.2,.8,.3,1.1);
+    position: relative;
   }
-  .staff-eyebrow {
+  @keyframes pass-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .pass-head {
+    background: var(--amber);
+    color: var(--ink);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pass-head .ph-label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 3px;
-    color: var(--amber);
-    margin-bottom: 8px;
-    text-align: center;
+    font-weight: 700;
   }
+  .pass-head .ph-brand {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+  .pass-perf {
+    position: relative;
+    height: 0;
+    border-top: 2px dashed rgba(255,255,255,0.14);
+    margin: 0 0;
+  }
+  .pass-perf::before, .pass-perf::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(7,11,22,0.88);
+  }
+  .pass-perf::before { left: -10px; }
+  .pass-perf::after  { right: -10px; }
+
+  .pass-body { padding: 20px; }
   .staff-title {
     font-size: 15px;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
   }
   .staff-buttons {
     display: flex;
@@ -236,28 +343,49 @@
   }
   .staff-btn {
     width: 100%;
-    padding: 14px;
-    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    background: rgba(255,255,255,0.035);
     border: 1px solid var(--line);
     border-radius: 10px;
     color: var(--text);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
     cursor: pointer;
+    min-height: 54px;
+    letter-spacing: 1px;
+    transition: transform 0.08s ease;
   }
   .staff-btn:active {
     background: var(--amber);
     color: var(--ink);
     border-color: var(--amber);
+    transform: scale(0.97);
   }
   .staff-back {
-    margin-top: 14px;
+    margin-top: 16px;
     text-align: center;
     font-size: 12px;
     color: var(--muted);
     text-decoration: underline;
     cursor: pointer;
+    padding: 6px;
+  }
+  .pass-foot {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--muted2);
+    text-align: center;
+    padding: 0 20px 16px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .title span { animation: none; opacity: 1; transform: none; }
+    .row { animation: none; opacity: 1; }
+    .ticker-track { animation: none; padding-left: 12px; }
+    .dot, .eyebrow::before, .clock .colon { animation: none; }
+    .staff-box { animation: none; }
   }
 </style>
 </head>
@@ -269,14 +397,20 @@
     <div>
       <div class="eyebrow">SIEG OPS BOARD</div>
       <div class="title" id="title"></div>
+      <div class="greet" id="greet"></div>
     </div>
     <div class="clock-box">
-      <div class="clock" id="clock">--:--</div>
-      <div class="date" id="date">----/--/--</div>
+      <div class="clock" id="clock">--<span class="colon">:</span>--</div>
+      <div class="date" id="date">----/--/-- ---</div>
     </div>
   </div>
 
-  <div class="subline">業務ツール一覧 ｜ 使いたいメニューをタップしてください</div>
+  <div class="ticker">
+    <div class="ticker-tag">INFO</div>
+    <div class="ticker-view">
+      <div class="ticker-track" id="ticker-track"></div>
+    </div>
+  </div>
 
   <div class="col-heads">
     <div>GATE</div>
@@ -286,8 +420,8 @@
   </div>
 
   <div class="board" id="board">
-    <a href="#" class="row active" data-id="keihi" data-mode="staff" data-url="https://script.google.com/macros/s/AKfycbz2D5dOlSN-a5P93rdmz9dsVhs6900cvAInW3JUKNydJ5n96xGNmaJL5Ojw-eI3CwmOXg/exec" data-staff='["福山","古川","清田"]' onclick="return goTo(this)" style="animation-delay:.05s">
-      <div class="gate">01</div>
+    <a href="#" class="row active" data-id="keihi" data-mode="staff" data-url="https://sakusakusansan-star.github.io/keihi23/" data-staff='["福山","古川","清田"]' onclick="return goTo(this)" style="animation-delay:.05s">
+      <div class="gate">K1<small>GATE</small></div>
       <div class="name-block">
         <div class="name">経費精算</div>
         <div class="desc">領収書をAIで自動読み取り</div>
@@ -301,8 +435,8 @@
          {"label":"Sieg社員","type":"link","url":"https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing"},
          {"label":"パートナー様","type":"staff","url":"https://script.google.com/macros/s/AKfycbwx4-wjr4Qmx6zeXDXZhht-65W7veveJvaXXmC9V5MQLipOLxLoWfz-XEUBau8NZ58h/exec","staff":["山口","鈴木","毛利","藤本"]}
        ]'
-       onclick="return goTo(this)" style="animation-delay:.15s">
-      <div class="gate">02</div>
+       onclick="return goTo(this)" style="animation-delay:.14s">
+      <div class="gate">S2<small>GATE</small></div>
       <div class="name-block">
         <div class="name">シフト入力</div>
         <div class="desc">スタッフのシフトを登録</div>
@@ -316,8 +450,8 @@
          {"label":"Sieg社員","type":"link","url":"https://docs.google.com/spreadsheets/d/1shpJvauT5rwKCaWH9RQBNZt3DzAA11yD5jNFUg2c6d4/edit?usp=sharing"},
          {"label":"山口","type":"link","url":"https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing"}
        ]'
-       onclick="return goTo(this)" style="animation-delay:.25s">
-      <div class="gate">03</div>
+       onclick="return goTo(this)" style="animation-delay:.23s">
+      <div class="gate">T3<small>GATE</small></div>
       <div class="name-block">
         <div class="name">交通費計算</div>
         <div class="desc">通勤距離・交通費の自動計算</div>
@@ -334,38 +468,65 @@
 
 </div>
 
-<!-- 選択オーバーレイ（名前選択／カテゴリ選択 兼用） -->
-<div id="staff-overlay" class="staff-overlay">
+<!-- 搭乗券風 選択オーバーレイ -->
+<div id="staff-overlay" class="staff-overlay" onclick="overlayBgClose(event)">
   <div class="staff-box">
-    <div class="staff-eyebrow" id="ov-eyebrow">SELECT PASSENGER</div>
-    <div class="staff-title" id="ov-title">あなたの名前を選んでください</div>
-    <div class="staff-buttons" id="staff-buttons"></div>
-    <div class="staff-back" id="ov-back" style="display:none;" onclick="backToCategory()">‹ 戻る</div>
+    <div class="pass-head">
+      <span class="ph-label" id="ov-eyebrow">BOARDING PASS</span>
+      <span class="ph-brand">SIEG OPS</span>
+    </div>
+    <div class="pass-perf"></div>
+    <div class="pass-body">
+      <div class="staff-title" id="ov-title">あなたの名前を選んでください</div>
+      <div class="staff-buttons" id="staff-buttons"></div>
+      <div class="staff-back" id="ov-back" style="display:none;" onclick="backToCategory()">‹ 戻る</div>
+    </div>
+    <div class="pass-foot">SIEG OPERATIONS PORTAL ★ KUMAMOTO</div>
   </div>
 </div>
 
 <script>
+  // ═══ タイトル（スプリットフラップ） ═══
   var titleText = "Sieg 業務ポータル";
   var titleEl = document.getElementById('title');
   titleText.split('').forEach(function(ch, i) {
     var span = document.createElement('span');
     span.textContent = ch === ' ' ? '\u00A0' : ch;
-    span.style.animationDelay = (i * 0.035) + 's';
+    span.style.animationDelay = (i * 0.04) + 's';
     titleEl.appendChild(span);
   });
 
+  // ═══ 時計・日付・挨拶 ═══
+  var DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   function tick() {
     var now = new Date();
     var hh = String(now.getHours()).padStart(2,'0');
     var mm = String(now.getMinutes()).padStart(2,'0');
-    document.getElementById('clock').textContent = hh + ':' + mm;
+    document.getElementById('clock').innerHTML = hh + '<span class="colon">:</span>' + mm;
     var y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
-    document.getElementById('date').textContent = y + '/' + m + '/' + d;
+    document.getElementById('date').textContent = y + '/' + m + '/' + d + ' ' + DOW[now.getDay()];
+
+    var h = now.getHours();
+    var greet;
+    if (h < 5)       greet = '深夜の作業、おつかれさまです';
+    else if (h < 11) greet = 'おはようございます。本日も安全運行で';
+    else if (h < 17) greet = 'おつかれさまです';
+    else             greet = 'おつかれさまです。本日もあと少し';
+    document.getElementById('greet').textContent = greet;
   }
   tick();
-  setInterval(tick, 1000 * 15);
+  setInterval(tick, 1000 * 10);
 
-  // 名前選択まわり(ツールごとに記憶)
+  // ═══ ティッカー ═══
+  var TICKER_MSGS = [
+    '経費精算：領収書は撮影するだけでAIが自動読み取りします',
+    'シフト入力：カレンダーで開始日と終了日をタップするだけ',
+    '交通費計算：通勤距離から自動で金額を算出します',
+    'ページがうまく開かないときは、一度閉じてポータルから入り直してください'
+  ];
+  document.getElementById('ticker-track').textContent = TICKER_MSGS.join('　◆　') + '　◆　';
+
+  // ═══ ナビゲーション ═══
   var STAFF_KEY_PREFIX = "siegStaff_";
   var pendingRow = null;
   var pendingCategoryOptions = null;
@@ -376,14 +537,12 @@
     var sep = url.indexOf('?') === -1 ? '?' : '&';
     window.location.href = url + sep + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
   }
-
   function navigateDirect(url) {
     window.location.href = url;
   }
 
-  // ── 名前選択オーバーレイ ──
   function openStaffOverlay(list) {
-    document.getElementById('ov-eyebrow').textContent = 'SELECT PASSENGER';
+    document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
     document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
@@ -417,10 +576,9 @@
     }
   }
 
-  // ── カテゴリ選択オーバーレイ（Sieg社員／パートナー様 等） ──
   function openCategoryOverlay(row) {
     var options = JSON.parse(row.getAttribute('data-options') || '[]');
-    document.getElementById('ov-eyebrow').textContent = 'SELECT CATEGORY';
+    document.getElementById('ov-eyebrow').textContent = 'SELECT GATE';
     document.getElementById('ov-title').textContent = '対象を選んでください';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
@@ -451,6 +609,14 @@
     if (!pendingRow) return;
     pendingCategoryOptions = null;
     openCategoryOverlay(pendingRow);
+  }
+
+  function overlayBgClose(e) {
+    if (e.target === document.getElementById('staff-overlay')) {
+      document.getElementById('staff-overlay').classList.remove('show');
+      pendingRow = null;
+      pendingCategoryOptions = null;
+    }
   }
 
   function goTo(el) {

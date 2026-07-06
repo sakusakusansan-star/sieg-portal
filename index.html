@@ -377,8 +377,10 @@
 
     <a href="#" class="row" data-id="commute" data-mode="category"
        data-options='[
-         {"label":"Sieg社員","type":"link","url":"https://docs.google.com/spreadsheets/d/1shpJvauT5rwKCaWH9RQBNZt3DzAA11yD5jNFUg2c6d4/edit?usp=sharing"},
-         {"label":"山口","type":"link","url":"https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing"}
+         {"label":"福山","type":"link","url":"https://sakusakusansan-star.github.io/commute-form/","appendStaff":true},
+         {"label":"古川","type":"link","url":"https://sakusakusansan-star.github.io/commute-form/","appendStaff":true},
+         {"label":"清田","type":"link","url":"https://sakusakusansan-star.github.io/commute-form/","appendStaff":true},
+         {"label":"山口","type":"link","url":"https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing","appendStaff":false}
        ]'
        onclick="return goTo(this)" style="animation-delay:.23s">
       <div class="gate">T3<small>GATE</small></div>
@@ -528,7 +530,12 @@
           openStaffFromCategory(opt, staffList);
         } else {
           closeOverlay();
-          window.location.href = opt.url;
+          if (opt.appendStaff) {
+            var sep = opt.url.indexOf('?') >= 0 ? '&' : '?';
+            window.location.href = opt.url + sep + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
+          } else {
+            window.location.href = opt.url;
+          }
         }
       };
       box.appendChild(btn);

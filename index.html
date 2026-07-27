@@ -369,6 +369,18 @@
     border-color: var(--amber);
     transform: scale(0.97);
   }
+  .contact-btn { text-align: left; }
+  .contact-btn:active { background: var(--red); border-color: var(--red); }
+  .contact-name { font-size: 15px; font-weight: 700; }
+  .contact-tel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 1px;
+  }
+  .contact-btn:active .contact-tel { color: var(--ink); }
   .staff-back {
     margin-top: 16px;
     text-align: center;
@@ -490,6 +502,23 @@
         <div class="desc">実績・所感をTeamsへ送信</div>
       </div>
       <div class="status"><span class="dot"></span>運行中</div>
+      <div class="arrow">›</div>
+    </a>
+
+    <a href="#" class="row" data-id="emergency" data-mode="contact"
+       data-contacts='[
+         {"name":"福岡","role":"代表","tel":"08017879619"},
+         {"name":"清田","role":"","tel":"09072942546"},
+         {"name":"福山","role":"","tel":"08017513219"},
+         {"name":"古川","role":"","tel":"08085864518"}
+       ]'
+       onclick="return goTo(this)" style="animation-delay:.41s">
+      <div class="gate" style="color:var(--red);">E5<small>GATE</small></div>
+      <div class="name-block">
+        <div class="name">緊急連絡先</div>
+        <div class="desc">代表・スタッフへ電話をかける</div>
+      </div>
+      <div class="status" style="color:var(--red);"><span class="dot" style="background:var(--red);box-shadow:0 0 6px var(--red);"></span>24H</div>
       <div class="arrow">›</div>
     </a>
   </div>
@@ -639,8 +668,40 @@
       }
     } else if (mode === 'category') {
       openCategoryOverlay(el);
+    } else if (mode === 'contact') {
+      openContactOverlay(el);
     }
     return false;
+  }
+
+  function formatTel(tel) {
+    return tel.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
+  }
+
+  function openContactOverlay(el) {
+    var contacts = JSON.parse(el.getAttribute('data-contacts') || '[]');
+    document.getElementById('ov-eyebrow').textContent = 'EMERGENCY';
+    document.getElementById('ov-title').textContent = '緊急連絡先';
+    document.getElementById('ov-back').style.display = 'none';
+    var box = document.getElementById('staff-buttons');
+    box.innerHTML = '';
+    contacts.forEach(function(c) {
+      var btn = document.createElement('button');
+      btn.className = 'staff-btn contact-btn';
+      var nameDiv = document.createElement('div');
+      nameDiv.className = 'contact-name';
+      nameDiv.textContent = (c.role ? c.role + '　' : '') + c.name;
+      var telDiv = document.createElement('div');
+      telDiv.className = 'contact-tel';
+      telDiv.textContent = formatTel(c.tel);
+      btn.appendChild(nameDiv);
+      btn.appendChild(telDiv);
+      btn.onclick = function() {
+        window.location.href = 'tel:' + c.tel;
+      };
+      box.appendChild(btn);
+    });
+    document.getElementById('staff-overlay').classList.add('show');
   }
 
   function navigateWithStaff(url, name, idOverride) {

@@ -1,0 +1,34 @@
+{
+  "name": "Sieg 業務ポータル",
+  "short_name": "Sieg",
+  "description": "Siegの業務ツール入口。経費精算・シフト入力・交通費計算・日報・緊急連絡先。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "id": "/sieg-portal/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1220",
+  "theme_color": "#0B1220",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

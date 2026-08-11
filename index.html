@@ -7,6 +7,15 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<meta name="description" content="Siegの業務ツール入口。経費精算・シフト入力・交通費計算・日報・緊急連絡先。">
+<meta name="theme-color" content="#0B1220">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sieg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap">
@@ -290,6 +299,56 @@
   }
   .foot b { color: var(--muted); }
 
+  /* ═══ オフライン表示 ═══ */
+  .offline-bar {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(232,106,90,0.10);
+    border: 1px solid rgba(232,106,90,0.45);
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--red);
+  }
+  .offline-bar.show { display: flex; }
+  .offline-bar .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+  }
+
+  /* ═══ ホーム画面に追加 ═══ */
+  .install-bar {
+    display: none;
+    width: 100%;
+    align-items: center;
+    gap: 10px;
+    background: rgba(232,163,61,0.08);
+    border: 1px solid rgba(232,163,61,0.45);
+    border-radius: 12px;
+    padding: 13px 14px;
+    margin-top: 14px;
+    color: var(--amber2);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+  .install-bar.show { display: flex; }
+  .install-bar:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
+  .install-bar .ib-icon { font-size: 16px; line-height: 1; }
+  .install-bar .ib-sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .install-bar:active .ib-sub { color: var(--ink); }
+
   /* ═══ 搭乗券風オーバーレイ ═══ */
   .staff-overlay {
     position: fixed; inset: 0;
@@ -427,6 +486,11 @@
     </div>
   </div>
 
+  <div class="offline-bar" id="offline-bar">
+    <span class="dot"></span>
+    オフラインです。お知らせは最新でない場合があります
+  </div>
+
   <div class="ticker">
     <div class="ticker-tag">INFO</div>
     <div class="ticker-view">
@@ -525,6 +589,14 @@
       <div class="arrow">›</div>
     </a>
   </div>
+
+  <button class="install-bar" id="install-bar" type="button">
+    <span class="ib-icon">＋</span>
+    <span>
+      ホーム画面に追加
+      <span class="ib-sub">アプリのように1タップで開けます</span>
+    </span>
+  </button>
 
   <div class="foot">
     うまく開けない場合は、リンクを長押しして<br>
@@ -797,6 +869,48 @@
 
   function overlayBgClose(e) {
     if (e.target.id === 'staff-overlay') closeOverlay();
+  }
+
+  // ═══ オフライン表示 ═══
+  (function() {
+    var bar = document.getElementById('offline-bar');
+    function sync() { bar.classList.toggle('show', !navigator.onLine); }
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
+    sync();
+  })();
+
+  // ═══ ホーム画面に追加（Android / デスクトップ Chrome）═══
+  (function() {
+    var bar = document.getElementById('install-bar');
+    var deferred = null;
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferred = e;
+      bar.classList.add('show');
+    });
+
+    bar.addEventListener('click', function() {
+      if (!deferred) return;
+      bar.classList.remove('show');
+      deferred.prompt();
+      deferred.userChoice.then(function() { deferred = null; });
+    });
+
+    window.addEventListener('appinstalled', function() {
+      deferred = null;
+      bar.classList.remove('show');
+    });
+  })();
+
+  // ═══ Service Worker（オフライン対応）═══
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('sw.js').catch(function() {
+        /* 登録失敗時も通常のページとして動作する */
+      });
+    });
   }
 </script>
 </body>

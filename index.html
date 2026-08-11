@@ -97,6 +97,30 @@
     transform-origin: center 55%;
   }
   .greet { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* ═══ 利用者表示（あなた：◯◯） ═══ */
+  .whoami {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 7px;
+    font-size: 11px;
+    color: var(--muted2);
+  }
+  .whoami-name { color: var(--amber2); font-weight: 700; font-size: 12px; }
+  .whoami-name.unset { color: var(--muted2); font-weight: 400; font-size: 11px; }
+  .whoami-change {
+    font-family: inherit;
+    font-size: 10px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 3px 9px;
+    cursor: pointer;
+    min-height: 24px;
+  }
+  .whoami-change:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
   .clock-box { text-align: right; }
   .clock {
     font-family: 'JetBrains Mono', monospace;
@@ -451,6 +475,13 @@
     border-color: var(--amber);
     transform: scale(0.97);
   }
+  /* いま記憶されている名前 */
+  .staff-btn.is-me {
+    border-color: rgba(232,163,61,0.55);
+    color: var(--amber2);
+    background: rgba(232,163,61,0.07);
+  }
+  .staff-btn.is-me::after { content: '　✓'; font-size: 13px; }
   .contact-btn { text-align: left; }
   .contact-btn:active { background: var(--red); border-color: var(--red); }
   .contact-name { font-size: 15px; font-weight: 700; }
@@ -501,6 +532,10 @@
       <div class="eyebrow">SIEG OPS BOARD</div>
       <div class="title" id="title"></div>
       <div class="greet" id="greet"></div>
+      <div class="whoami">
+        あなた：<span class="whoami-name unset" id="whoami-name">未設定</span>
+        <button class="whoami-change" id="whoami-change" type="button">選択</button>
+      </div>
     </div>
     <div class="clock-box">
       <div class="clock" id="clock">--<span class="colon">:</span>--</div>
@@ -863,32 +898,132 @@
       .catch(function() { /* 読み込み失敗時はプレースホルダーのまま */ });
   })();
 
+  // ═══ スタッフ名簿（増減はここだけ直せば全GATEに反映される） ═══
+  var ALL_STAFF = ['福山', '古川', '清田', '山口'];
+
+  // ═══ 利用者の記憶（全GATE共通） ═══
+  // 名前は1つのキーに保存し、どのGATEからでも使い回す。
+  // カテゴリ（Sieg社員／パートナー様など、名前ではない選択肢）はGATEごとに覚える。
+  var STAFF_KEY = 'siegStaff';
+  var CHOICE_PREFIX = 'siegChoice_';
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  function getStaff() { return lsGet(STAFF_KEY); }
+
+  function setStaff(name) {
+    if (name !== getStaff()) clearChoices(); // 人が変われば前の人の選択は無効
+    lsSet(STAFF_KEY, name);
+    renderWhoami();
+  }
+
+  function getChoice(id) { return id ? lsGet(CHOICE_PREFIX + id) : ''; }
+  function setChoice(id, label) { if (id) lsSet(CHOICE_PREFIX + id, label); }
+
+  function clearChoices() {
+    try {
+      Object.keys(localStorage).forEach(function(k) {
+        if (k.indexOf(CHOICE_PREFIX) === 0) lsDel(k);
+      });
+    } catch (e) {}
+  }
+
+  // 旧バージョン（経費精算だけ個別に保存していた）からの引き継ぎ
+  (function migrateOldKey() {
+    if (getStaff()) return;
+    var old = lsGet('siegStaff_keihi');
+    if (old) { lsSet(STAFF_KEY, old); lsDel('siegStaff_keihi'); }
+  })();
+
+  // ═══ ヘッダーの「あなた：◯◯」表示 ═══
+  function renderWhoami() {
+    var name = getStaff();
+    var nameEl = document.getElementById('whoami-name');
+    var btnEl = document.getElementById('whoami-change');
+    if (name) {
+      nameEl.textContent = name;
+      nameEl.classList.remove('unset');
+      btnEl.textContent = '変更';
+    } else {
+      nameEl.textContent = '未設定';
+      nameEl.classList.add('unset');
+      btnEl.textContent = '選択';
+    }
+  }
+
+  document.getElementById('whoami-change').addEventListener('click', function() {
+    openStaffOverlay(ALL_STAFF, {
+      title: 'あなたの名前を選んでください',
+      onPick: function(n) { setStaff(n); closeOverlay(); }
+    });
+  });
+
+  renderWhoami();
+
   // ═══ ナビゲーション ═══
   var pendingRow = null;
-  var pendingCategoryOptions = null;
-
-  function keyFor(id) { return 'siegStaff_' + id; }
 
   function goTo(el) {
     var mode = el.getAttribute('data-mode');
+    var id = el.getAttribute('data-id');
+    var me = getStaff();
     pendingRow = el;
 
     if (mode === 'staff') {
-      var id = el.getAttribute('data-id');
-      var url = el.getAttribute('data-url');
-      var name = localStorage.getItem(keyFor(id));
-      if (name) {
+      var names = JSON.parse(el.getAttribute('data-staff') || '[]');
+      // 記憶した名前がこのGATEの対象なら、そのまま通す
+      if (me && names.indexOf(me) >= 0) {
         pendingRow = null;
-        navigateWithStaff(url, name, id);
+        navigateWithStaff(el.getAttribute('data-url'), me);
       } else {
-        openStaffOverlay(JSON.parse(el.getAttribute('data-staff') || '[]'));
+        openStaffOverlay(names);
       }
+
     } else if (mode === 'category') {
-      openCategoryOverlay(el);
+      var options = JSON.parse(el.getAttribute('data-options') || '[]');
+      var hit = null;
+      // 1) 選択肢がスタッフ名なら、記憶した名前で直行
+      if (me) hit = findOption(options, me);
+      // 2) 名前ではない選択肢（カテゴリ）は、前回の選択を覚えておいて直行
+      if (!hit) hit = findOption(options, getChoice(id));
+      if (hit) {
+        pendingRow = null;
+        followOption(hit, id);
+      } else {
+        openCategoryOverlay(el);
+      }
+
     } else if (mode === 'contact') {
       openContactOverlay(el);
     }
     return false;
+  }
+
+  function findOption(options, label) {
+    if (!label) return null;
+    for (var i = 0; i < options.length; i++) {
+      if (options[i].label === label) return options[i];
+    }
+    return null;
+  }
+
+  // 選択肢に進む。名前の選択肢なら本人確認として名前も記憶し、
+  // カテゴリの選択肢ならそのGATEの選択として記憶する。
+  function followOption(opt, id) {
+    if (ALL_STAFF.indexOf(opt.label) >= 0) {
+      setStaff(opt.label);
+    } else {
+      setChoice(id, opt.label);
+    }
+    closeOverlay();
+    var url = opt.url;
+    if (opt.appendStaff) {
+      var sep = url.indexOf('?') >= 0 ? '&' : '?';
+      url = url + sep + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
+    }
+    window.location.href = url;
   }
 
   function formatTel(tel) {
@@ -921,28 +1056,34 @@
     document.getElementById('staff-overlay').classList.add('show');
   }
 
-  function navigateWithStaff(url, name, idOverride) {
-    var id = idOverride || (pendingRow ? pendingRow.getAttribute('data-id') : null);
-    if (id) localStorage.setItem(keyFor(id), name);
+  function navigateWithStaff(url, name) {
+    setStaff(name);
     var sep = url.indexOf('?') >= 0 ? '&' : '?';
     window.location.href = url + sep + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
   }
 
-  function openStaffOverlay(names) {
+  /**
+   * 名前を選ぶオーバーレイ。
+   * opts.onPick を渡すと画面遷移せず、選ばれた名前を呼び出し側で受け取れる
+   * （ヘッダーの「変更」から使う）。
+   */
+  function openStaffOverlay(names, opts) {
+    opts = opts || {};
+    var me = getStaff();
     document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
-    document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
+    document.getElementById('ov-title').textContent = opts.title || 'あなたの名前を選んでください';
     document.getElementById('ov-back').style.display = 'none';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     names.forEach(function(n) {
       var btn = document.createElement('button');
-      btn.className = 'staff-btn';
+      btn.className = 'staff-btn' + (n === me ? ' is-me' : '');
       btn.textContent = n;
       btn.onclick = function() {
+        if (opts.onPick) { opts.onPick(n); return; }
         var url = pendingRow.getAttribute('data-url');
-        var id = pendingRow.getAttribute('data-id');
         closeOverlay();
-        navigateWithStaff(url, n, id);
+        navigateWithStaff(url, n);
       };
       box.appendChild(btn);
     });
@@ -950,8 +1091,9 @@
   }
 
   function openCategoryOverlay(el) {
+    var id = el.getAttribute('data-id');
     var options = JSON.parse(el.getAttribute('data-options') || '[]');
-    pendingCategoryOptions = options;
+    var me = getStaff();
     document.getElementById('ov-eyebrow').textContent = 'SELECT';
     document.getElementById('ov-title').textContent = '進み先を選んでください';
     document.getElementById('ov-back').style.display = 'none';
@@ -959,20 +1101,13 @@
     box.innerHTML = '';
     options.forEach(function(opt) {
       var btn = document.createElement('button');
-      btn.className = 'staff-btn';
+      btn.className = 'staff-btn' + (opt.label === me ? ' is-me' : '');
       btn.textContent = opt.label;
       btn.onclick = function() {
         if (opt.type === 'staff') {
-          var staffList = JSON.parse(el.getAttribute('data-staff') || '[]');
-          openStaffFromCategory(opt, staffList);
+          openStaffFromCategory(opt, JSON.parse(el.getAttribute('data-staff') || '[]'));
         } else {
-          closeOverlay();
-          if (opt.appendStaff) {
-            var sep = opt.url.indexOf('?') >= 0 ? '&' : '?';
-            window.location.href = opt.url + sep + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
-          } else {
-            window.location.href = opt.url;
-          }
+          followOption(opt, id);
         }
       };
       box.appendChild(btn);
@@ -981,6 +1116,7 @@
   }
 
   function openStaffFromCategory(opt, staffList) {
+    var me = getStaff();
     document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
     document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
     document.getElementById('ov-back').style.display = 'block';
@@ -988,9 +1124,10 @@
     box.innerHTML = '';
     (opt.staff || staffList).forEach(function(n) {
       var btn = document.createElement('button');
-      btn.className = 'staff-btn';
+      btn.className = 'staff-btn' + (n === me ? ' is-me' : '');
       btn.textContent = n;
       btn.onclick = function() {
+        setStaff(n);
         closeOverlay();
         var sep = opt.url.indexOf('?') >= 0 ? '&' : '?';
         window.location.href = opt.url + sep + 'staff=' + encodeURIComponent(n) + '&v=' + Date.now();
@@ -1006,7 +1143,6 @@
   function closeOverlay() {
     document.getElementById('staff-overlay').classList.remove('show');
     pendingRow = null;
-    pendingCategoryOptions = null;
   }
 
   function overlayBgClose(e) {

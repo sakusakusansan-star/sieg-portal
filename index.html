@@ -79,13 +79,22 @@
     letter-spacing: 1px;
     margin-top: 6px;
   }
+  /* ── スプリットフラップ（パタパタ）演出 ── */
   .title span {
     display: inline-block;
-    animation: flap .5s ease both;
+    transform-origin: center 55%;
+    will-change: transform;
   }
-  @keyframes flap {
-    0% { opacity: 0; transform: translateY(-6px) rotateX(60deg); }
-    100% { opacity: 1; transform: none; }
+  .flap-run { color: var(--muted2); }
+  .flap-set { animation: flap-settle .26s cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes flap-settle {
+    0%   { transform: rotateX(-74deg); opacity: .4; }
+    62%  { transform: rotateX(9deg);   opacity: 1; }
+    100% { transform: none;            opacity: 1; }
+  }
+  .gate-code {
+    display: inline-block;
+    transform-origin: center 55%;
   }
   .greet { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .clock-box { text-align: right; }
@@ -98,6 +107,17 @@
     text-shadow: 0 0 14px rgba(244,197,107,0.35);
   }
   .clock .colon { animation: blink 1s infinite; }
+  .clock .d {
+    display: inline-block;
+    transform-origin: center 55%;
+  }
+  .clock .d.flip { animation: digit-flip .42s ease both; }
+  @keyframes digit-flip {
+    0%   { transform: rotateX(0deg);   opacity: 1; }
+    48%  { transform: rotateX(88deg);  opacity: .3; }
+    52%  { transform: rotateX(-88deg); opacity: .3; }
+    100% { transform: rotateX(0deg);   opacity: 1; }
+  }
   .date {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -463,6 +483,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .title span { animation: none; opacity: 1; transform: none; }
+    .flap-set, .clock .d.flip { animation: none; transform: none; opacity: 1; }
+    .flap-run { color: inherit; }
     .row { animation: none; opacity: 1; }
     .ticker-track { animation: none; padding-left: 12px; }
     .dot, .eyebrow::before, .clock .colon { animation: none; }
@@ -521,7 +543,7 @@
        data-url="https://sakusakusansan-star.github.io/keihi23/"
        data-staff='["福山","古川","清田"]'
        onclick="return goTo(this)" style="animation-delay:.05s">
-      <div class="gate">K1<small>GATE</small></div>
+      <div class="gate"><span class="gate-code">K1</span><small>GATE</small></div>
       <div class="name-block">
         <div class="name">経費精算</div>
         <div class="desc">領収書をAIで自動読み取り</div>
@@ -536,7 +558,7 @@
          {"label":"パートナー様","type":"link","url":"https://sakusakusansan-star.github.io/shift-form/"}
        ]'
        onclick="return goTo(this)" style="animation-delay:.14s">
-      <div class="gate">S2<small>GATE</small></div>
+      <div class="gate"><span class="gate-code">S2</span><small>GATE</small></div>
       <div class="name-block">
         <div class="name">シフト入力</div>
         <div class="desc">スタッフのシフトを登録</div>
@@ -553,7 +575,7 @@
          {"label":"山口","type":"link","url":"https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing","appendStaff":false}
        ]'
        onclick="return goTo(this)" style="animation-delay:.23s">
-      <div class="gate">T3<small>GATE</small></div>
+      <div class="gate"><span class="gate-code">T3</span><small>GATE</small></div>
       <div class="name-block">
         <div class="name">交通費計算</div>
         <div class="desc">通勤距離・交通費の自動計算</div>
@@ -563,7 +585,7 @@
     </a>
 
     <a href="https://sakusakusansan-star.github.io/nippou-form/" class="row" style="animation-delay:.32s">
-      <div class="gate">N4<small>GATE</small></div>
+      <div class="gate"><span class="gate-code">N4</span><small>GATE</small></div>
       <div class="name-block">
         <div class="name">日報</div>
         <div class="desc">実績・所感をDiscordへ送信</div>
@@ -580,7 +602,7 @@
          {"name":"古川","role":"","tel":"07089742868"}
        ]'
        onclick="return goTo(this)" style="animation-delay:.41s">
-      <div class="gate" style="color:var(--red);">E5<small>GATE</small></div>
+      <div class="gate" style="color:var(--red);"><span class="gate-code">E5</span><small>GATE</small></div>
       <div class="name-block">
         <div class="name">緊急連絡先</div>
         <div class="desc">代表・スタッフへ電話をかける</div>
@@ -626,14 +648,102 @@
   // ═══ 設定：お知らせGASのデプロイURLを貼る ═══
   var NOTICE_API = 'https://script.google.com/macros/s/AKfycbxA1xDkeYuLRSo39iZju6-RUirpwAQbou_WjYe2G0t7KAQJAEADPgl8-56FW9jWzSvT/exec';
 
-  // ═══ タイトル（スプリットフラップ風） ═══
-  var titleText = "Sieg 業務ポータル";
-  var titleEl = document.getElementById('title');
-  titleText.split('').forEach(function(ch, i) {
-    var span = document.createElement('span');
-    span.textContent = ch === ' ' ? '\u00A0' : ch;
-    span.style.animationDelay = (i * 0.03) + 's';
-    titleEl.appendChild(span);
+  // ═══ スプリットフラップ演出（空港のパタパタ表示器） ═══
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var FLAP_GLYPHS = {
+    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    lower: 'abcdefghijklmnopqrstuvwxyz',
+    digit: '0123456789',
+    kana:  'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン',
+    kanji: '業務空港便運行時刻案内発着搭乗経費交通日報連絡精算'
+  };
+
+  // 文字種ごとに、めくる候補（同じ種類の文字）を返す。
+  // 記号・空白は候補なし＝めくらずにそのまま出す。
+  function flapPool(ch) {
+    if (ch >= 'A' && ch <= 'Z') return FLAP_GLYPHS.upper;
+    if (ch >= 'a' && ch <= 'z') return FLAP_GLYPHS.lower;
+    if (ch >= '0' && ch <= '9') return FLAP_GLYPHS.digit;
+    if (/[ァ-ヴー]/.test(ch)) return FLAP_GLYPHS.kana;
+    if (/[一-龥]/.test(ch)) return FLAP_GLYPHS.kanji;
+    return null;
+  }
+
+  /**
+   * el の中身を1文字ずつ span に分け、左から順に確定させながらパタパタさせる。
+   * opts: lead=確定が始まるまで(ms)、stagger=文字間の間隔(ms)、cycle=1コマの表示時間(ms)
+   */
+  function splitFlap(el, text, opts) {
+    opts = opts || {};
+    var lead    = opts.lead    != null ? opts.lead    : 240;
+    var stagger = opts.stagger != null ? opts.stagger : 60;
+    var cycle   = opts.cycle   != null ? opts.cycle   : 45;
+
+    var chars = text.split('');
+    el.textContent = '';
+
+    var cells = chars.map(function(ch) {
+      var span = document.createElement('span');
+      span.textContent = ch === ' ' ? '\u00A0' : ch;
+      el.appendChild(span);
+      return { span: span, ch: ch, pool: flapPool(ch), done: false, shown: -1 };
+    });
+
+    if (REDUCED) return; // モーション軽減設定では最初から確定表示
+
+    // めくり中に文字幅が変わって行がガタつかないよう、確定後の幅で仮固定する。
+    // （まとめて計測 → まとめて適用。確定時に解除するのでレイアウトには残さない）
+    var widths = cells.map(function(c) { return c.span.offsetWidth; });
+
+    var settleAt = [];
+    cells.forEach(function(c, i) {
+      settleAt.push(lead + i * stagger);
+      if (c.pool) {
+        c.span.style.minWidth = widths[i] + 'px';
+        c.span.style.textAlign = 'center';
+        c.span.classList.add('flap-run');
+      } else {
+        c.done = true; // 空白・記号は最初から確定
+      }
+    });
+
+    var start = performance.now();
+
+    function frame(now) {
+      var t = now - start;
+      var remaining = false;
+
+      cells.forEach(function(c, i) {
+        if (c.done) return;
+        if (t >= settleAt[i]) {
+          c.span.textContent = c.ch === ' ' ? '\u00A0' : c.ch;
+          c.span.style.minWidth = '';
+          c.span.style.textAlign = '';
+          c.span.classList.remove('flap-run');
+          c.span.classList.add('flap-set');
+          c.done = true;
+          return;
+        }
+        remaining = true;
+        var step = Math.floor(t / cycle);
+        if (step !== c.shown) {
+          c.shown = step;
+          c.span.textContent = c.pool.charAt(Math.floor(Math.random() * c.pool.length));
+        }
+      });
+
+      if (remaining) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ═══ タイトル ═══
+  splitFlap(document.getElementById('title'), 'Sieg 業務ポータル', { lead: 260, stagger: 58, cycle: 45 });
+
+  // ═══ GATE番号（各行の登場アニメに合わせて遅らせる） ═══
+  Array.prototype.forEach.call(document.querySelectorAll('.gate-code'), function(el, i) {
+    splitFlap(el, el.textContent.trim(), { lead: 320 + i * 90, stagger: 70, cycle: 40 });
   });
 
   // ═══ 挨拶文（時間帯） ═══
@@ -643,20 +753,52 @@
     document.getElementById('greet').textContent = g;
   })();
 
-  // ═══ 時計 ═══
+  // ═══ 時計（桁ごとにパタッと切り替わる） ═══
+  var clockDigits = (function() {
+    var clock = document.getElementById('clock');
+    clock.textContent = '';
+    var digits = [];
+    for (var i = 0; i < 4; i++) {
+      if (i === 2) {
+        var colon = document.createElement('span');
+        colon.className = 'colon';
+        colon.textContent = ':';
+        clock.appendChild(colon);
+      }
+      var d = document.createElement('span');
+      d.className = 'd';
+      d.textContent = '-';
+      clock.appendChild(d);
+      digits.push(d);
+    }
+    return digits;
+  })();
+
+  // 変わった桁だけ、めくれる途中（アニメの中間）で文字を差し替える
+  var clockReady = false;
+  function setDigit(el, ch) {
+    if (el.textContent === ch) return;
+    if (REDUCED || !clockReady) { el.textContent = ch; return; }
+    el.classList.remove('flip');
+    void el.offsetWidth; // アニメを再生し直すためのリフロー
+    el.classList.add('flip');
+    setTimeout(function() { el.textContent = ch; }, 200);
+  }
+
   function tick() {
     var now = new Date();
-    var hh = String(now.getHours()).padStart(2, '0');
-    var mm = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('clock').innerHTML = hh + '<span class="colon">:</span>' + mm;
+    var hhmm = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+    for (var i = 0; i < 4; i++) setDigit(clockDigits[i], hhmm.charAt(i));
+
     var days = ['日','月','火','水','木','金','土'];
     var y = now.getFullYear();
     var m = String(now.getMonth() + 1).padStart(2, '0');
     var d = String(now.getDate()).padStart(2, '0');
     document.getElementById('date').textContent = y + '/' + m + '/' + d + ' ' + days[now.getDay()];
   }
-  tick();
-  setInterval(tick, 1000 * 15);
+  tick();                  // 初回はアニメなしで現在時刻を表示
+  clockReady = true;
+  setInterval(tick, 1000); // 毎秒確認し、変わった桁だけ描き替える
 
   // ═══ INFOティッカー ═══
   var tickerMessages = [

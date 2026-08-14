@@ -106,26 +106,6 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
   vertical-align: 1px;
 }
 
-/* ═══ 共通ルール枠 ═══ */
-.callout {
-  background: rgba(232,163,61,0.07);
-  border: 1px solid rgba(232,163,61,0.35);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 16px;
-}
-.callout h2 {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--amber2);
-  margin-bottom: 9px;
-  letter-spacing: .5px;
-}
-.callout dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 12.5px; }
-.callout dt { color: var(--muted); white-space: nowrap; }
-.callout dd { color: var(--text); }
-.callout .note { font-size: 11.5px; color: var(--muted); margin-top: 10px; line-height: 1.7; }
-
 /* ═══ 絞り込み ═══ */
 .filter {
   position: sticky;
@@ -227,6 +207,43 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
 .tel:active small { color: var(--ink); }
 .na { color: var(--red); font-weight: 700; font-size: 12.5px; }
 .yes { color: var(--green); font-weight: 700; font-size: 12.5px; }
+
+/* ダイヤル操作（ガイダンスで何を押すか） */
+.dial {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 9px 11px;
+  margin-top: 7px;
+}
+.dial-seq {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--amber2);
+  letter-spacing: 1px;
+}
+.dial-desc {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.dial.unknown .dial-seq { color: var(--muted); font-size: 13px; letter-spacing: 0; }
+.dial-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--amber2);
+  margin-top: 6px;
+}
+.guide-note {
+  font-size: 11px;
+  color: var(--muted2);
+  line-height: 1.65;
+  margin: 2px 2px 12px;
+}
 .warn {
   background: rgba(232,106,90,0.09);
   border-left: 3px solid var(--red);

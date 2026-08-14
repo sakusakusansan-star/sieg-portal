@@ -7,7 +7,7 @@
  *  - お知らせAPI（GAS）は一切キャッシュせず、常にネットワークへ通す。
  */
 
-var VERSION = 'v2'; // アイコン差し替え時など、配布物を入れ替えたら上げる
+var VERSION = 'v3'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
 var SHELL_CACHE = 'sieg-shell-' + VERSION;
 var ASSET_CACHE = 'sieg-asset-' + VERSION;
 var FONT_CACHE = 'sieg-font-' + VERSION;
@@ -21,7 +21,12 @@ var PRECACHE = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  // 資料置き場（現場では圏外のこともあるので必ず持たせる）
+  './docs/',
+  './docs/index.html',
+  './docs/mnp-yoyaku.html',
+  './docs/docs.css'
 ];
 
 self.addEventListener('install', function(e) {
@@ -49,18 +54,24 @@ function isFontHost(url) {
 }
 
 // ページ本体：ネットワーク優先 → 失敗したらキャッシュ
+// ポータルと資料ページで複数あるため、必ずリクエストごとに保存する
+// （ここを固定キーにすると、資料を開いた後にトップがその資料に化ける）
 function networkFirst(req) {
   return fetch(req)
     .then(function(res) {
       if (res && res.ok) {
         var copy = res.clone();
-        caches.open(SHELL_CACHE).then(function(c) { c.put(SHELL, copy); });
+        caches.open(SHELL_CACHE).then(function(c) { c.put(req, copy); });
       }
       return res;
     })
     .catch(function() {
-      return caches.match(SHELL, { ignoreSearch: true }).then(function(hit) {
-        return hit || Response.error();
+      return caches.match(req, { ignoreSearch: true }).then(function(hit) {
+        if (hit) return hit;
+        // そのページを持っていなければポータルのトップを返す
+        return caches.match(SHELL, { ignoreSearch: true }).then(function(top) {
+          return top || Response.error();
+        });
       });
     });
 }
@@ -69,11 +80,19 @@ function networkFirst(req) {
 function cacheFirst(req, cacheName) {
   return caches.open(cacheName).then(function(cache) {
     return cache.match(req).then(function(hit) {
-      var net = fetch(req).then(function(res) {
+      if (hit) {
+        fetch(req).then(function(res) {
+          if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+        }).catch(function() {});
+        return hit;
+      }
+      return fetch(req).then(function(res) {
         if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
         return res;
-      }).catch(function() { return hit; });
-      return hit || net;
+      }).catch(function() {
+        // 事前キャッシュ側（docs.cssなど）にあれば、そちらから返す
+        return caches.match(req, { ignoreSearch: true });
+      });
     });
   });
 }

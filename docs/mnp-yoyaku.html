@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>予約番号発行方法｜Sieg 資料置き場</title>
+<meta name="description" content="MNP予約番号を各社どこから発行するかの早見表。ドコモ・ahamo・au・UQ・ソフトバンク・ワイモバイル・楽天・OCN。">
+<meta name="theme-color" content="#0B1220">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" href="../icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="./">‹ 資料置き場へ戻る</a>
+
+  <div class="page-head">
+    <div class="eyebrow">MNP</div>
+    <h1>予約番号発行方法</h1>
+    <div class="lede">MNP予約番号を、どの事業者がどこから出せるかの早見表です。</div>
+    <div class="updated">最終確認日 2026-08-14</div>
+  </div>
+
+  <!-- ═══ まず読む：共通ルール ═══ -->
+  <div class="callout">
+    <h2>まず確認すること</h2>
+    <dl>
+      <dt>有効期限</dt>
+      <dd>発行日を含めて<b>15日間</b></dd>
+      <dt>手数料</dt>
+      <dd>ここに載せた8社はすべて<b>無料</b></dd>
+      <dt>発行のコツ</dt>
+      <dd>乗り換え直前に取る（早く取ると期限切れになる）</dd>
+    </dl>
+    <div class="note">
+      <b style="color:var(--amber2)">そもそも予約番号が要らない場合があります。</b><br>
+      乗り換え先も「MNPワンストップ」に対応していれば、<b>予約番号を取らずに乗り換え先の申込画面だけで完結</b>します。
+      ここに載せた8社のうち、OCN以外はワンストップ対応です。<br>
+      予約番号が必要になるのは、<b>乗り換え先がワンストップ非対応のとき</b>だと覚えてください。
+    </div>
+  </div>
+
+  <!-- ═══ 絞り込み ═══ -->
+  <div class="filter">
+    <input type="search" id="q" placeholder="事業者名で絞り込み（例：au、ワイモバ）" autocomplete="off">
+  </div>
+
+  <div class="carriers" id="carriers">
+
+    <!-- ── ドコモ ── -->
+    <details class="carrier" data-search="ドコモ docomo どこも">
+      <summary>
+        <span class="c-name">ドコモ<span class="c-sub">NTT docomo</span></span>
+        <span class="badge ok">ワンストップ○</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>My docomo<span class="sub">24時間（メンテナンス時を除く）</span></dd>
+          <dt>電話</dt>
+          <dd>
+            <a class="tel" href="tel:151">151<small>ドコモ携帯から</small></a>
+            <a class="tel" href="tel:0120800000">0120-800-000<small>一般電話から</small></a>
+            <span class="sub">9:00〜20:00</span>
+          </dd>
+          <dt>店頭</dt>
+          <dd><span class="yes">○ ドコモショップで可</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+      </div>
+    </details>
+
+    <!-- ── ahamo ── -->
+    <details class="carrier" data-search="ahamo アハモ あはも ドコモ docomo">
+      <summary>
+        <span class="c-name">ahamo<span class="c-sub">アハモ</span></span>
+        <span class="badge ok">ワンストップ○</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>My docomo（ahamoサイトから）<span class="sub">24時間</span></dd>
+          <dt>電話</dt>
+          <dd><span class="na">✕ 電話では発行不可</span></dd>
+          <dt>店頭</dt>
+          <dd><span class="na">✕ ドコモショップでも発行不可</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+        <div class="warn">
+          <b>ここが一番間違えやすい。</b>ahamoはオンライン専用プランのため、
+          <b>店頭でも電話でも発行できません</b>。お客様を店舗へ案内しないよう注意してください。
+          必ずご本人にMy docomoから操作してもらいます。
+        </div>
+      </div>
+    </details>
+
+    <!-- ── au ── -->
+    <details class="carrier" data-search="au エーユー KDDI">
+      <summary>
+        <span class="c-name">au<span class="c-sub">KDDI</span></span>
+        <span class="badge ok">ワンストップ○</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>My au<span class="sub">9:00〜20:00</span></dd>
+          <dt>電話</dt>
+          <dd>
+            <a class="tel" href="tel:0077-75470">0077-75470<small>無料・携帯／一般共通</small></a>
+            <span class="sub">9:00〜20:00</span>
+          </dd>
+          <dt>店頭</dt>
+          <dd><span class="yes">○ auショップで可</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+        <div class="warn">
+          <b>WEBも20時までです。</b>ドコモ・ソフトバンクは24時間ですが、auはMy auからでも
+          時間外は手続きできません。<b>夜間の来店・問い合わせでは翌日案内</b>になります。
+        </div>
+      </div>
+    </details>
+
+    <!-- ── UQ mobile ── -->
+    <details class="carrier" data-search="UQ ユーキュー uqmobile ユーキューモバイル KDDI">
+      <summary>
+        <span class="c-name">UQ mobile<span class="c-sub">ユーキューモバイル</span></span>
+        <span class="badge ok">ワンストップ○</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>my UQ mobile<span class="sub">24時間</span></dd>
+          <dt>電話</dt>
+          <dd>
+            <a class="tel" href="tel:0120001659">0120-001-659<small>UQお客さまセンター・無料</small></a>
+            <span class="sub">9:00〜20:00（年中無休）</span>
+          </dd>
+          <dt>店頭</dt>
+          <dd><span class="na">✕ 店舗では発行不可</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+        <div class="warn">
+          <b>店頭では出せません。</b>my UQ mobile か電話のみです。
+          なお、<b>auへ移る場合はそもそもMNP不要</b>（番号移行手続きになります）。
+        </div>
+      </div>
+    </details>
+
+    <!-- ── ソフトバンク ── -->
+    <details class="carrier" data-search="ソフトバンク softbank SB そふとばんく">
+      <summary>
+        <span class="c-name">ソフトバンク<span class="c-sub">SoftBank</span></span>
+        <span class="badge ok">ワンストップ○</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>My SoftBank<span class="sub">24時間・365日</span></dd>
+          <dt>電話</dt>
+          <dd>
+            <a class="tel" href="tel:*5533">*5533<small>ソフトバンク携帯から・無料</small></a>
+            <a class="tel" href="tel:0800-100-5533">0800-100-5533<small>一般電話から・無料</small></a>
+            <span class="sub">9:00〜20:00（年中無休）／ 音声ガイダンスで「1」</span>
+          </dd>
+          <dt>店頭</dt>
+          <dd><span class="yes">○ ソフトバンクショップで可</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+        <div class="warn">
+          予約番号は<b>SMSで通知</b>されます。端末の故障などでSMSが受け取れない場合は、
+          店頭での手続きに切り替えてください。
+        </div>
+      </div>
+    </details>
+
+    <!-- ── ワイモバイル ── -->
+    <details class="carrier" data-search="ワイモバイル Y!mobile ymobile ワイモバ わいもばいる">
+      <summary>
+        <span class="c-name">ワイモバイル<span class="c-sub">Y!mobile</span></span>
+        <span class="badge ok">ワンストップ○</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>My Y!mobile<span class="sub">24時間（メンテナンス時を除く）</span></dd>
+          <dt>電話</dt>
+          <dd>
+            <a class="tel" href="tel:0570039151">0570-039-151<small>ワイモバイルカスタマーセンター</small></a>
+            <span class="sub">9:00〜20:00</span>
+          </dd>
+          <dt>店頭</dt>
+          <dd><span class="yes">○ ワイモバイルショップで可</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+        <div class="warn">
+          店頭で行う場合は<b>契約者本人の本人確認書類</b>が必要です。来店予約を取ってもらうと確実です。
+        </div>
+      </div>
+    </details>
+
+    <!-- ── 楽天モバイル ── -->
+    <details class="carrier" data-search="楽天 らくてん rakuten 楽天モバイル">
+      <summary>
+        <span class="c-name">楽天モバイル<span class="c-sub">Rakuten Mobile</span></span>
+        <span class="badge ok">ワンストップ○</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>my 楽天モバイル（アプリ／Web）<span class="sub">24時間・即日発行</span></dd>
+          <dt>電話</dt>
+          <dd><span class="na">✕ 原則オンラインのみ</span></dd>
+          <dt>店頭</dt>
+          <dd><span class="badge chk">要確認</span><span class="sub">店舗での取り扱いは店舗ごとに要確認</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+        <div class="warn">
+          発行前に<b>解約理由などのアンケート回答</b>と、<b>ワンタイムパスワード認証</b>（登録メールまたはSMS）があります。
+          登録メールアドレスやSMSが受け取れる状態か、先に確認してください。
+        </div>
+      </div>
+    </details>
+
+    <!-- ── OCN モバイル ONE ── -->
+    <details class="carrier" data-search="OCN オーシーエヌ ocnモバイル NTTコミュニケーションズ">
+      <summary>
+        <span class="c-name">OCN モバイル ONE<span class="c-sub">新規受付終了済み</span></span>
+        <span class="badge chk">ワンストップ 要確認</span>
+        <span class="c-chev">›</span>
+      </summary>
+      <div class="c-body">
+        <dl class="rows">
+          <dt>WEB</dt>
+          <dd>OCN マイページ<span class="sub">即日、SMSで通知</span></dd>
+          <dt>電話</dt>
+          <dd>
+            <a class="tel" href="tel:0120506506">0120-506-506<small>OCNサポート</small></a>
+            <span class="sub">10:00〜19:00（年中無休）</span>
+          </dd>
+          <dt>店頭</dt>
+          <dd><span class="na">✕ 店頭窓口なし</span></dd>
+          <dt>手数料</dt>
+          <dd>無料</dd>
+        </dl>
+        <div class="warn">
+          <b>新規受付は終了しています</b>（既存契約者のみ）。<br>
+          また<b>ワンストップ対応事業者の一覧に掲載を確認できませんでした</b>。
+          OCNからの乗り換えは<b>予約番号を取る前提</b>で進めるのが安全です。
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+  <div class="no-hit" id="no-hit">該当する事業者がありません</div>
+
+  <div class="foot">
+    <h3>この資料について</h3>
+    受付時間や電話番号は変わることがあります。
+    お客様に案内する前に、迷ったら各社公式で確認してください。
+    <b>古い記載を見つけたら必ず共有をお願いします。</b>
+    <br><br>
+    <h3>確認に使った情報源</h3>
+    <ul>
+      <li>ソフトバンク公式FAQ softbank.jp/support/faq/view/10068</li>
+      <li>ahamo公式FAQ faq.ahamo.com/faq/show/2514</li>
+      <li>UQ mobile公式FAQ uqwimax.jp/mobile/support/faq/pages/pg00002640.html</li>
+      <li>楽天モバイル公式FAQ network.mobile.rakuten.co.jp/faq/detail/00001409/</li>
+      <li>ドコモ MNPワンストップ対応事業者一覧（PDF・2026年3月17日更新）</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  // ═══ 事業者の絞り込み ═══
+  (function() {
+    var input = document.getElementById('q');
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.carrier'));
+    var noHit = document.getElementById('no-hit');
+
+    input.addEventListener('input', function() {
+      var q = input.value.trim().toLowerCase();
+      var hit = 0;
+      cards.forEach(function(el) {
+        var hay = (el.getAttribute('data-search') + ' ' + el.textContent).toLowerCase();
+        var show = !q || hay.indexOf(q) >= 0;
+        el.hidden = !show;
+        if (show) hit++;
+        // 1社に絞られたら中身を開いておく
+        if (q && show && hit === 1) el.open = true;
+      });
+      noHit.style.display = hit ? 'none' : 'block';
+    });
+  })();
+</script>
+</body>
+</html>

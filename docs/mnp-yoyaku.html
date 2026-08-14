@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>予約番号発行方法｜Sieg 資料置き場</title>
-<meta name="description" content="MNP予約番号の発行窓口。各社の電話番号・ガイダンスの押す番号・WEBで取れるかの早見表。">
+<meta name="description" content="MNP予約番号の発行窓口。各社の営業時間・電話番号・音声ガイダンスで押す番号の早見表。">
 <meta name="theme-color" content="#0B1220">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" href="../icons/icon-192.png" type="image/png">
@@ -21,242 +21,222 @@
   <div class="page-head">
     <div class="eyebrow">MNP</div>
     <h1>予約番号発行方法</h1>
-    <div class="lede">電話番号・ガイダンスで押す番号・WEBで取れるかの早見表です。</div>
-    <div class="updated">最終確認日 2026-08-14</div>
+    <div class="lede">営業時間・電話番号・音声ガイダンスで押す番号の早見表です。</div>
+    <div class="updated">最終更新 2026-08-14</div>
   </div>
 
   <div class="filter">
-    <input type="search" id="q" placeholder="事業者名で絞り込み（例：au、ワイモバ）" autocomplete="off">
+    <input type="search" id="q" placeholder="事業者名で絞り込み（例：au、ワイモバ、イオン）" autocomplete="off">
   </div>
-
-  <p class="guide-note">
-    ガイダンスの番号は各社の都合で変わることがあります。数字が合わないときは、
-    読み上げられる<b>「解約・MNP」「携帯電話番号ポータビリティ」</b>の案内を選んでください。
-  </p>
 
   <div class="carriers" id="carriers">
 
     <!-- ── ドコモ ── -->
-    <details class="carrier" data-search="ドコモ docomo どこも">
-      <summary>
-        <span class="c-name">ドコモ<span class="c-sub">NTT docomo</span></span>
-        <span class="badge">電話・WEB</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd>
-            <a class="tel" href="tel:151">151<small>ドコモ携帯から・無料</small></a>
-            <a class="tel" href="tel:0120800000">0120-800-000<small>一般電話から・無料</small></a>
-            <span class="sub">9:00〜20:00</span>
-            <div class="dial">
-              <span class="dial-seq">4 → 2</span>
-              <span class="dial-desc">「携帯電話番号ポータビリティ」の案内を選ぶ → もう一度同じ案内を選ぶ</span>
-            </div>
-            <span class="dial-hint">ネットワーク暗証番号（4桁）を聞かれます</span>
-          </dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">My docomo ／ 24時間（メンテナンス時を除く）</span></dd>
-        </dl>
+    <div class="carrier" data-search="ドコモ docomo どこも">
+      <div class="c-head">
+        <span class="c-emoji">🍄</span>
+        <span class="c-name">ドコモ</span>
+        <span class="c-hours">9:00〜20:00</span>
       </div>
-    </details>
-
-    <!-- ── ahamo ── -->
-    <details class="carrier" data-search="ahamo アハモ あはも ドコモ docomo">
-      <summary>
-        <span class="c-name">ahamo<span class="c-sub">アハモ</span></span>
-        <span class="badge chk">WEBのみ</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd><span class="na">✕ 電話では発行できない</span></dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">My docomo（ahamoサイトから）／ 24時間</span></dd>
-        </dl>
-        <div class="warn">
-          <b>店頭でも発行できません。</b>オンライン専用プランのため、ドコモショップに行っても対応不可です。
-          必ずご本人にMy docomoから操作してもらってください。
+      <div class="c-act">
+        <a class="tel" href="tel:0120800000">0120-800-000</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">4 <span class="arw">→</span> 3</span>
         </div>
       </div>
-    </details>
+      <div class="tip warn">
+        暗証番号忘れ・ペア回線・ファミ割・一括請求などが絡んでダルいときは、
+        <b>電話の方が早いかも</b>。ただし超待たされます。
+      </div>
+    </div>
 
     <!-- ── au ── -->
-    <details class="carrier" data-search="au エーユー KDDI">
-      <summary>
-        <span class="c-name">au<span class="c-sub">KDDI</span></span>
-        <span class="badge">電話・WEB</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd>
-            <a class="tel" href="tel:0077-75470">0077-75470<small>携帯・一般共通／無料</small></a>
-            <span class="sub">9:00〜20:00</span>
-            <div class="dial unknown">
-              <span class="dial-seq">ガイダンスに従って選択 → オペレーター対応</span>
-              <span class="dial-desc">押す番号は確定情報が取れていません。「解約・MNP」の案内を選んでください</span>
-            </div>
-            <span class="dial-hint">暗証番号（4桁）を聞かれます</span>
-          </dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">My au ／ <b>9:00〜20:00のみ</b></span></dd>
-        </dl>
-        <div class="warn">
-          <b>WEBも20時までです。</b>ドコモ・ソフトバンクは24時間ですが、auはMy auからでも
-          時間外は手続きできません。夜間は翌日案内になります。
+    <div class="carrier" data-search="au エーユー KDDI">
+      <div class="c-head">
+        <span class="c-emoji">🍊</span>
+        <span class="c-name">au</span>
+        <span class="c-hours">9:00〜20:00</span>
+      </div>
+      <div class="c-act">
+        <a class="tel" href="tel:007775470">0077-75470</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">4 <span class="arw">→</span> 2</span>
         </div>
       </div>
-    </details>
-
-    <!-- ── UQ mobile ── -->
-    <details class="carrier" data-search="UQ ユーキュー uqmobile ユーキューモバイル KDDI">
-      <summary>
-        <span class="c-name">UQ mobile<span class="c-sub">ユーキューモバイル</span></span>
-        <span class="badge">電話・WEB</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd>
-            <a class="tel" href="tel:0120001659">0120-001-659<small>UQお客さまセンター・無料</small></a>
-            <span class="sub">9:00〜20:00（年中無休）</span>
-            <div class="dial">
-              <span class="dial-seq">2</span>
-              <span class="dial-desc">「各種お手続き」を選ぶ → オペレーターへ。<b>情報源により手順が異なります</b>（3→2→2→1という案内もあり）</span>
-            </div>
-            <span class="dial-hint">契約者本人が、契約回線から番号通知でかけてください</span>
-          </dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">my UQ mobile ／ 24時間</span></dd>
-        </dl>
+      <div class="tip warn">
+        <b>セット割を組んでいるとWEBで出せません。</b>電話確定です。
       </div>
-    </details>
+    </div>
+
+    <!-- ── UQ ── -->
+    <div class="carrier" data-search="UQ ユーキュー uqmobile ユーキューモバイル">
+      <div class="c-head">
+        <span class="c-emoji">👸</span>
+        <span class="c-name">UQ</span>
+        <span class="c-hours">9:00〜20:00</span>
+      </div>
+      <div class="c-act">
+        <a class="tel" href="tel:0120001659">0120-001-659</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">3 <span class="arw">→</span> 2</span>
+        </div>
+      </div>
+      <div class="tip warn">
+        <b>セット割を組んでいるとWEBで出せません。</b>電話確定です。
+      </div>
+    </div>
 
     <!-- ── ソフトバンク ── -->
-    <details class="carrier" data-search="ソフトバンク softbank SB そふとばんく">
-      <summary>
-        <span class="c-name">ソフトバンク<span class="c-sub">SoftBank</span></span>
-        <span class="badge">電話・WEB</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd>
-            <a class="tel" href="tel:*5533">*5533<small>ソフトバンク携帯から・無料</small></a>
-            <a class="tel" href="tel:0800-100-5533">0800-100-5533<small>一般電話から・無料</small></a>
-            <span class="sub">9:00〜20:00（年中無休）</span>
-            <div class="dial">
-              <span class="dial-seq">2</span>
-              <span class="dial-desc"><b>自動音声だけで発行できる</b>（オペレーターと話さずに済むので早い）</span>
-            </div>
-            <div class="dial">
-              <span class="dial-seq">1</span>
-              <span class="dial-desc">オペレーターに繋ぐ場合。暗証番号が分からないときはそのまま待てば繋がります</span>
-            </div>
-          </dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">My SoftBank ／ 24時間・365日</span></dd>
-        </dl>
-        <div class="warn">
-          予約番号は<b>SMSで届きます</b>。端末の故障などでSMSが受け取れない場合は店頭対応に切り替えてください。
+    <div class="carrier" data-search="SB ソフトバンク softbank そふとばんく">
+      <div class="c-head">
+        <span class="c-emoji">🐶</span>
+        <span class="c-name">SB</span>
+        <span class="c-hours">9:00〜20:00</span>
+      </div>
+      <div class="c-act">
+        <a class="tel" href="tel:0800-100-5533">0800-100-5533</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">2 <span class="arw">→</span> #</span>
         </div>
       </div>
-    </details>
+      <div class="tip good">🩷 すぐ出る神</div>
+    </div>
 
     <!-- ── ワイモバイル ── -->
-    <details class="carrier" data-search="ワイモバイル Y!mobile ymobile ワイモバ わいもばいる">
-      <summary>
-        <span class="c-name">ワイモバイル<span class="c-sub">Y!mobile</span></span>
-        <span class="badge">電話・WEB</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd>
-            <a class="tel" href="tel:151">151<small>ワイモバイル携帯から・無料</small></a>
-            <a class="tel" href="tel:0570039151">0570-039-151<small>他社の電話から・有料</small></a>
-            <span class="sub">9:00〜20:00（年中無休）</span>
-            <div class="dial">
-              <span class="dial-seq">2 → 2 → # → 3</span>
-              <span class="dial-desc">各種手続き → 解約／MNP → 回線の確認 → MNP予約番号の発行</span>
-            </div>
-          </dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">My Y!mobile ／ 24時間（メンテナンス時を除く）</span></dd>
-        </dl>
+    <div class="carrier" data-search="YM ワイモバイル Y!mobile ymobile ワイモバ">
+      <div class="c-head">
+        <span class="c-emoji">🐱</span>
+        <span class="c-name">YM</span>
+        <span class="c-hours">9:00〜20:00</span>
       </div>
-    </details>
-
-    <!-- ── 楽天モバイル ── -->
-    <details class="carrier" data-search="楽天 らくてん rakuten 楽天モバイル">
-      <summary>
-        <span class="c-name">楽天モバイル<span class="c-sub">Rakuten Mobile</span></span>
-        <span class="badge chk">WEBのみ</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd><span class="na">✕ 原則オンラインのみ</span></dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">my 楽天モバイル（アプリ／Web）／ 24時間・即日</span></dd>
-        </dl>
-        <div class="warn">
-          発行前に<b>解約理由などのアンケート</b>と<b>ワンタイムパスワード認証</b>（登録メールまたはSMS）があります。
-          登録メールやSMSを受け取れる状態か、先に確認してください。
+      <div class="c-act">
+        <a class="tel" href="tel:0800-222-8449">0800-222-8449</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">2 <span class="arw">→</span> #</span>
         </div>
       </div>
-    </details>
+      <div class="tip good">🩷 すぐ出る神</div>
+    </div>
+
+    <!-- ── 楽天モバイル ── -->
+    <div class="carrier" data-search="楽天 らくてん rakuten 楽天モバイル">
+      <div class="c-head">
+        <span class="c-emoji">🐼</span>
+        <span class="c-name">楽天モバイル</span>
+        <span class="c-hours">9:00〜17:00</span>
+      </div>
+      <div class="c-act">
+        <a class="tel" href="tel:05054344653">050-5434-4653</a>
+        <div class="dial none">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">電話では出せない</span>
+        </div>
+      </div>
+      <div class="tip warn">
+        <b>結局、電話では出せません。</b>死んでもマイページにログインして出すしかないです。
+        ログインできないとクソダルいので、<b>先にログインできるか確認</b>を。
+      </div>
+    </div>
 
     <!-- ── OCN モバイル ONE ── -->
-    <details class="carrier" data-search="OCN オーシーエヌ ocnモバイル NTTコミュニケーションズ">
-      <summary>
-        <span class="c-name">OCN モバイル ONE<span class="c-sub">新規受付終了済み</span></span>
-        <span class="badge">電話・WEB</span>
-        <span class="c-chev">›</span>
-      </summary>
-      <div class="c-body">
-        <dl class="rows">
-          <dt>電話</dt>
-          <dd>
-            <a class="tel" href="tel:0120506506">0120-506-506<small>OCNサポート</small></a>
-            <span class="sub">10:00〜19:00（年中無休）※他社より終了が早い</span>
-            <div class="dial unknown">
-              <span class="dial-seq">要確認</span>
-              <span class="dial-desc">押す番号の確定情報が取れていません。ガイダンスでモバイル・解約関連の案内を選んでください</span>
-            </div>
-          </dd>
-          <dt>WEB</dt>
-          <dd><span class="yes">○ 取れる</span><span class="sub">OCN マイページ ／ 即日、SMSで通知</span></dd>
-        </dl>
+    <div class="carrier" data-search="OCN オーシーエヌ ocnモバイル">
+      <div class="c-head">
+        <span class="c-emoji">■</span>
+        <span class="c-name">OCN モバイル ONE</span>
+        <span class="c-hours">10:00〜19:00</span>
       </div>
-    </details>
+      <div class="c-act">
+        <a class="tel" href="tel:0120506305">0120-506-305</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">3 <span class="arw">→</span> 1 <span class="arw">→</span> 2 <span class="after">→ 待つとオペレーター</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── J:COM MOBILE ── -->
+    <div class="carrier" data-search="JCOM J:COM ジェイコム jcomモバイル">
+      <div class="c-head">
+        <span class="c-emoji">■</span>
+        <span class="c-name">J:COM MOBILE</span>
+        <span class="c-hours">9:00〜18:00</span>
+      </div>
+      <div class="c-act">
+        <a class="tel" href="tel:0120938362">0120-938-362</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BIGLOBEモバイル ── -->
+    <div class="carrier" data-search="BIGLOBE ビッグローブ biglobeモバイル">
+      <div class="c-head">
+        <span class="c-emoji">■</span>
+        <span class="c-name">BIGLOBEモバイル</span>
+        <span class="c-hours">9:00〜18:00</span>
+      </div>
+      <div class="c-act">
+        <a class="tel" href="tel:0364795608">03-6479-5608</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">2 <span class="arw">→</span> 1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── イオンモバイル ── -->
+    <div class="carrier" data-search="イオン いおん aeon イオンモバイル">
+      <div class="c-head">
+        <span class="c-emoji">■</span>
+        <span class="c-name">イオンモバイル</span>
+        <span class="c-hours">10:30〜19:30</span>
+      </div>
+      <div class="c-act">
+        <a class="tel" href="tel:0120025260">0120-025-260</a>
+        <div class="dial">
+          <span class="dial-label">ガイダンス</span>
+          <span class="dial-seq">1 <span class="arw">→</span> 2</span>
+        </div>
+      </div>
+      <div class="tip warn">
+        <b>店舗でも受付可。</b>行けるなら店舗の方が早いかも。
+        ただし<b>即日は出ません</b>。翌日23:00発行なので、最短でも翌々日になります。
+      </div>
+    </div>
 
   </div>
 
   <div class="no-hit" id="no-hit">該当する事業者がありません</div>
 
+  <!-- ═══ WEBでしか出せない ═══ -->
+  <div id="web-only-block">
+    <div class="section-head">⚠️ WEBでしか出せない</div>
+    <div class="web-only">
+      <div class="chips">
+        <span class="chip">ahamo</span>
+        <span class="chip">povo</span>
+        <span class="chip">LINEMO</span>
+        <span class="chip">IIJmio</span>
+        <span class="chip">mineo</span>
+        <span class="chip">日本通信</span>
+      </div>
+      <div class="msg">
+        電話では発行できません。必ずご本人にマイページから操作してもらってください。
+        店頭に案内しても対応できないので注意。
+      </div>
+    </div>
+  </div>
+
   <div class="foot">
-    <h3>この資料について</h3>
-    電話番号・受付時間・ガイダンスの番号は変わることがあります。
-    お客様に案内する前に、迷ったら各社公式で確認してください。
-    <b>古い記載を見つけたら必ず共有をお願いします。</b>
-    <br><br>
-    <h3>確認に使った情報源</h3>
-    <ul>
-      <li>ソフトバンク公式FAQ softbank.jp/support/faq/view/10068</li>
-      <li>ahamo公式FAQ faq.ahamo.com/faq/show/2514</li>
-      <li>UQ mobile公式FAQ uqwimax.jp/mobile/support/faq/pages/pg00002640.html</li>
-      <li>ワイモバイル公式FAQ ymobile.jp/support/faq/view/21461</li>
-      <li>楽天モバイル公式FAQ network.mobile.rakuten.co.jp/faq/detail/00001409/</li>
-    </ul>
+    電話番号・営業時間・ガイダンスの番号は変わることがあります。
+    <b>実際にかけて違っていたら必ず共有してください。すぐ直します。</b>
   </div>
 
 </div>
@@ -267,6 +247,8 @@
     var input = document.getElementById('q');
     var cards = Array.prototype.slice.call(document.querySelectorAll('.carrier'));
     var noHit = document.getElementById('no-hit');
+    var webOnly = document.getElementById('web-only-block');
+    var webNames = 'ahamo povo linemo iijmio mineo 日本通信 アハモ ポヴォ ラインモ';
 
     input.addEventListener('input', function() {
       var q = input.value.trim().toLowerCase();
@@ -276,10 +258,11 @@
         var show = !q || hay.indexOf(q) >= 0;
         el.hidden = !show;
         if (show) hit++;
-        // 1社に絞られたら中身を開いておく
-        if (q && show && hit === 1) el.open = true;
       });
-      noHit.style.display = hit ? 'none' : 'block';
+      // WEBでしか出せない事業者も、名前で引けるようにする
+      var webHit = !q || webNames.indexOf(q) >= 0;
+      webOnly.hidden = !webHit;
+      noHit.style.display = (hit || webHit) ? 'none' : 'block';
     });
   })();
 </script>

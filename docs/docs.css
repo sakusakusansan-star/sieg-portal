@@ -136,132 +136,140 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
   padding: 22px 0;
 }
 
-/* ═══ 事業者カード ═══ */
+/* ═══ 事業者カード（開かずに全部見えるようにする） ═══ */
 .carriers { display: flex; flex-direction: column; gap: 9px; }
 .carrier {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
-  overflow: hidden;
+  padding: 13px 14px 14px;
 }
 .carrier[hidden] { display: none; }
-.carrier > summary {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 14px;
-  cursor: pointer;
-  list-style: none;
-  min-height: 56px;
-}
-.carrier > summary::-webkit-details-marker { display: none; }
-.carrier > summary:active { background: rgba(232,163,61,0.08); }
-.c-name { font-size: 16px; font-weight: 700; flex: 1; }
-.c-sub { display: block; font-size: 10px; color: var(--muted2); font-weight: 400; margin-top: 2px; }
-.c-chev { color: var(--muted2); font-size: 14px; transition: transform .18s ease; }
-.carrier[open] .c-chev { transform: rotate(90deg); }
 
-/* ワンストップ可否バッジ */
-.badge {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .5px;
-  border-radius: 6px;
-  padding: 3px 7px;
-  border: 1px solid var(--line);
-  color: var(--muted);
+.c-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.c-emoji { font-size: 17px; line-height: 1; flex-shrink: 0; }
+.c-name { font-size: 17px; font-weight: 800; flex: 1; letter-spacing: .5px; }
+.c-hours {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--amber2);
   white-space: nowrap;
 }
-.badge.ok { background: rgba(76,217,123,0.12); border-color: rgba(76,217,123,0.45); color: var(--green); }
-.badge.ng { background: rgba(232,106,90,0.12); border-color: rgba(232,106,90,0.45); color: var(--red); }
-.badge.chk { background: rgba(232,163,61,0.12); border-color: rgba(232,163,61,0.45); color: var(--amber2); }
 
-/* カード中身 */
-.c-body { padding: 0 14px 14px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 12px; }
-.rows { display: grid; grid-template-columns: 58px 1fr; gap: 9px 10px; font-size: 13px; }
-.rows dt {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--muted2);
-  padding-top: 3px;
-}
-.rows dd { color: var(--text); }
-.rows dd .sub { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+/* 電話番号＋ガイダンス */
+.c-act { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
 .tel {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  justify-content: center;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--amber2);
-  text-decoration: none;
-  border: 1px solid rgba(232,163,61,0.35);
-  border-radius: 8px;
-  padding: 6px 10px;
-  margin: 2px 6px 2px 0;
-}
-.tel:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
-.tel small { font-size: 9px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
-.tel:active small { color: var(--ink); }
-.na { color: var(--red); font-weight: 700; font-size: 12.5px; }
-.yes { color: var(--green); font-weight: 700; font-size: 12.5px; }
-
-/* ダイヤル操作（ガイダンスで何を押すか） */
-.dial {
-  background: rgba(255,255,255,0.035);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 9px 11px;
-  margin-top: 7px;
-}
-.dial-seq {
-  display: block;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--amber2);
-  letter-spacing: 1px;
+  text-decoration: none;
+  background: rgba(232,163,61,0.08);
+  border: 1px solid rgba(232,163,61,0.45);
+  border-radius: 10px;
+  padding: 9px 13px;
+  min-height: 52px;
+  letter-spacing: .5px;
 }
-.dial-desc {
-  display: block;
-  font-size: 11px;
+.tel:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
+.tel small {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 9.5px;
+  font-weight: 400;
   color: var(--muted);
-  margin-top: 4px;
-  line-height: 1.6;
+  letter-spacing: 0;
+  margin-top: 2px;
 }
-.dial.unknown .dial-seq { color: var(--muted); font-size: 13px; letter-spacing: 0; }
-.dial-hint {
-  display: block;
-  font-size: 11px;
+.tel:active small { color: var(--ink); }
+
+.dial {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 13px;
+  min-height: 52px;
+}
+.dial-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--muted2);
+}
+.dial-seq {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+.dial-seq .arw { color: var(--muted2); font-weight: 400; }
+.dial-seq .after { font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 11px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+.dial.none { border-style: dashed; }
+.dial.none .dial-seq { font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px; color: var(--muted); letter-spacing: 0; }
+
+/* ひとこと（注意 / 良い情報） */
+.tip {
+  font-size: 12px;
+  line-height: 1.65;
+  border-radius: 0 8px 8px 0;
+  padding: 9px 11px;
+  margin-top: 10px;
+}
+.tip.warn { background: rgba(232,106,90,0.09); border-left: 3px solid var(--red); }
+.tip.warn b { color: var(--red); }
+.tip.good {
+  background: rgba(76,217,123,0.09);
+  border-left: 3px solid var(--green);
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* ═══ WEBでしか出せない事業者 ═══ */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 26px 0 10px;
+  font-size: 13px;
+  font-weight: 800;
   color: var(--amber2);
-  margin-top: 6px;
+  letter-spacing: .5px;
 }
+.web-only {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 11px;
+}
+.web-only .msg { font-size: 12px; color: var(--muted); margin-top: 11px; line-height: 1.65; }
+
 .guide-note {
   font-size: 11px;
   color: var(--muted2);
   line-height: 1.65;
   margin: 2px 2px 12px;
-}
-.warn {
-  background: rgba(232,106,90,0.09);
-  border-left: 3px solid var(--red);
-  border-radius: 0 8px 8px 0;
-  padding: 9px 11px;
-  font-size: 12px;
-  color: var(--text);
-  margin-top: 12px;
-  line-height: 1.65;
-}
-.warn b { color: var(--red); }
-.official {
-  display: inline-block;
-  font-size: 11px;
-  color: var(--muted);
-  text-decoration: none;
-  border-bottom: 1px dotted var(--muted2);
-  margin-top: 11px;
 }
 
 /* ═══ フッター ═══ */

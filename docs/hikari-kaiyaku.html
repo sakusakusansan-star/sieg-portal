@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>光 解約金・工事費一覧｜Sieg 資料置き場</title>
+<meta name="description" content="光回線の解約違約金・工事費残債・撤去費用。契約時期で分けた早見表。">
+<meta name="theme-color" content="#0B1220">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" href="../icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="./">‹ 資料置き場へ戻る</a>
+
+  <div class="page-head">
+    <div class="eyebrow">HIKARI</div>
+    <h1>光 解約金・工事費一覧</h1>
+    <div class="lede">「いつ契約したか」を聞いて、該当する方の金額を見てください。</div>
+    <div class="updated">最終更新 2026-08-15</div>
+  </div>
+
+  <div class="filter">
+    <input type="search" id="q" placeholder="事業者名で絞り込み（例：au、NURO、BBIQ）" autocomplete="off">
+  </div>
+
+  <p class="guide-note">
+    <b style="color:var(--amber2)">更新月に解約すれば違約金は0円</b>です（各社とも2年自動更新が主流）。
+    まず更新月かどうかを確認してください。<br>
+    <span class="unchecked">要確認</span> が付いた金額は裏が取れていません。お客様に伝える前に必ず確認を。
+  </p>
+
+  <div class="carriers" id="carriers">
+
+    <!-- ══ ドコモ光 ══ -->
+    <div class="carrier" data-search="ドコモ光 docomo どこも">
+      <div class="c-head">
+        <span class="c-emoji">🍄</span>
+        <span class="c-name">ドコモ光</span>
+      </div>
+
+      <div class="field">
+        <div class="field-name">解約違約金</div>
+        <div class="era-split">
+          <div class="era before">
+            <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
+            <dl class="era-rows">
+              <dt>戸建て</dt><dd>14,300<span class="yen">円</span></dd>
+              <dt>マンション</dt><dd>8,800<span class="yen">円</span></dd>
+            </dl>
+          </div>
+          <div class="era after">
+            <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
+            <dl class="era-rows">
+              <dt>戸建て</dt><dd>5,500<span class="yen">円</span><span class="unchecked">要確認</span></dd>
+              <dt>マンション</dt><dd>4,180<span class="yen">円</span></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">工事費残債</div>
+        <div class="field-val">
+          12回 または 24回の分割<span class="unchecked">要確認</span>
+          <span class="sub">実質無料特典を使っていれば残債なし。明細の分割額で計算してください</span>
+        </div>
+        <div class="calc" data-calc>
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
+          <span class="lbl">回</span>
+          <span class="out zero">— 円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">撤去工事費</div>
+        <div class="field-val">原則不要</div>
+      </div>
+    </div>
+
+    <!-- ══ ソフトバンク光 ══ -->
+    <div class="carrier" data-search="ソフトバンク光 softbank SB そふとばんく">
+      <div class="c-head">
+        <span class="c-emoji">🐶</span>
+        <span class="c-name">ソフトバンク光</span>
+      </div>
+
+      <div class="field">
+        <div class="field-name">解約違約金</div>
+        <div class="era-split">
+          <div class="era before">
+            <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
+            <dl class="era-rows">
+              <dt>金額</dt><dd class="vague">10,450〜16,500円<span class="unchecked">要確認</span></dd>
+            </dl>
+          </div>
+          <div class="era after">
+            <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
+            <dl class="era-rows">
+              <dt>金額</dt><dd class="vague">4,180〜5,830円<span class="unchecked">要確認</span></dd>
+            </dl>
+          </div>
+        </div>
+        <div class="tip warn">
+          プランによって幅があります。<b>My SoftBankで解約予定月を選ぶと、違約金と工事費残債の合計が出ます。</b>
+          そちらで確認してもらうのが確実です。
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">工事費残債</div>
+        <div class="field-val">
+          工事費 <span class="big">26,400</span> 円を分割
+          <span class="sub">明細の分割額で計算してください</span>
+        </div>
+        <div class="calc" data-calc>
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
+          <span class="lbl">回</span>
+          <span class="out zero">— 円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">撤去工事費</div>
+        <div class="field-val">原則不要</div>
+      </div>
+    </div>
+
+    <!-- ══ auひかり ══ -->
+    <div class="carrier" data-search="auひかり au エーユー KDDI">
+      <div class="c-head">
+        <span class="c-emoji">🍊</span>
+        <span class="c-name">auひかり</span>
+      </div>
+
+      <div class="field">
+        <div class="field-name">解約違約金</div>
+        <div class="era-split">
+          <div class="era before">
+            <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
+            <dl class="era-rows">
+              <dt>金額</dt><dd class="vague">取得できず<span class="unchecked">要確認</span></dd>
+            </dl>
+          </div>
+          <div class="era after">
+            <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
+            <dl class="era-rows">
+              <dt>ホーム</dt><dd>4,730<span class="yen">円</span></dd>
+              <dt>マンション</dt><dd>2,290<span class="yen">円</span></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">撤去工事費 ← 要注意</div>
+        <div class="era-split">
+          <div class="era before">
+            <div class="era-label">2018年3月〜2022年6月 契約の<b>ホームタイプ</b></div>
+            <dl class="era-rows">
+              <dt>撤去</dt><dd>31,680<span class="yen">円</span></dd>
+              <dt></dt><dd class="vague" style="color:var(--red)">必須（断れない）</dd>
+            </dl>
+          </div>
+          <div class="era after">
+            <div class="era-label">それ以外の時期／<b>マンションタイプ</b></div>
+            <dl class="era-rows">
+              <dt>撤去</dt><dd class="vague">任意（原則不要）</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="tip warn">
+          <b>ここが一番効きます。</b>該当する時期のホームタイプだと、違約金より撤去費の方がはるかに高額です。
+          乗り換えの提案前に<b>契約時期とホーム／マンションを必ず確認</b>してください。
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">工事費残債</div>
+        <div class="field-val">
+          プランによる<span class="unchecked">要確認</span>
+          <span class="sub">明細の分割額で計算してください</span>
+        </div>
+        <div class="calc" data-calc>
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
+          <span class="lbl">回</span>
+          <span class="out zero">— 円</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ NURO光 ══ -->
+    <div class="carrier" data-search="NURO ニューロ nuro光">
+      <div class="c-head">
+        <span class="c-emoji">🟥</span>
+        <span class="c-name">NURO光</span>
+      </div>
+
+      <div class="field">
+        <div class="field-name">解約違約金</div>
+        <div class="field-val">
+          <span class="vague" style="color:var(--muted)">取得できず</span><span class="unchecked">要確認</span>
+          <span class="sub">2年契約と3年契約で異なります</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">工事費残債</div>
+        <div class="field-val">
+          工事費 <span class="big">44,000</span> 円 ÷ 36回 ＝ 約 <span class="big">1,222</span> 円/月
+          <span class="sub">月々の割引で実質無料。途中解約すると残り回数分が一括請求されます</span>
+        </div>
+        <div class="calc" data-calc data-unit="1222">
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" value="1222">
+          <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
+          <span class="lbl">回</span>
+          <span class="out zero">— 円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">撤去工事費</div>
+        <div class="field-val">
+          <span class="big">11,000</span> 円
+          <span class="sub">撤去は任意。希望する場合のみサポートデスクへ連絡</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ BBIQ ══ -->
+    <div class="carrier" data-search="BBIQ ビビック QTnet 九電 きゅうでん">
+      <div class="c-head">
+        <span class="c-emoji">⚡</span>
+        <span class="c-name">BBIQ</span>
+      </div>
+
+      <div class="field">
+        <div class="field-name">解約違約金</div>
+        <div class="field-val">
+          最大 <span class="big">19,800</span> 円<span class="unchecked">要確認</span>
+          <span class="sub">2年自動更新。更新月以外の解約で発生します</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">工事費残債</div>
+        <div class="field-val">
+          標準工事費 <span class="big">39,600</span> 円
+          <span class="sub">分割払いの途中で解約すると残りが一括請求されます</span>
+        </div>
+        <div class="calc" data-calc>
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
+          <span class="lbl">回</span>
+          <span class="out zero">— 円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">撤去工事費</div>
+        <div class="era-split">
+          <div class="era after">
+            <div class="era-label">2022年7月 <b>より後</b>の申込／宅内機器の回収のみ</div>
+            <dl class="era-rows">
+              <dt>撤去</dt><dd>0<span class="yen">円</span></dd>
+            </dl>
+          </div>
+          <div class="era before">
+            <div class="era-label">引込線まで<b>完全撤去</b>する場合</div>
+            <dl class="era-rows">
+              <dt>撤去</dt><dd>11,000<span class="yen">円</span></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="tip warn">
+        <b>BBIQはWebで解約できません。電話のみです。</b>
+        金額は利用期間・続ける割の状況で変わるので、QTnetで残債を確認してもらってください。
+      </div>
+    </div>
+
+    <!-- ══ J:COM NET ══ -->
+    <div class="carrier" data-search="JCOM J:COM ジェイコム jcom net">
+      <div class="c-head">
+        <span class="c-emoji">🟨</span>
+        <span class="c-name">J:COM NET</span>
+      </div>
+
+      <div class="field">
+        <div class="field-name">解約違約金</div>
+        <div class="field-val">
+          <span class="vague" style="color:var(--muted)">条件差が大きく確定できず</span><span class="unchecked">要確認</span>
+          <span class="sub">2年自動更新。更新月なら0円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">工事費残債</div>
+        <div class="field-val">
+          キャンペーン次第<span class="unchecked">要確認</span>
+          <span class="sub">実質無料でも分割は残っているため、途中解約なら残りが請求されます</span>
+        </div>
+        <div class="calc" data-calc>
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
+          <span class="lbl">回</span>
+          <span class="out zero">— 円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">撤去工事費</div>
+        <div class="field-val">
+          自己撤去を選べば圧縮できる
+          <span class="sub">訪問での撤去より安く済みます</span>
+        </div>
+      </div>
+
+      <div class="tip warn">
+        TV・電話とのセット契約が絡むことが多く、<b>総額は条件で大きく変わります</b>。
+        マイページか窓口で確認してもらうのが確実です。
+      </div>
+    </div>
+
+  </div>
+
+  <div class="no-hit" id="no-hit">該当する事業者がありません</div>
+
+  <div class="foot">
+    <h3>金額を伝えるときの注意</h3>
+    ここの数字は<b>目安</b>です。キャンペーンや個別条件で変わるため、
+    確定額はお客様ご本人のマイページ・窓口で確認してもらってください。<br><br>
+    <b>実際の請求額が分かったら共有をお願いします。正しい数字に直します。</b>
+  </div>
+
+</div>
+
+<script>
+  // ═══ 事業者の絞り込み ═══
+  (function() {
+    var input = document.getElementById('q');
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.carrier'));
+    var noHit = document.getElementById('no-hit');
+    input.addEventListener('input', function() {
+      var q = input.value.trim().toLowerCase();
+      var hit = 0;
+      cards.forEach(function(el) {
+        var hay = (el.getAttribute('data-search') + ' ' + el.textContent).toLowerCase();
+        var show = !q || hay.indexOf(q) >= 0;
+        el.hidden = !show;
+        if (show) hit++;
+      });
+      noHit.style.display = hit ? 'none' : 'block';
+    });
+  })();
+
+  // ═══ 工事費残債のミニ計算（月々の分割額 × 残り回数）═══
+  (function() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-calc]'), function(box) {
+      var unit = box.querySelector('.unit');
+      var rest = box.querySelector('.rest');
+      var out = box.querySelector('.out');
+
+      function calc() {
+        var u = parseFloat(unit.value);
+        var r = parseFloat(rest.value);
+        if (!(u > 0) || !(r > 0)) {
+          out.textContent = '— 円';
+          out.classList.add('zero');
+          return;
+        }
+        out.textContent = Math.round(u * r).toLocaleString('ja-JP') + ' 円';
+        out.classList.remove('zero');
+      }
+      unit.addEventListener('input', calc);
+      rest.addEventListener('input', calc);
+    });
+  })();
+</script>
+</body>
+</html>

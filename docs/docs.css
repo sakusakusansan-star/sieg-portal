@@ -289,3 +289,110 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ═══ 契約時期で分ける表示（〜より前／〜より後）═══ */
+.era-split { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.era {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+}
+.era.before { background: rgba(232,106,90,0.08); border-color: rgba(232,106,90,0.38); }
+.era.after  { background: rgba(76,217,123,0.07); border-color: rgba(76,217,123,0.35); }
+.era-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 7px;
+  letter-spacing: .3px;
+}
+.era.before .era-label b { color: var(--red); font-size: 12px; }
+.era.after  .era-label b { color: var(--green); font-size: 12px; }
+.era-rows { display: grid; grid-template-columns: 70px 1fr; gap: 5px 10px; align-items: baseline; }
+.era-rows dt { font-size: 11px; color: var(--muted2); }
+.era-rows dd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: .5px;
+}
+.era-rows dd .yen { font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 1px; }
+.era-rows dd.vague { font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px; font-weight: 700; color: var(--muted); }
+
+/* 未確認バッジ */
+.unchecked {
+  display: inline-block;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--amber2);
+  background: rgba(232,163,61,0.13);
+  border: 1px solid rgba(232,163,61,0.45);
+  border-radius: 5px;
+  padding: 1px 5px;
+  margin-left: 5px;
+  vertical-align: 2px;
+}
+
+/* 項目見出し */
+.field {
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+}
+.field:first-of-type { margin-top: 10px; padding-top: 0; border-top: 0; }
+.field-name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--muted2);
+  margin-bottom: 7px;
+}
+.field-val { font-size: 13px; color: var(--text); line-height: 1.65; }
+.field-val .big {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--amber2);
+  letter-spacing: .5px;
+}
+.field-val .sub { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* 工事費残債のミニ計算 */
+.calc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 11px;
+  margin-top: 8px;
+}
+.calc input {
+  width: 78px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(0,0,0,0.28);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 9px;
+  text-align: right;
+  min-height: 42px;
+}
+.calc input:focus { outline: none; border-color: rgba(232,163,61,0.6); }
+.calc .lbl { font-size: 11px; color: var(--muted); }
+.calc .eq { font-size: 14px; color: var(--muted2); }
+.calc .out {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--amber2);
+  margin-left: auto;
+  letter-spacing: .5px;
+}
+.calc .out.zero { color: var(--muted2); }

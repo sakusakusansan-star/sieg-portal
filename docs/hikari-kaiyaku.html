@@ -22,7 +22,7 @@
     <div class="eyebrow">HIKARI</div>
     <h1>光 解約金・工事費一覧</h1>
     <div class="lede">「いつ契約したか」を聞いて、該当する方の金額を見てください。</div>
-    <div class="updated">最終更新 2026-08-15</div>
+    <div class="updated">最終更新 2026-08-15　金額はすべて税込</div>
   </div>
 
   <div class="filter">
@@ -30,9 +30,9 @@
   </div>
 
   <p class="guide-note">
-    <b style="color:var(--amber2)">更新月に解約すれば違約金は0円</b>です（各社とも2年自動更新が主流）。
-    まず更新月かどうかを確認してください。<br>
-    <span class="unchecked">要確認</span> が付いた金額は裏が取れていません。お客様に伝える前に必ず確認を。
+    <b style="color:var(--amber2)">更新月なら違約金は0円。</b>
+    各社とも<b>契約満了月の当月・翌月・翌々月の3か月間</b>は違約金がかかりません。まずここを確認してください。<br>
+    工事費は<b>実質無料でも分割は残っています</b>。途中解約なら残り回数分が一括請求されるので、必ず残債を計算してください。
   </p>
 
   <div class="carriers" id="carriers">
@@ -49,29 +49,34 @@
         <div class="era-split">
           <div class="era before">
             <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
-            <dl class="era-rows">
-              <dt>戸建て</dt><dd>14,300<span class="yen">円</span></dd>
-              <dt>マンション</dt><dd>8,800<span class="yen">円</span></dd>
-            </dl>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て</span><span class="v">14,300<i>円</i></span></div>
+              <div class="era-row"><span class="k">マンション</span><span class="v">8,800<i>円</i></span></div>
+            </div>
           </div>
           <div class="era after">
             <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
-            <dl class="era-rows">
-              <dt>戸建て</dt><dd>5,500<span class="yen">円</span><span class="unchecked">要確認</span></dd>
-              <dt>マンション</dt><dd>4,180<span class="yen">円</span></dd>
-            </dl>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て</span><span class="v">5,500<i>円</i></span></div>
+              <div class="era-row"><span class="k">マンション</span><span class="v">4,180<i>円</i></span></div>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="field">
+        <div class="field-name">契約期間</div>
+        <div class="field-val">2年自動更新（更新月は24ヶ月目）</div>
+      </div>
+
+      <div class="field">
         <div class="field-name">工事費残債</div>
         <div class="field-val">
-          12回 または 24回の分割<span class="unchecked">要確認</span>
-          <span class="sub">実質無料特典を使っていれば残債なし。明細の分割額で計算してください</span>
+          総額 <span class="big">19,800</span> 円 ÷ 24回 ＝ 月々 <span class="big">825</span> 円
+          <span class="sub">「新規工事料実質0円特典」適用なら月額割引で相殺。残り回数を入れてください</span>
         </div>
         <div class="calc" data-calc>
-          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" value="825">
           <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
           <span class="lbl">回</span>
           <span class="out zero">— 円</span>
@@ -80,7 +85,15 @@
 
       <div class="field">
         <div class="field-name">撤去工事費</div>
-        <div class="field-val">原則不要</div>
+        <div class="field-val">なし（撤去は任意・費用は発生しない）</div>
+      </div>
+
+      <div class="tip warn">
+        <b>プロバイダによっては別途解約手続きが必要</b>です。ドコモ光だけ解約して終わりにならないケースがあります。
+      </div>
+
+      <div class="src">
+        <b>出典</b> docomo.ne.jp/internet/hikari/charge/ ／ .../procedure/cancellation/（ページ更新日 2026年6月1日）
       </div>
     </div>
 
@@ -96,31 +109,40 @@
         <div class="era-split">
           <div class="era before">
             <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
-            <dl class="era-rows">
-              <dt>金額</dt><dd class="vague">10,450〜16,500円<span class="unchecked">要確認</span></dd>
-            </dl>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て（2年）</span><span class="v">10,450<i>円</i></span></div>
+              <div class="era-row"><span class="k">マンション（2年）</span><span class="v">10,450<i>円</i></span></div>
+              <div class="era-row"><span class="k">戸建て（5年）</span><span class="v">16,500<i>円</i></span></div>
+            </div>
           </div>
           <div class="era after">
             <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
-            <dl class="era-rows">
-              <dt>金額</dt><dd class="vague">4,180〜5,830円<span class="unchecked">要確認</span></dd>
-            </dl>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て（2年）</span><span class="v">5,720<i>円</i><span class="later">26年12月〜 6,050円</span></span></div>
+              <div class="era-row"><span class="k">マンション（2年）</span><span class="v">4,180<i>円</i><span class="later">26年12月〜 4,510円</span></span></div>
+              <div class="era-row"><span class="k">戸建て（5年）</span><span class="v">5,170<i>円</i><span class="later">26年12月〜 5,500円</span></span></div>
+              <div class="era-row"><span class="k">10ギガ</span><span class="v">6,380<i>円</i></span></div>
+            </div>
           </div>
         </div>
         <div class="tip warn">
-          プランによって幅があります。<b>My SoftBankで解約予定月を選ぶと、違約金と工事費残債の合計が出ます。</b>
-          そちらで確認してもらうのが確実です。
+          <b>2026年12月1日から値上がりします。</b>年末以降の案内では新しい方の金額を使ってください。
         </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">契約期間</div>
+        <div class="field-val">2年 または 5年自動更新</div>
       </div>
 
       <div class="field">
         <div class="field-name">工事費残債</div>
         <div class="field-val">
-          工事費 <span class="big">26,400</span> 円を分割
-          <span class="sub">明細の分割額で計算してください</span>
+          総額 <span class="big">26,400</span> 円 ÷ 24回 ＝ 月々 <span class="big">1,100</span> 円
+          <span class="sub">My SoftBankで解約予定月を選ぶと、違約金と残債の合計が出ます</span>
         </div>
         <div class="calc" data-calc>
-          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" value="1100">
           <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
           <span class="lbl">回</span>
           <span class="out zero">— 円</span>
@@ -129,7 +151,15 @@
 
       <div class="field">
         <div class="field-name">撤去工事費</div>
-        <div class="field-val">原則不要</div>
+        <div class="field-val">なし（撤去工事は不要）</div>
+      </div>
+
+      <div class="tip good">
+        🩷 他社から乗り換えるお客様には「あんしん乗り換えキャンペーン」で<b>他社違約金を最大10万円還元</b>。提案材料に使えます。
+      </div>
+
+      <div class="src">
+        <b>出典</b> softbank.jp/internet/cancellation-fee/（ページ更新日 2025年7月1日）
       </div>
     </div>
 
@@ -145,55 +175,71 @@
         <div class="era-split">
           <div class="era before">
             <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
-            <dl class="era-rows">
-              <dt>金額</dt><dd class="vague">取得できず<span class="unchecked">要確認</span></dd>
-            </dl>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て</span><span class="v">15,000<i>円</i></span></div>
+              <div class="era-row"><span class="k">マンション</span><span class="v">8,800<i>円</i></span></div>
+            </div>
           </div>
           <div class="era after">
             <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
-            <dl class="era-rows">
-              <dt>ホーム</dt><dd>4,730<span class="yen">円</span></dd>
-              <dt>マンション</dt><dd>2,290<span class="yen">円</span></dd>
-            </dl>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て</span><span class="v">4,730<i>円</i></span></div>
+              <div class="era-row"><span class="k">マンション</span><span class="v">3,080<i>円</i></span></div>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="field">
-        <div class="field-name">撤去工事費 ← 要注意</div>
+        <div class="field-name">契約期間</div>
+        <div class="field-val">2年自動更新（ずっとギガ得プラン等）</div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">撤去工事費 ← 金額が大きい</div>
         <div class="era-split">
           <div class="era before">
-            <div class="era-label">2018年3月〜2022年6月 契約の<b>ホームタイプ</b></div>
-            <dl class="era-rows">
-              <dt>撤去</dt><dd>31,680<span class="yen">円</span></dd>
-              <dt></dt><dd class="vague" style="color:var(--red)">必須（断れない）</dd>
-            </dl>
+            <div class="era-label">2018年3月1日 <b>以降</b>に契約したホームタイプ</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">撤去</span><span class="v">31,680<i>円</i></span></div>
+              <div class="era-row"><span class="k">必須か任意か</span><span class="v txt">要確認<span class="unchecked">下記参照</span></span></div>
+            </div>
           </div>
           <div class="era after">
-            <div class="era-label">それ以外の時期／<b>マンションタイプ</b></div>
-            <dl class="era-rows">
-              <dt>撤去</dt><dd class="vague">任意（原則不要）</dd>
-            </dl>
+            <div class="era-label">2018年2月28日 <b>以前</b>の契約</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">撤去</span><span class="v">11,000<i>円</i></span></div>
+            </div>
           </div>
         </div>
         <div class="tip warn">
-          <b>ここが一番効きます。</b>該当する時期のホームタイプだと、違約金より撤去費の方がはるかに高額です。
-          乗り換えの提案前に<b>契約時期とホーム／マンションを必ず確認</b>してください。
+          <b>ここだけ情報が割れています。</b>「解約時に撤去が必須」という情報と、
+          公式の文面「<b>撤去をご希望の場合は</b>撤去工事費31,680円がかかります」（＝任意）が食い違っています。
+          金額が大きく提案の可否を左右するので、<b>該当のお客様が出たらKDDIに直接確認してください。</b>
+          なお2022年7月以降の契約は任意で一致しています。マンションタイプは原則不要です。
         </div>
       </div>
 
       <div class="field">
         <div class="field-name">工事費残債</div>
         <div class="field-val">
-          プランによる<span class="unchecked">要確認</span>
-          <span class="sub">明細の分割額で計算してください</span>
+          総額 <span class="big">48,950</span> 円 ÷ 23回 ＝ 月々 <span class="big">2,128</span> 円
+          <span class="sub">初回のみ2,134円。「初期費用相当額割引」で実質無料（月額割引で相殺）</span>
         </div>
         <div class="calc" data-calc>
-          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" value="2128">
           <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
           <span class="lbl">回</span>
           <span class="out zero">— 円</span>
         </div>
+      </div>
+
+      <div class="tip warn">
+        <b>au one net以外のプロバイダは、各社の窓口で別途解約手続きが必要</b>です。
+      </div>
+
+      <div class="src">
+        <b>出典</b> au.com/internet/auhikari_1g/charge/standard/（ページ更新日 2026年8月1日）
       </div>
     </div>
 
@@ -206,19 +252,43 @@
 
       <div class="field">
         <div class="field-name">解約違約金</div>
-        <div class="field-val">
-          <span class="vague" style="color:var(--muted)">取得できず</span><span class="unchecked">要確認</span>
-          <span class="sub">2年契約と3年契約で異なります</span>
+        <div class="era-split">
+          <div class="era before">
+            <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て・マンション<br>（2年／3年とも）</span><span class="v">10,450<i>円</i></span></div>
+            </div>
+          </div>
+          <div class="era after">
+            <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て 2ギガ（2年）</span><span class="v">3,740<i>円</i></span></div>
+              <div class="era-row"><span class="k">戸建て 2ギガ（3年）</span><span class="v">3,850<i>円</i></span></div>
+              <div class="era-row"><span class="k">戸建て 10ギガ（3年）</span><span class="v">4,400<i>円</i></span></div>
+              <div class="era-row"><span class="k">マンション 2ギガ（2年）</span><span class="v">363<i>円</i></span></div>
+              <div class="era-row"><span class="k">マンション 2ギガ（3年）</span><span class="v">528<i>円</i></span></div>
+              <div class="era-row"><span class="k">契約期間なしプラン</span><span class="v">0<i>円</i></span></div>
+            </div>
+          </div>
         </div>
+        <div class="tip good">
+          🩷 <b>マンションは数百円</b>です。違約金を理由に渋られたら、この金額を出せば話が早いです。
+          2024年10月10日以降の集合住宅プランは<b>解除料そのものがありません</b>。
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">契約期間</div>
+        <div class="field-val">2年 または 3年自動更新（満了月を含む3か月間は無料解約期間）</div>
       </div>
 
       <div class="field">
         <div class="field-name">工事費残債</div>
         <div class="field-val">
-          工事費 <span class="big">44,000</span> 円 ÷ 36回 ＝ 約 <span class="big">1,222</span> 円/月
-          <span class="sub">月々の割引で実質無料。途中解約すると残り回数分が一括請求されます</span>
+          総額 <span class="big">44,000</span> 円
+          <span class="sub">3年契約 = 36回 → 月々1,222円 ／ 2年契約 = 24回 → 月々1,833円</span>
         </div>
-        <div class="calc" data-calc data-unit="1222">
+        <div class="calc" data-calc>
           <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" value="1222">
           <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
           <span class="lbl">回</span>
@@ -228,10 +298,15 @@
 
       <div class="field">
         <div class="field-name">撤去工事費</div>
-        <div class="field-val">
-          <span class="big">11,000</span> 円
-          <span class="sub">撤去は任意。希望する場合のみサポートデスクへ連絡</span>
-        </div>
+        <div class="field-val">なし（撤去は任意・費用は発生しない）</div>
+      </div>
+
+      <div class="tip warn">
+        解約は<b>NUROマイページから</b>。電話窓口では受け付けていません。
+      </div>
+
+      <div class="src">
+        <b>出典</b> support.nuro.jp/faqsupport/nuro/web/knowledge7067.html ／ nuro.jp/hikari/price/rel_price.html（ページ更新日 2025年9月30日）
       </div>
     </div>
 
@@ -245,19 +320,27 @@
       <div class="field">
         <div class="field-name">解約違約金</div>
         <div class="field-val">
-          最大 <span class="big">19,800</span> 円<span class="unchecked">要確認</span>
-          <span class="sub">2年自動更新。更新月以外の解約で発生します</span>
+          <b>月額基本料の1か月分</b>（契約時期を問わず）
+          <span class="sub">1ギガコースの場合：戸建て 5,500円 ／ マンション 4,400円〜</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">契約期間</div>
+        <div class="field-val">
+          24か月（つづけて割の適用中は36か月自動更新）
+          <span class="sub">更新月を含む3か月間なら違約金なし。24か月以内の解約は期間内解約料が別途発生</span>
         </div>
       </div>
 
       <div class="field">
         <div class="field-name">工事費残債</div>
         <div class="field-val">
-          標準工事費 <span class="big">39,600</span> 円
-          <span class="sub">分割払いの途中で解約すると残りが一括請求されます</span>
+          総額 <span class="big">43,560</span> 円
+          <span class="sub">24回 → 月々1,815円 ／ 36回 → 月々1,210円。「標準工事費相当割」で実質無料</span>
         </div>
         <div class="calc" data-calc>
-          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" value="1815">
           <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
           <span class="lbl">回</span>
           <span class="out zero">— 円</span>
@@ -268,23 +351,30 @@
         <div class="field-name">撤去工事費</div>
         <div class="era-split">
           <div class="era after">
-            <div class="era-label">2022年7月 <b>より後</b>の申込／宅内機器の回収のみ</div>
-            <dl class="era-rows">
-              <dt>撤去</dt><dd>0<span class="yen">円</span></dd>
-            </dl>
+            <div class="era-label">ケーブル残置（<b>宅内機器のみ回収</b>）</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">撤去</span><span class="v">0<i>円</i></span></div>
+            </div>
           </div>
           <div class="era before">
-            <div class="era-label">引込線まで<b>完全撤去</b>する場合</div>
-            <dl class="era-rows">
-              <dt>撤去</dt><dd>11,000<span class="yen">円</span></dd>
-            </dl>
+            <div class="era-label">引込線まで<b>全撤去</b>する場合</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">撤去</span><span class="v">11,000<i>円</i></span></div>
+            </div>
           </div>
+        </div>
+        <div class="field-val" style="margin-top:8px;">
+          <span class="sub">どちらも任意。<b>機器回収だけなら無料</b>なので、そちらを案内してください</span>
         </div>
       </div>
 
       <div class="tip warn">
-        <b>BBIQはWebで解約できません。電話のみです。</b>
-        金額は利用期間・続ける割の状況で変わるので、QTnetで残債を確認してもらってください。
+        <b>Webでは解約できません。電話のみです。</b>
+        九州電力のセット割が絡むことが多いので、そちらの扱いも確認してください。
+      </div>
+
+      <div class="src">
+        <b>出典</b> bbiq.jp/hikari/（ページ更新日 2026年7月31日）
       </div>
     </div>
 
@@ -297,20 +387,51 @@
 
       <div class="field">
         <div class="field-name">解約違約金</div>
+        <div class="era-split">
+          <div class="era before">
+            <div class="era-label">2022年7月1日 <b>より前</b>の契約</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て 1G</span><span class="v">5,610<i>円</i></span></div>
+              <div class="era-row"><span class="k">集合住宅 1G</span><span class="v">5,280<i>円</i></span></div>
+              <div class="era-row"><span class="k">戸建て 10G</span><span class="v">6,710<i>円</i></span></div>
+              <div class="era-row"><span class="k">集合住宅 10G</span><span class="v">5,830<i>円</i></span></div>
+            </div>
+          </div>
+          <div class="era after">
+            <div class="era-label">2022年7月1日 <b>より後</b>の契約</div>
+            <div class="era-rows">
+              <div class="era-row"><span class="k">戸建て 1G</span><span class="v">5,610<i>円</i></span></div>
+              <div class="era-row"><span class="k">集合住宅 1G</span><span class="v">5,280<i>円</i></span></div>
+              <div class="era-row"><span class="k">戸建て 10G</span><span class="v">6,160<i>円</i></span></div>
+              <div class="era-row"><span class="k">集合住宅 10G</span><span class="v">6,380<i>円</i></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="field-val" style="margin-top:9px;">
+          <b>J:COM NET 光(N)</b>（NTT回線）の場合
+          <span class="sub">1G：戸建て 5,808円 ／ 集合住宅 5,258円　　10G：6,886円</span>
+        </div>
+        <div class="tip warn">
+          J:COMは<b>1Gコースだと契約時期で金額が変わりません</b>。10Gだけ差があります。
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-name">契約期間</div>
         <div class="field-val">
-          <span class="vague" style="color:var(--muted)">条件差が大きく確定できず</span><span class="unchecked">要確認</span>
-          <span class="sub">2年自動更新。更新月なら0円</span>
+          2年自動更新
+          <span class="sub">最低利用期間3か月のサービスもあります</span>
         </div>
       </div>
 
       <div class="field">
         <div class="field-name">工事費残債</div>
         <div class="field-val">
-          キャンペーン次第<span class="unchecked">要確認</span>
-          <span class="sub">実質無料でも分割は残っているため、途中解約なら残りが請求されます</span>
+          総額 <span class="big">23,760</span> 円 ÷ 24回 ＝ 月々 <span class="big">990</span> 円
+          <span class="sub">「新規加入基本工事費実質0円」で実質無料（月額割引で相殺）</span>
         </div>
         <div class="calc" data-calc>
-          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" placeholder="0">
+          <span class="lbl">月々</span><input type="number" inputmode="numeric" class="unit" value="990">
           <span class="lbl">円 × 残り</span><input type="number" inputmode="numeric" class="rest" placeholder="0">
           <span class="lbl">回</span>
           <span class="out zero">— 円</span>
@@ -320,14 +441,18 @@
       <div class="field">
         <div class="field-name">撤去工事費</div>
         <div class="field-val">
-          自己撤去を選べば圧縮できる
-          <span class="sub">訪問での撤去より安く済みます</span>
+          引込線を撤去する場合 <span class="big">10,780</span> 円
+          <span class="sub">任意。撤去しなければ費用は発生しません</span>
         </div>
       </div>
 
       <div class="tip warn">
         TV・電話とのセット契約が絡むことが多く、<b>総額は条件で大きく変わります</b>。
-        マイページか窓口で確認してもらうのが確実です。
+        キャッシュバックの条件も残っていることがあるので、マイページか窓口で確認してもらってください。
+      </div>
+
+      <div class="src">
+        <b>出典</b> jcom.co.jp/price/ ／ jcom.co.jp/price/hikari-n/（契約条件更新 2025年11月5日）
       </div>
     </div>
 
@@ -337,9 +462,9 @@
 
   <div class="foot">
     <h3>金額を伝えるときの注意</h3>
-    ここの数字は<b>目安</b>です。キャンペーンや個別条件で変わるため、
-    確定額はお客様ご本人のマイページ・窓口で確認してもらってください。<br><br>
-    <b>実際の請求額が分かったら共有をお願いします。正しい数字に直します。</b>
+    ここの数字は各社公式サイトを確認した<b>2026年8月時点</b>のものです。
+    キャンペーンや個別条件で変わるため、確定額はお客様ご本人のマイページ・窓口で確認してもらってください。<br><br>
+    <b>実際の請求額が違っていたら共有をお願いします。すぐ直します。</b>
   </div>
 
 </div>

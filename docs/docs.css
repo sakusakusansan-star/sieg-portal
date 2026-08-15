@@ -307,17 +307,47 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
 }
 .era.before .era-label b { color: var(--red); font-size: 12px; }
 .era.after  .era-label b { color: var(--green); font-size: 12px; }
-.era-rows { display: grid; grid-template-columns: 70px 1fr; gap: 5px 10px; align-items: baseline; }
-.era-rows dt { font-size: 11px; color: var(--muted2); }
-.era-rows dd {
+.era-rows { display: flex; flex-direction: column; gap: 5px; }
+.era-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.era-row .k { font-size: 11.5px; color: var(--muted2); line-height: 1.4; }
+.era-row .v {
   font-family: 'JetBrains Mono', monospace;
   font-size: 16px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: .5px;
+  white-space: nowrap;
 }
-.era-rows dd .yen { font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 11px; font-weight: 400; color: var(--muted); margin-left: 1px; }
-.era-rows dd.vague { font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 13px; font-weight: 700; color: var(--muted); }
+.era-row .v i {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 1px;
+}
+.era-row .v.txt {
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: normal;
+  text-align: right;
+}
+.era-row .v .later {
+  display: block;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted2);
+  letter-spacing: 0;
+  margin-top: 1px;
+}
 
 /* 未確認バッジ */
 .unchecked {
@@ -396,3 +426,17 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
   letter-spacing: .5px;
 }
 .calc .out.zero { color: var(--muted2); }
+
+/* 出典リンク */
+.src {
+  display: block;
+  font-size: 10.5px;
+  color: var(--muted2);
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255,255,255,0.08);
+  word-break: break-all;
+  line-height: 1.6;
+}
+.src a { color: var(--muted); }
+.src b { color: var(--muted); font-weight: 700; }

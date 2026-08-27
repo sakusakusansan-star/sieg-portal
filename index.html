@@ -503,6 +503,39 @@
     cursor: pointer;
     padding: 6px;
   }
+  /* 搭乗確認：遷移の直前にはさむカード */
+  .nav-confirm {
+    text-align: center;
+    padding: 2px 0 6px;
+  }
+  .nc-gate {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted2);
+  }
+  .nc-label {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--amber2);
+    letter-spacing: 2px;
+    margin: 10px 0 4px;
+    word-break: break-all;
+  }
+  .nc-note { font-size: 12px; color: var(--muted); }
+  .nc-go {
+    border-color: rgba(232,163,61,0.55);
+    color: var(--amber2);
+    background: rgba(232,163,61,0.07);
+  }
+  .nc-go[disabled] { opacity: 0.45; }
+  .nc-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 8px;
+  }
   /* 記憶をすべて消して未設定に戻す出口。名前ボタンと誤タップしないよう区切り線で分ける */
   .staff-reset {
     display: block;
@@ -1038,10 +1071,12 @@
       var names = JSON.parse(el.getAttribute('data-staff') || '[]');
       // 記憶した名前がこのGATEの対象なら、そのまま通す
       if (me && names.indexOf(me) >= 0) {
-        pendingRow = null;
-        navigateWithStaff(el.getAttribute('data-url'), me);
+        // 記憶で素通りさせず、確認カードから名前を選び直せるようにする
+        navigateWithStaff(el.getAttribute('data-url'), me, gateLabel(el), function() {
+          openStaffOverlay(names, { row: el });
+        });
       } else {
-        openStaffOverlay(names);
+        openStaffOverlay(names, { row: el });
       }
 
     } else if (mode === 'category') {
@@ -1052,8 +1087,7 @@
       // 2) 名前ではない選択肢（カテゴリ）は、前回の選択を覚えておいて直行
       if (!hit) hit = findOption(options, getChoice(id));
       if (hit) {
-        pendingRow = null;
-        followOption(hit, id);
+        followOption(hit, id, gateLabel(el), function() { openCategoryOverlay(el); });
       } else {
         openCategoryOverlay(el);
       }
@@ -1072,21 +1106,131 @@
     return null;
   }
 
-  // 選択肢に進む。名前の選択肢なら本人確認として名前も記憶し、
-  // カテゴリの選択肢ならそのGATEの選択として記憶する。
-  function followOption(opt, id) {
-    if (ALL_STAFF.indexOf(opt.label) >= 0) {
-      setStaff(opt.label);
-    } else {
-      setChoice(id, opt.label);
+  // 選択肢に進む。実際の遷移と記憶は確認カードで確定してから行う。
+  function followOption(opt, id, gate, back) {
+    requestNav({
+      label: opt.label,
+      url: opt.url,
+      appendStaff: opt.appendStaff,
+      choiceId: id,
+      gate: gate,
+      back: back
+    });
+  }
+
+  // ═══ 搭乗確認（押し間違えても引き返せるようにする） ═══
+  // 遷移は必ずこのカードを1枚はさむ。指が滑っても、記憶で直行したときも、
+  // 出るのは同じ画面。「進む」で即、放っておけば NAV_SECONDS 秒で自動。
+  var NAV_SECONDS = 3;
+  var NAV_LOCK_MS = 400;   // 直前のタップが「進む」に貫通しないための保護
+  var pendingNav = null;
+  var navTimer = null;
+
+  function stopNavTimer() {
+    if (navTimer) { clearInterval(navTimer); navTimer = null; }
+  }
+
+  /**
+   * nav: { label, url, appendStaff, choiceId, gate, back }
+   * back は「選び直す」で開き直す画面。省略時はオーバーレイを閉じるだけ。
+   */
+  function requestNav(nav) {
+    stopNavTimer();
+    pendingNav = nav;
+
+    document.getElementById('ov-eyebrow').textContent = 'BOARDING';
+    document.getElementById('ov-title').textContent = '行き先の確認';
+    document.getElementById('ov-back').style.display = 'none';
+    document.getElementById('ov-reset').style.display = 'none';
+
+    var box = document.getElementById('staff-buttons');
+    box.innerHTML = '';
+
+    var card = document.createElement('div');
+    card.className = 'nav-confirm';
+    if (nav.gate) {
+      var gateEl = document.createElement('div');
+      gateEl.className = 'nc-gate';
+      gateEl.textContent = nav.gate;
+      card.appendChild(gateEl);
     }
-    closeOverlay();
-    var url = opt.url;
-    if (opt.appendStaff) {
+    var labelEl = document.createElement('div');
+    labelEl.className = 'nc-label';
+    labelEl.textContent = nav.label;
+    var noteEl = document.createElement('div');
+    noteEl.className = 'nc-note';
+    noteEl.textContent = 'で進みます';
+    card.appendChild(labelEl);
+    card.appendChild(noteEl);
+    box.appendChild(card);
+
+    var go = document.createElement('button');
+    go.className = 'staff-btn nc-go';
+    go.type = 'button';
+    go.disabled = true;
+    var goText = document.createTextNode('進む');
+    var count = document.createElement('span');
+    count.className = 'nc-count';
+    go.appendChild(goText);
+    go.appendChild(count);
+    go.onclick = commitNav;
+    box.appendChild(go);
+
+    var redo = document.createElement('button');
+    redo.className = 'staff-btn';
+    redo.type = 'button';
+    redo.textContent = '選び直す';
+    redo.onclick = cancelNav;
+    box.appendChild(redo);
+
+    document.getElementById('staff-overlay').classList.add('show');
+    setTimeout(function() { if (pendingNav === nav) go.disabled = false; }, NAV_LOCK_MS);
+
+    var left = NAV_SECONDS;
+    count.textContent = '（' + left + '）';
+    navTimer = setInterval(function() {
+      left--;
+      if (left <= 0) { commitNav(); return; }
+      count.textContent = '（' + left + '）';
+    }, 1000);
+  }
+
+  // ここで初めて記憶に書き込む。押し間違いを覚えさせないため。
+  function commitNav() {
+    var nav = pendingNav;
+    if (!nav) return;
+    stopNavTimer();
+    pendingNav = null;
+
+    if (ALL_STAFF.indexOf(nav.label) >= 0) {
+      setStaff(nav.label);
+    } else if (nav.choiceId) {
+      setChoice(nav.choiceId, nav.label);
+    }
+
+    var url = nav.url;
+    if (nav.appendStaff) {
       var sep = url.indexOf('?') >= 0 ? '&' : '?';
-      url = url + sep + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
+      url = url + sep + 'staff=' + encodeURIComponent(nav.label) + '&v=' + Date.now();
     }
     window.location.href = url;
+  }
+
+  function cancelNav() {
+    var nav = pendingNav;
+    stopNavTimer();
+    pendingNav = null;
+    if (nav && nav.back) nav.back();
+    else closeOverlay();
+  }
+
+  // GATEの見出し（確認カードに出す「K1 ・ 経費精算」）
+  function gateLabel(el) {
+    if (!el) return '';
+    var code = el.querySelector('.gate-code');
+    var name = el.querySelector('.name');
+    return [code ? code.textContent : '', name ? name.textContent : '']
+      .filter(function(t) { return t; }).join(' ・ ');
   }
 
   function formatTel(tel) {
@@ -1120,10 +1264,8 @@
     document.getElementById('staff-overlay').classList.add('show');
   }
 
-  function navigateWithStaff(url, name) {
-    setStaff(name);
-    var sep = url.indexOf('?') >= 0 ? '&' : '?';
-    window.location.href = url + sep + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
+  function navigateWithStaff(url, name, gate, back) {
+    requestNav({ label: name, url: url, appendStaff: true, gate: gate, back: back });
   }
 
   /**
@@ -1147,9 +1289,10 @@
       btn.textContent = n;
       btn.onclick = function() {
         if (opts.onPick) { opts.onPick(n); return; }
-        var url = pendingRow.getAttribute('data-url');
-        closeOverlay();
-        navigateWithStaff(url, n);
+        var row = opts.row || pendingRow;
+        navigateWithStaff(row.getAttribute('data-url'), n, gateLabel(row), function() {
+          openStaffOverlay(names, opts);
+        });
       };
       box.appendChild(btn);
     });
@@ -1172,9 +1315,9 @@
       btn.textContent = opt.label;
       btn.onclick = function() {
         if (opt.type === 'staff') {
-          openStaffFromCategory(opt, JSON.parse(el.getAttribute('data-staff') || '[]'));
+          openStaffFromCategory(opt, JSON.parse(el.getAttribute('data-staff') || '[]'), el);
         } else {
-          followOption(opt, id);
+          followOption(opt, id, gateLabel(el), function() { openCategoryOverlay(el); });
         }
       };
       box.appendChild(btn);
@@ -1182,7 +1325,7 @@
     document.getElementById('staff-overlay').classList.add('show');
   }
 
-  function openStaffFromCategory(opt, staffList) {
+  function openStaffFromCategory(opt, staffList, row) {
     var me = getStaff();
     document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
     document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
@@ -1195,10 +1338,13 @@
       btn.className = 'staff-btn' + (n === me ? ' is-me' : '');
       btn.textContent = n;
       btn.onclick = function() {
-        setStaff(n);
-        closeOverlay();
-        var sep = opt.url.indexOf('?') >= 0 ? '&' : '?';
-        window.location.href = opt.url + sep + 'staff=' + encodeURIComponent(n) + '&v=' + Date.now();
+        requestNav({
+          label: n,
+          url: opt.url,
+          appendStaff: true,
+          gate: gateLabel(row),
+          back: function() { openStaffFromCategory(opt, staffList, row); }
+        });
       };
       box.appendChild(btn);
     });
@@ -1210,6 +1356,8 @@
 
   function closeOverlay() {
     document.getElementById('staff-overlay').classList.remove('show');
+    stopNavTimer();
+    pendingNav = null;
     pendingRow = null;
   }
 

@@ -503,6 +503,29 @@
     cursor: pointer;
     padding: 6px;
   }
+  /* 記憶をすべて消して未設定に戻す出口。名前ボタンと誤タップしないよう区切り線で分ける */
+  .staff-reset {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px 6px 6px;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .staff-reset:active { color: var(--amber2); }
+  .sr-sub {
+    display: block;
+    font-size: 10px;
+    color: var(--muted2);
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+  }
   .pass-foot {
     font-family: 'JetBrains Mono', monospace;
     font-size: 8px;
@@ -684,6 +707,10 @@
       <div class="staff-title" id="ov-title">あなたの名前を選んでください</div>
       <div class="staff-buttons" id="staff-buttons"></div>
       <div class="staff-back" id="ov-back" style="display:none;" onclick="backToCategory()">‹ 戻る</div>
+      <button class="staff-reset" id="ov-reset" type="button" style="display:none;" onclick="resetIdentity()">
+        未設定に戻す
+        <span class="sr-sub">名前と、覚えている進み先をすべて消します</span>
+      </button>
     </div>
     <div class="pass-foot">SIEG OPERATIONS PORTAL ★ KUMAMOTO</div>
   </div>
@@ -940,6 +967,31 @@
     } catch (e) {}
   }
 
+  // 端末に何か覚えているか（名前、またはGATEごとの進み先）。
+  // パートナー様のように名前が未設定でも、進み先だけ記憶が残っていることがある。
+  function hasMemory() {
+    if (getStaff()) return true;
+    try {
+      return Object.keys(localStorage).some(function(k) {
+        return k.indexOf(CHOICE_PREFIX) === 0;
+      });
+    } catch (e) { return false; }
+  }
+
+  // 名前も進み先の記憶もすべて消して、まっさらな未設定に戻す。
+  // 旧キーも消さないと、次回読み込み時に migrateOldKey が名前を復活させてしまう。
+  function clearIdentity() {
+    lsDel(STAFF_KEY);
+    lsDel('siegStaff_keihi');
+    clearChoices();
+    renderWhoami();
+  }
+
+  function resetIdentity() {
+    clearIdentity();
+    closeOverlay();
+  }
+
   // 旧バージョン（経費精算だけ個別に保存していた）からの引き継ぎ
   (function migrateOldKey() {
     if (getStaff()) return;
@@ -966,6 +1018,7 @@
   document.getElementById('whoami-change').addEventListener('click', function() {
     openStaffOverlay(ALL_STAFF, {
       title: 'あなたの名前を選んでください',
+      allowReset: true,
       onPick: function(n) { setStaff(n); closeOverlay(); }
     });
   });
@@ -1045,6 +1098,7 @@
     document.getElementById('ov-eyebrow').textContent = 'EMERGENCY';
     document.getElementById('ov-title').textContent = '緊急連絡先';
     document.getElementById('ov-back').style.display = 'none';
+    document.getElementById('ov-reset').style.display = 'none';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     contacts.forEach(function(c) {
@@ -1083,6 +1137,8 @@
     document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
     document.getElementById('ov-title').textContent = opts.title || 'あなたの名前を選んでください';
     document.getElementById('ov-back').style.display = 'none';
+    // 記憶が何も無ければ消すものも無いので出さない
+    document.getElementById('ov-reset').style.display = (opts.allowReset && hasMemory()) ? 'block' : 'none';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     names.forEach(function(n) {
@@ -1107,6 +1163,7 @@
     document.getElementById('ov-eyebrow').textContent = 'SELECT';
     document.getElementById('ov-title').textContent = '進み先を選んでください';
     document.getElementById('ov-back').style.display = 'none';
+    document.getElementById('ov-reset').style.display = 'none';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     options.forEach(function(opt) {
@@ -1130,6 +1187,7 @@
     document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
     document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
     document.getElementById('ov-back').style.display = 'block';
+    document.getElementById('ov-reset').style.display = 'none';
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     (opt.staff || staffList).forEach(function(n) {

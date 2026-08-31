@@ -406,12 +406,12 @@
   var STAFF    = ['福岡', '清田', '福山', '古川'];
   var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル'];
   var CARRIERS = ['docomo', 'SoftBank', 'au'];
-  var PLACES   = ['近見店', '下通', '健軍', '未確定'];   // よく使う場所。登録済みの場所も自動で足す
+  var PLACES   = ['近見', '下通', '健軍', '未確定'];   // よく使う場所。登録済みの場所も自動で足す
 
   // 取引先を選んだときに、いつもの組み合わせを自動で入れる。
   // 場所が毎回変わる取引先は、キャリアだけ入れて場所は選んでもらう。
   var PRESET = {
-    '南国殖産': { carrier: 'docomo',   place: '近見店' },
+    '南国殖産': { carrier: 'docomo',   place: '近見' },
     'ハイコム': { carrier: 'SoftBank' },
     'サンコミ': { carrier: 'au' },
     'ダル':     { carrier: 'docomo' }

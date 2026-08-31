@@ -154,6 +154,7 @@
     background: var(--green);
     box-shadow: 0 0 6px var(--green);
   }
+  .cal-cell .mark.hold { background: var(--red); box-shadow: 0 0 6px var(--red); }
   .cal-cell.on {
     background: var(--amber);
     border-color: var(--amber);
@@ -201,6 +202,7 @@
   }
   .day-row .t { color: var(--muted); line-height: 1.5; }
   .day-row .t b { color: var(--text); font-weight: 700; }
+  .day-row .t b.hold { color: var(--red); }
   .empty-note { font-size: 12px; color: var(--muted2); }
 
   /* 送信バー */
@@ -274,6 +276,17 @@
   }
   .ov-title { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
   .ov-lede { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .ov-warn {
+    background: rgba(232,106,90,0.10);
+    border-left: 3px solid var(--red);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .ov-warn b { display: block; color: var(--red); margin-bottom: 4px; }
+  .ov-warn span { display: block; }
   .ov-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
   .ov-item {
     font-size: 12px;
@@ -360,6 +373,7 @@
     <div class="cal-legend">
       <span><i style="background:var(--amber);"></i>選択中</span>
       <span><i style="background:var(--green);"></i>登録済み</span>
+      <span><i style="background:var(--red);"></i>希望休・店休日など</span>
     </div>
   </div>
 
@@ -386,6 +400,7 @@
   <div class="ov-box">
     <div class="ov-title" id="ov-title">送信内容の確認</div>
     <div class="ov-lede" id="ov-lede"></div>
+    <div class="ov-warn" id="ov-warn" style="display:none;"></div>
     <div class="ov-list" id="ov-list"></div>
     <div class="ov-names" id="ov-names" style="display:none;"></div>
     <div class="ov-acts" id="ov-acts">
@@ -436,6 +451,7 @@
   function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function apiReady() { return SHIFT_API.indexOf('http') === 0; }
+  function tokenParam() { return SHIFT_TOKEN ? '&token=' + encodeURIComponent(SHIFT_TOKEN) : ''; }
 
   function showMsg(kind, html) {
     var el = $('msg');
@@ -493,7 +509,7 @@
    */
   function initMonths() {
     if (!apiReady()) return buildMonths(defaultMonths());
-    fetch(SHIFT_API + '?action=months&v=' + Date.now())
+    fetch(SHIFT_API + '?action=months' + tokenParam() + '&v=' + Date.now())
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data || !data.ok || !data.months || !data.months.length) throw new Error('月が取れません');
@@ -641,9 +657,10 @@
         var num = document.createElement('span');
         num.textContent = day;
         b.appendChild(num);
-        if (state.existing[day]) {
+        var entry = state.existing[day];
+        if (entry) {
           var mark = document.createElement('span');
-          mark.className = 'mark';
+          mark.className = 'mark' + (isHold(entry) ? ' hold' : '');
           b.appendChild(mark);
         }
         b.addEventListener('click', function() {
@@ -656,6 +673,19 @@
       })(d);
     }
     $('picked-count').textContent = pickedDays().length + '日';
+  }
+
+  /**
+   * 「希望休」「店休日」「打ち合わせ」など、稼働ではない記載かどうか。
+   * 取引先が入っていないのに場所だけ書かれている日をそう見なす。
+   * 送信するとこれが消えてしまうので、確認画面で知らせる。
+   */
+  function isHold(entry) {
+    return !!entry && !entry.client && !!(entry.place || entry.hotel);
+  }
+
+  function holdDays(days) {
+    return days.filter(function(d) { return isHold(state.existing[d]); });
   }
 
   function pickedDays() {
@@ -692,7 +722,7 @@
   /* ═══ 登録済みの読み込み ═══ */
   function loadExisting() {
     if (!apiReady() || !state.name || !state.year) return;
-    var url = SHIFT_API + '?action=list' +
+    var url = SHIFT_API + '?action=list' + tokenParam() +
       '&name=' + encodeURIComponent(state.name) +
       '&year=' + state.year + '&month=' + state.month +
       '&v=' + Date.now();
@@ -734,7 +764,11 @@
       var right = document.createElement('div');
       right.className = 't';
       var parts = [];
-      if (e.place) parts.push('<b>' + escapeHtml(e.place) + '</b>');
+      if (e.place) {
+        parts.push(isHold(e)
+          ? '<b class="hold">' + escapeHtml(e.place) + '</b>'
+          : '<b>' + escapeHtml(e.place) + '</b>');
+      }
       if (e.client) parts.push(escapeHtml(e.client));
       if (e.carrier) parts.push(escapeHtml(e.carrier));
       if (e.hotel) parts.push('🏨' + escapeHtml(e.hotel));
@@ -806,6 +840,20 @@
     $('ov-lede').textContent = state.name + 'さん／' + state.year + '年' + state.month + '月';
     $('ov-names').style.display = 'none';
     $('ov-acts').style.display = 'flex';
+
+    var holds = holdDays(days);
+    var warn = $('ov-warn');
+    if (holds.length) {
+      warn.innerHTML = '<b>' + (del ? 'この日の記載も消えます' : 'この日は上書きされます') + '</b>' +
+        holds.map(function(d) {
+          var e = state.existing[d];
+          return '<span>' + d + '日：' + escapeHtml(e.place || e.hotel) + '</span>';
+        }).join('');
+      warn.style.display = 'block';
+    } else {
+      warn.style.display = 'none';
+    }
+
     var list = $('ov-list');
     list.style.display = 'flex';
     list.innerHTML = '';

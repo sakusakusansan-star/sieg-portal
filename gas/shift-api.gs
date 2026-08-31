@@ -37,7 +37,15 @@ var LABEL_KEYS = ['client', 'carrier', 'place', 'hotel'];
 function doGet(e) {
   try {
     var p = (e && e.parameter) || {};
+
+    // 疎通確認だけは合言葉なしで通す（中身は何も返さない）
     if (p.action === 'ping') return json({ ok: true, message: 'shift-api is alive' });
+
+    // シフトの中身は、合言葉が合っているときだけ返す
+    if (TOKEN && String(p.token || '') !== TOKEN) {
+      return json({ ok: false, error: '合言葉が違います' });
+    }
+
     if (p.action === 'months') return json(listMonths());
     if (p.action === 'list') {
       return json(listShift(String(p.name || ''), Number(p.year), Number(p.month)));

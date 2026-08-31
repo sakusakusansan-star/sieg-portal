@@ -437,6 +437,30 @@
     letter-spacing: 1px;
     color: var(--muted);
   }
+  .ph-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  /* 間違えて開いた／間違えて選びそうなときに、いつでも抜けられるボタン */
+  .pass-close {
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    cursor: pointer;
+  }
+  .pass-close:active {
+    background: var(--amber);
+    color: var(--ink);
+    border-color: var(--amber);
+  }
   .pass-perf {
     height: 0;
     border-top: 1px dashed var(--line);
@@ -495,13 +519,50 @@
   }
   .contact-btn:active .contact-tel { color: var(--ink); }
   .staff-back {
-    margin-top: 16px;
     text-align: center;
     font-size: 12px;
     color: var(--muted);
     text-decoration: underline;
     cursor: pointer;
     padding: 6px;
+  }
+  /* 「戻る」「やめる」を並べる行 */
+  .staff-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .staff-cancel {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 6px;
+    background: transparent;
+    border: 0;
+    font-family: inherit;
+  }
+  /* 記憶した名前を消して「未設定」に戻す（人物を間違えたときの取り消し） */
+  .staff-clear {
+    width: 100%;
+    margin-top: 14px;
+    padding: 11px;
+    background: transparent;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    min-height: 42px;
+  }
+  .staff-clear:active {
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
   }
   .pass-foot {
     font-family: 'JetBrains Mono', monospace;
@@ -677,13 +738,20 @@
   <div class="staff-box">
     <div class="pass-head">
       <span class="ph-label" id="ov-eyebrow">BOARDING PASS</span>
-      <span class="ph-brand">SIEG OPS</span>
+      <span class="ph-right">
+        <span class="ph-brand">SIEG OPS</span>
+        <button class="pass-close" id="ov-close" type="button" aria-label="閉じる" onclick="closeOverlay()">✕</button>
+      </span>
     </div>
     <div class="pass-perf"></div>
     <div class="pass-body">
       <div class="staff-title" id="ov-title">あなたの名前を選んでください</div>
       <div class="staff-buttons" id="staff-buttons"></div>
-      <div class="staff-back" id="ov-back" style="display:none;" onclick="backToCategory()">‹ 戻る</div>
+      <button class="staff-clear" id="ov-clear" type="button" style="display:none;" onclick="clearStaffChoice()">この名前を消して「未設定」に戻す</button>
+      <div class="staff-actions">
+        <span class="staff-back" id="ov-back" style="display:none;" onclick="backToCategory()">‹ 戻る</span>
+        <button class="staff-cancel" id="ov-cancel" type="button" onclick="closeOverlay()">やめる</button>
+      </div>
     </div>
     <div class="pass-foot">SIEG OPERATIONS PORTAL ★ KUMAMOTO</div>
   </div>
@@ -929,6 +997,13 @@
     renderWhoami();
   }
 
+  // 記憶した名前を消して「未設定」に戻す（人物を間違えて選んだときの取り消し）
+  function clearStaff() {
+    lsDel(STAFF_KEY);
+    clearChoices();
+    renderWhoami();
+  }
+
   function getChoice(id) { return id ? lsGet(CHOICE_PREFIX + id) : ''; }
   function setChoice(id, label) { if (id) lsSet(CHOICE_PREFIX + id, label); }
 
@@ -966,9 +1041,16 @@
   document.getElementById('whoami-change').addEventListener('click', function() {
     openStaffOverlay(ALL_STAFF, {
       title: 'あなたの名前を選んでください',
+      allowClear: true,
       onPick: function(n) { setStaff(n); closeOverlay(); }
     });
   });
+
+  // オーバーレイの「この名前を消して『未設定』に戻す」
+  function clearStaffChoice() {
+    clearStaff();
+    closeOverlay();
+  }
 
   renderWhoami();
 
@@ -1045,6 +1127,7 @@
     document.getElementById('ov-eyebrow').textContent = 'EMERGENCY';
     document.getElementById('ov-title').textContent = '緊急連絡先';
     document.getElementById('ov-back').style.display = 'none';
+    setClearVisible(false);
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     contacts.forEach(function(c) {
@@ -1083,6 +1166,7 @@
     document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
     document.getElementById('ov-title').textContent = opts.title || 'あなたの名前を選んでください';
     document.getElementById('ov-back').style.display = 'none';
+    setClearVisible(!!opts.allowClear && !!me);
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     names.forEach(function(n) {
@@ -1107,6 +1191,7 @@
     document.getElementById('ov-eyebrow').textContent = 'SELECT';
     document.getElementById('ov-title').textContent = '進み先を選んでください';
     document.getElementById('ov-back').style.display = 'none';
+    setClearVisible(false);
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     options.forEach(function(opt) {
@@ -1130,6 +1215,7 @@
     document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
     document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
     document.getElementById('ov-back').style.display = 'block';
+    setClearVisible(false);
     var box = document.getElementById('staff-buttons');
     box.innerHTML = '';
     (opt.staff || staffList).forEach(function(n) {
@@ -1150,14 +1236,25 @@
     if (pendingRow) openCategoryOverlay(pendingRow);
   }
 
+  function setClearVisible(on) {
+    document.getElementById('ov-clear').style.display = on ? 'block' : 'none';
+  }
+
   function closeOverlay() {
     document.getElementById('staff-overlay').classList.remove('show');
+    setClearVisible(false);
     pendingRow = null;
   }
 
   function overlayBgClose(e) {
     if (e.target.id === 'staff-overlay') closeOverlay();
   }
+
+  // Esc でも抜けられるようにする（PC 利用時の逃げ道）
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape' && e.keyCode !== 27) return;
+    if (document.getElementById('staff-overlay').classList.contains('show')) closeOverlay();
+  });
 
   // ═══ オフライン表示 ═══
   (function() {

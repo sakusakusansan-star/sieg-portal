@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>シフト入力｜Sieg 業務ポータル</title>
+<meta name="description" content="スマホからシフトを送信して、シフト表に直接書き込むページ。">
+<meta name="theme-color" content="#0B1220">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="docs/docs.css">
+<style>
+  /* ═══ このページ専用（配色・土台は docs.css と共通） ═══ */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .card-head {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--amber2);
+    letter-spacing: .5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card-head .req {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted2);
+    font-weight: 700;
+  }
+
+  /* 名前 */
+  .whoami {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .whoami-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+  .whoami-name { font-size: 19px; font-weight: 900; flex: 1; letter-spacing: 1px; }
+  .whoami-name.unset { color: var(--muted2); font-size: 15px; font-weight: 700; }
+
+  /* ボタン共通 */
+  .btn {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 9px 13px;
+    cursor: pointer;
+  }
+  .btn:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
+  .btn.small { font-size: 11px; padding: 6px 10px; border-radius: 7px; }
+  .btn.ghost { color: var(--muted); }
+
+  /* 選択チップ */
+  .pick { display: flex; flex-wrap: wrap; gap: 7px; }
+  .pick button {
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 9px 13px;
+    cursor: pointer;
+  }
+  .pick button.on {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: var(--ink);
+    box-shadow: 0 0 12px rgba(232,163,61,0.30);
+  }
+
+  /* 入力欄 */
+  .input {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px; /* iOSで自動ズームさせない */
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 11px 12px;
+    margin-top: 8px;
+  }
+  .input::placeholder { color: var(--muted2); }
+  .input:focus { outline: none; border-color: var(--amber); }
+
+  /* 月切り替え */
+  .months { display: flex; gap: 7px; }
+  .months button { flex: 1; text-align: center; }
+  .month-sub { display: block; font-size: 10px; font-weight: 500; opacity: .75; margin-top: 2px; }
+
+  /* カレンダー */
+  .cal-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .cal-dow, .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .cal-dow { margin-bottom: 5px; }
+  .cal-dow div {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted2);
+    letter-spacing: 1px;
+  }
+  .cal-dow .sun { color: rgba(232,106,90,0.75); }
+  .cal-dow .sat { color: rgba(110,165,235,0.75); }
+  .cal-cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .cal-cell.blank { background: none; border: none; cursor: default; }
+  .cal-cell.sun { color: #E86A5A; }
+  .cal-cell.sat { color: #6EA5EB; }
+  .cal-cell .mark {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+  .cal-cell .mark.hold { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .cal-cell.on {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: var(--ink);
+    box-shadow: 0 0 12px rgba(232,163,61,0.30);
+  }
+  .cal-cell.on .mark { background: var(--ink); box-shadow: none; }
+  .cal-cell.on.del {
+    background: var(--red);
+    border-color: var(--red);
+    box-shadow: 0 0 12px rgba(232,106,90,0.30);
+  }
+  .cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .cal-legend i {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* 登録済みの内容 */
+  .day-list { display: flex; flex-direction: column; gap: 6px; }
+  .day-row {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    gap: 10px;
+    align-items: center;
+    font-size: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .day-row .d {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--amber2);
+  }
+  .day-row .t { color: var(--muted); line-height: 1.5; }
+  .day-row .t b { color: var(--text); font-weight: 700; }
+  .day-row .t b.hold { color: var(--red); }
+  .empty-note { font-size: 12px; color: var(--muted2); }
+
+  /* 送信バー */
+  .send-bar {
+    position: sticky;
+    bottom: 0;
+    margin: 18px -14px 0;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(11,18,32,0) 0%, var(--bg2) 30%);
+  }
+  .send {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: var(--ink);
+    background: var(--amber);
+    border: none;
+    border-radius: 11px;
+    padding: 15px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(232,163,61,0.25);
+  }
+  .send:disabled { background: rgba(255,255,255,0.10); color: var(--muted2); box-shadow: none; cursor: default; }
+  .send.del { background: var(--red); color: #fff; box-shadow: 0 6px 20px rgba(232,106,90,0.25); }
+  .send-sub { text-align: center; font-size: 11px; color: var(--muted2); margin-top: 8px; line-height: 1.6; }
+
+  /* モード切替 */
+  .modes { display: flex; gap: 7px; margin-bottom: 12px; }
+  .modes button { flex: 1; }
+  .modes button.on { background: var(--amber); border-color: var(--amber); color: var(--ink); }
+  .modes button.on.del { background: var(--red); border-color: var(--red); color: #fff; }
+
+  /* 通知 */
+  .msg {
+    font-size: 12px;
+    line-height: 1.65;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .msg.show { display: block; }
+  .msg.ok { background: rgba(76,217,123,0.10); border-left: 3px solid var(--green); color: var(--green); font-weight: 700; }
+  .msg.err { background: rgba(232,106,90,0.10); border-left: 3px solid var(--red); }
+  .msg.err b { color: var(--red); }
+  .msg.info { background: rgba(232,163,61,0.09); border-left: 3px solid var(--amber); }
+
+  /* 確認オーバーレイ */
+  .ov {
+    position: fixed; inset: 0;
+    background: rgba(6,10,18,0.80);
+    backdrop-filter: blur(3px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+  .ov.show { display: flex; }
+  .ov-box {
+    width: 100%;
+    max-width: 380px;
+    max-height: 82vh;
+    overflow-y: auto;
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .ov-title { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+  .ov-lede { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .ov-warn {
+    background: rgba(232,106,90,0.10);
+    border-left: 3px solid var(--red);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .ov-warn b { display: block; color: var(--red); margin-bottom: 4px; }
+  .ov-warn span { display: block; }
+  .ov-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .ov-item {
+    font-size: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 11px;
+    line-height: 1.6;
+  }
+  .ov-item b { font-family: 'JetBrains Mono', monospace; color: var(--amber2); font-size: 13px; }
+  .ov-acts { display: flex; gap: 8px; }
+  .ov-acts button { flex: 1; padding: 12px; font-size: 14px; font-weight: 800; }
+  .ov-acts .go { background: var(--amber); border-color: var(--amber); color: var(--ink); }
+  .ov-acts .go.del { background: var(--red); border-color: var(--red); color: #fff; }
+  .ov-names { display: flex; flex-direction: column; gap: 8px; }
+  .ov-names button { width: 100%; padding: 14px; font-size: 16px; font-weight: 800; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="./">‹ ポータルへ戻る</a>
+
+  <div class="page-head">
+    <div class="eyebrow">SHIFT ENTRY</div>
+    <h1>シフト入力</h1>
+    <div class="lede">選んで押すだけ。シフト表に直接書き込まれます。</div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <!-- 名前 -->
+  <div class="whoami">
+    <div>
+      <div class="whoami-label">あなた</div>
+      <div class="whoami-name unset" id="who-name">未設定</div>
+    </div>
+    <button class="btn small" type="button" id="who-change">選択</button>
+  </div>
+
+  <!-- モード -->
+  <div class="modes">
+    <button class="btn on" type="button" data-mode="submit">シフトを入れる</button>
+    <button class="btn" type="button" data-mode="delete">取り消す</button>
+  </div>
+
+  <!-- 月 -->
+  <div class="card">
+    <div class="card-head"><span>1. 月をえらぶ</span></div>
+    <div class="months pick" id="months"></div>
+  </div>
+
+  <!-- 稼働内容 -->
+  <div class="card" id="detail-card">
+    <div class="card-head"><span>2. 稼働の内容</span><span class="req">REQUIRED</span></div>
+
+    <div class="guide-note" style="margin:0 0 6px;">取引先</div>
+    <div class="pick" id="clients"></div>
+
+    <div class="guide-note" style="margin:12px 0 6px;">キャリア／店舗</div>
+    <div class="pick" id="carriers"></div>
+
+    <div class="guide-note" style="margin:12px 0 6px;">開催場所</div>
+    <div class="pick" id="places"></div>
+    <input class="input" id="place-input" type="text" placeholder="開催場所（例：近見／下通）" autocomplete="off">
+
+    <div class="guide-note" style="margin:12px 0 6px;">ホテル（泊まりのときだけ）</div>
+    <input class="input" id="hotel-input" type="text" placeholder="未入力でOK" autocomplete="off" style="margin-top:0;">
+  </div>
+
+  <!-- カレンダー -->
+  <div class="card">
+    <div class="card-head"><span id="cal-step">3. 日にちをえらぶ</span><span class="req" id="picked-count">0日</span></div>
+    <div class="cal-tools">
+      <button class="btn small" type="button" data-sel="all">全部</button>
+      <button class="btn small" type="button" data-sel="weekday">平日</button>
+      <button class="btn small" type="button" data-sel="weekend">土日</button>
+      <button class="btn small ghost" type="button" data-sel="clear">クリア</button>
+    </div>
+    <div class="cal-dow">
+      <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
+    </div>
+    <div class="cal-grid" id="cal"></div>
+    <div class="cal-legend">
+      <span><i style="background:var(--amber);"></i>選択中</span>
+      <span><i style="background:var(--green);"></i>登録済み</span>
+      <span><i style="background:var(--red);"></i>希望休・店休日など</span>
+    </div>
+  </div>
+
+  <!-- 登録済み -->
+  <div class="card">
+    <div class="card-head"><span>登録済みのシフト</span><button class="btn small ghost" type="button" id="reload">再読込</button></div>
+    <div class="day-list" id="day-list"></div>
+  </div>
+
+  <div class="send-bar">
+    <button class="send" type="button" id="send" disabled>送信する</button>
+    <div class="send-sub" id="send-sub">名前・内容・日にちを選ぶと送信できます</div>
+  </div>
+
+  <div class="foot">
+    送信するとシフト表に直接書き込まれ、送信ログにも残ります。<br>
+    間違えたときは「取り消す」で消してから入れ直してください。
+  </div>
+
+</div>
+
+<!-- 確認 / 名前選択 -->
+<div class="ov" id="ov">
+  <div class="ov-box">
+    <div class="ov-title" id="ov-title">送信内容の確認</div>
+    <div class="ov-lede" id="ov-lede"></div>
+    <div class="ov-warn" id="ov-warn" style="display:none;"></div>
+    <div class="ov-list" id="ov-list"></div>
+    <div class="ov-names" id="ov-names" style="display:none;"></div>
+    <div class="ov-acts" id="ov-acts">
+      <button class="btn" type="button" id="ov-cancel">やめる</button>
+      <button class="btn go" type="button" id="ov-go">送信する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ═══════════════════════════════════════════════════════════
+     設定：Google Apps Script のデプロイURLをここに貼る
+     （gas/shift-api.gs を貼り付けてデプロイ → /exec のURL）
+     ═══════════════════════════════════════════════════════════ */
+  var SHIFT_API   = 'https://script.google.com/macros/s/AKfycbz_aHJ4v0Q-s5_m_i7G7gomrJeicz_iRWPF1qcafrG16gQtTV8VA7dU2ViTNgcbtTgYTg/exec';
+  var SHIFT_TOKEN = 'sieg-shift-2026';   // GAS側の TOKEN と同じ文字列
+
+  var STAFF    = ['福岡', '清田', '福山', '古川'];
+  var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル'];
+  var CARRIERS = ['docomo', 'SoftBank', 'au'];
+  var PLACES   = ['近見', '下通', '健軍', '未確定'];   // よく使う場所。登録済みの場所も自動で足す
+
+  // 取引先を選んだときに、いつもの組み合わせを自動で入れる。
+  // 場所が毎回変わる取引先は、キャリアだけ入れて場所は選んでもらう。
+  var PRESET = {
+    '南国殖産': { carrier: 'docomo',   place: '近見' },
+    'ハイコム': { carrier: 'SoftBank' },
+    'サンコミ': { carrier: 'au' },
+    'ダル':     { carrier: 'docomo' }
+  };
+  var STAFF_KEY = 'siegStaff';   // ポータル本体と共通（名前を1回選べば使い回せる）
+  var LAST_KEY  = 'siegShiftLast';
+
+  var DOW = ['日', '月', '火', '水', '木', '金', '土'];
+
+  var state = {
+    name: '',
+    year: 0,
+    month: 0,
+    mode: 'submit',
+    client: '', carrier: '', place: '', hotel: '',
+    picked: {},      // 日 → true
+    existing: {},    // 日 → {client, carrier, place, hotel}
+    busy: false
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function apiReady() { return SHIFT_API.indexOf('http') === 0; }
+  function tokenParam() { return SHIFT_TOKEN ? '&token=' + encodeURIComponent(SHIFT_TOKEN) : ''; }
+
+  function showMsg(kind, html) {
+    var el = $('msg');
+    el.className = 'msg show ' + kind;
+    el.innerHTML = html;
+  }
+  function hideMsg() { $('msg').className = 'msg'; }
+
+  /* ═══ 名前 ═══ */
+  function initName() {
+    var q = new URLSearchParams(location.search).get('staff');
+    var name = (q && STAFF.indexOf(q) >= 0) ? q : lsGet(STAFF_KEY);
+    if (name && STAFF.indexOf(name) >= 0) setName(name, true);
+    else openNamePicker();
+  }
+
+  function setName(name, quiet) {
+    state.name = name;
+    lsSet(STAFF_KEY, name);
+    $('who-name').textContent = name;
+    $('who-name').classList.remove('unset');
+    $('who-change').textContent = '変更';
+    if (!quiet) hideMsg();
+    loadExisting();
+    syncSend();
+  }
+
+  function openNamePicker() {
+    $('ov-title').textContent = 'あなたの名前をえらんでください';
+    $('ov-lede').textContent = '一度えらぶと次回から覚えています。';
+    $('ov-list').style.display = 'none';
+    $('ov-acts').style.display = 'none';
+    var box = $('ov-names');
+    box.style.display = 'flex';
+    box.innerHTML = '';
+    STAFF.forEach(function(n) {
+      var b = document.createElement('button');
+      b.className = 'btn';
+      b.type = 'button';
+      b.textContent = n;
+      b.addEventListener('click', function() { setName(n); closeOv(); });
+      box.appendChild(b);
+    });
+    $('ov').classList.add('show');
+  }
+
+  function closeOv() { $('ov').classList.remove('show'); }
+
+  /* ═══ 月 ═══ */
+
+  /**
+   * 入力できる月は、シフト表のシートがある月。
+   * シートを1枚作れば、その月がここに出てくる。
+   * 取れなかったときだけ、今月と来月を出しておく。
+   */
+  function initMonths() {
+    if (!apiReady()) return buildMonths(defaultMonths());
+    fetch(SHIFT_API + '?action=months' + tokenParam() + '&v=' + Date.now())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || !data.ok || !data.months || !data.months.length) throw new Error('月が取れません');
+        buildMonths(upcoming(data.months));
+      })
+      .catch(function() { buildMonths(defaultMonths()); });
+  }
+
+  function defaultMonths() {
+    var now = new Date();
+    return [0, 1].map(function(i) {
+      var d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      return { year: d.getFullYear(), month: d.getMonth() + 1 };
+    });
+  }
+
+  /** 今月以降のシートだけを残す。過去の月しか無ければ、その一番新しい月を出す。 */
+  function upcoming(months) {
+    var now = new Date();
+    var from = now.getFullYear() * 12 + now.getMonth();
+    var list = months.filter(function(m) { return (m.year * 12 + m.month - 1) >= from; });
+    return list.length ? list : months.slice(-1);
+  }
+
+  function buildMonths(months) {
+    var now = new Date();
+    var thisMonth = now.getFullYear() * 12 + now.getMonth();
+    var box = $('months');
+    box.innerHTML = '';
+
+    months.forEach(function(m) {
+      var diff = (m.year * 12 + m.month - 1) - thisMonth;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = m.month + '月<span class="month-sub">' +
+        (diff === 0 ? '今月' : diff === 1 ? '来月' : diff === 2 ? '再来月' : m.year + '年') + '</span>';
+      b.setAttribute('data-ym', m.year + '-' + m.month);
+      b.addEventListener('click', function() { setMonth(m.year, m.month); });
+      box.appendChild(b);
+    });
+
+    // 用意されている一番新しい月＝いま集めている月。それを開いておく。
+    var last = months[months.length - 1];
+    setMonth(last.year, last.month);
+  }
+
+  function setMonth(y, m) {
+    state.year = y;
+    state.month = m;
+    state.picked = {};
+    state.existing = {};
+    Array.prototype.forEach.call($('months').children, function(b) {
+      b.classList.toggle('on', b.getAttribute('data-ym') === y + '-' + m);
+    });
+    renderCal();
+    renderDayList();
+    loadExisting();
+    syncSend();
+  }
+
+  function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+  /* ═══ 選択チップ ═══ */
+  function renderPick(boxId, values, key, freeInputId, after) {
+    var box = $(boxId);
+    box.innerHTML = '';
+    values.forEach(function(v) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = v;
+      b.classList.toggle('on', state[key] === v);
+      b.addEventListener('click', function() {
+        state[key] = (state[key] === v) ? '' : v;
+        if (freeInputId) $(freeInputId).value = state[key];
+        if (after) after(state[key]);
+        renderChoices();
+        syncSend();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  // 取引先を選んだら、キャリアと場所を埋めておく。
+  // そのあと手で選び直せるので、違う日はそこだけ直せばよい。
+  function applyPreset(client) {
+    var preset = PRESET[client] || {};
+    if (preset.carrier) state.carrier = preset.carrier;
+
+    if (preset.place) {
+      state.place = preset.place;
+    } else if (isPresetPlace(state.place)) {
+      // 前の取引先で自動で入った場所が残らないように消す。
+      // 手で入れた場所は消さない。
+      state.place = '';
+    } else {
+      return;
+    }
+    $('place-input').value = state.place;
+  }
+
+  function isPresetPlace(place) {
+    if (!place) return false;
+    return Object.keys(PRESET).some(function(c) { return PRESET[c].place === place; });
+  }
+
+  function placeCandidates() {
+    var list = PLACES.slice();
+    Object.keys(PRESET).forEach(function(c) {
+      var p = PRESET[c].place;
+      if (p && list.indexOf(p) < 0) list.push(p);
+    });
+    Object.keys(state.existing).forEach(function(d) {
+      var p = state.existing[d].place;
+      if (p && list.indexOf(p) < 0) list.push(p);
+    });
+    return list;
+  }
+
+  function renderChoices() {
+    renderPick('clients', CLIENTS, 'client', null, applyPreset);
+    renderPick('carriers', CARRIERS, 'carrier');
+    renderPick('places', placeCandidates(), 'place', 'place-input');
+  }
+
+  /* ═══ カレンダー ═══ */
+  function renderCal() {
+    var cal = $('cal');
+    cal.innerHTML = '';
+    if (!state.year) return;
+    var first = new Date(state.year, state.month - 1, 1).getDay();
+    var total = daysInMonth(state.year, state.month);
+
+    for (var i = 0; i < first; i++) {
+      var blank = document.createElement('div');
+      blank.className = 'cal-cell blank';
+      cal.appendChild(blank);
+    }
+    for (var d = 1; d <= total; d++) {
+      (function(day) {
+        var dow = new Date(state.year, state.month - 1, day).getDay();
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'cal-cell' + (dow === 0 ? ' sun' : dow === 6 ? ' sat' : '') +
+          (state.picked[day] ? ' on' : '') + (state.mode === 'delete' ? ' del' : '');
+        var num = document.createElement('span');
+        num.textContent = day;
+        b.appendChild(num);
+        var entry = state.existing[day];
+        if (entry) {
+          var mark = document.createElement('span');
+          mark.className = 'mark' + (isHold(entry) ? ' hold' : '');
+          b.appendChild(mark);
+        }
+        b.addEventListener('click', function() {
+          if (state.picked[day]) delete state.picked[day];
+          else state.picked[day] = true;
+          renderCal();
+          syncSend();
+        });
+        cal.appendChild(b);
+      })(d);
+    }
+    $('picked-count').textContent = pickedDays().length + '日';
+  }
+
+  /**
+   * 「希望休」「店休日」「打ち合わせ」など、稼働ではない記載かどうか。
+   * 取引先が入っていないのに場所だけ書かれている日をそう見なす。
+   * 送信するとこれが消えてしまうので、確認画面で知らせる。
+   */
+  function isHold(entry) {
+    return !!entry && !entry.client && !!(entry.place || entry.hotel);
+  }
+
+  function holdDays(days) {
+    return days.filter(function(d) { return isHold(state.existing[d]); });
+  }
+
+  function pickedDays() {
+    return Object.keys(state.picked).map(Number).sort(function(a, b) { return a - b; });
+  }
+
+  /* 選んだ日を、連続しているかたまり（開始日〜終了日）にまとめる */
+  function toRanges(days) {
+    var out = [];
+    days.forEach(function(d) {
+      var last = out[out.length - 1];
+      if (last && d === last.end + 1) last.end = d;
+      else out.push({ start: d, end: d });
+    });
+    return out;
+  }
+
+  function quickSelect(kind) {
+    state.picked = {};
+    if (kind !== 'clear') {
+      var total = daysInMonth(state.year, state.month);
+      for (var d = 1; d <= total; d++) {
+        var dow = new Date(state.year, state.month - 1, d).getDay();
+        var weekend = (dow === 0 || dow === 6);
+        if (kind === 'all' || (kind === 'weekday' && !weekend) || (kind === 'weekend' && weekend)) {
+          state.picked[d] = true;
+        }
+      }
+    }
+    renderCal();
+    syncSend();
+  }
+
+  /* ═══ 登録済みの読み込み ═══ */
+  function loadExisting() {
+    if (!apiReady() || !state.name || !state.year) return;
+    var url = SHIFT_API + '?action=list' + tokenParam() +
+      '&name=' + encodeURIComponent(state.name) +
+      '&year=' + state.year + '&month=' + state.month +
+      '&v=' + Date.now();
+    $('day-list').innerHTML = '<div class="empty-note">読み込み中…</div>';
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || !data.ok) throw new Error((data && data.error) || '読み込みに失敗しました');
+        state.existing = data.days || {};
+        renderCal();
+        renderDayList();
+        renderChoices();
+      })
+      .catch(function(err) {
+        state.existing = {};
+        renderCal();
+        $('day-list').innerHTML = '<div class="empty-note">登録済みの表示を取得できませんでした（' +
+          escapeHtml(err.message) + '）。送信はできます。</div>';
+      });
+  }
+
+  function renderDayList() {
+    var box = $('day-list');
+    var days = Object.keys(state.existing).map(Number).sort(function(a, b) { return a - b; });
+    if (!days.length) {
+      box.innerHTML = '<div class="empty-note">' +
+        (state.name ? 'この月の登録はまだありません。' : '名前をえらぶと表示されます。') + '</div>';
+      return;
+    }
+    box.innerHTML = '';
+    days.forEach(function(d) {
+      var e = state.existing[d];
+      var dow = DOW[new Date(state.year, state.month - 1, d).getDay()];
+      var row = document.createElement('div');
+      row.className = 'day-row';
+      var left = document.createElement('div');
+      left.className = 'd';
+      left.textContent = d + '(' + dow + ')';
+      var right = document.createElement('div');
+      right.className = 't';
+      var parts = [];
+      if (e.place) {
+        parts.push(isHold(e)
+          ? '<b class="hold">' + escapeHtml(e.place) + '</b>'
+          : '<b>' + escapeHtml(e.place) + '</b>');
+      }
+      if (e.client) parts.push(escapeHtml(e.client));
+      if (e.carrier) parts.push(escapeHtml(e.carrier));
+      if (e.hotel) parts.push('🏨' + escapeHtml(e.hotel));
+      right.innerHTML = parts.join('　') || '—';
+      row.appendChild(left);
+      row.appendChild(right);
+      box.appendChild(row);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ═══ 送信できる状態か ═══ */
+  function syncSend() {
+    state.place = $('place-input').value.trim();
+    state.hotel = $('hotel-input').value.trim();
+
+    var days = pickedDays();
+    var ok, why;
+    if (!apiReady()) {
+      ok = false; why = '送信先が未設定です（gas/README.md の手順で設定してください）';
+    } else if (!state.name) {
+      ok = false; why = '名前をえらんでください';
+    } else if (!days.length) {
+      ok = false; why = '日にちをえらんでください';
+    } else if (state.mode === 'submit' && (!state.client || !state.carrier || !state.place)) {
+      ok = false; why = '取引先・キャリア・開催場所を入れてください';
+    } else {
+      ok = true;
+      why = state.mode === 'delete'
+        ? days.length + '日分を取り消します'
+        : days.length + '日分（' + toRanges(days).length + '件）を送信します';
+    }
+
+    var btn = $('send');
+    btn.disabled = !ok || state.busy;
+    btn.textContent = state.busy ? '送信中…' : (state.mode === 'delete' ? '取り消す' : '送信する');
+    btn.classList.toggle('del', state.mode === 'delete');
+    $('send-sub').textContent = why;
+  }
+
+  /* ═══ モード切替 ═══ */
+  function setMode(mode) {
+    state.mode = mode;
+    Array.prototype.forEach.call(document.querySelectorAll('.modes button'), function(b) {
+      var on = b.getAttribute('data-mode') === mode;
+      b.classList.toggle('on', on);
+      b.classList.toggle('del', on && mode === 'delete');
+    });
+    $('detail-card').style.display = (mode === 'delete') ? 'none' : '';
+    $('cal-step').textContent = (mode === 'delete')
+      ? '2. 取り消す日にちをえらぶ'
+      : '3. 日にちをえらぶ';
+    renderCal();
+    syncSend();
+  }
+
+  /* ═══ 確認 → 送信 ═══ */
+  function openConfirm() {
+    var days = pickedDays();
+    var ranges = toRanges(days);
+    var del = state.mode === 'delete';
+
+    $('ov-title').textContent = del ? '取り消しの確認' : '送信内容の確認';
+    $('ov-lede').textContent = state.name + 'さん／' + state.year + '年' + state.month + '月';
+    $('ov-names').style.display = 'none';
+    $('ov-acts').style.display = 'flex';
+
+    var holds = holdDays(days);
+    var warn = $('ov-warn');
+    if (holds.length) {
+      warn.innerHTML = '<b>' + (del ? 'この日の記載も消えます' : 'この日は上書きされます') + '</b>' +
+        holds.map(function(d) {
+          var e = state.existing[d];
+          return '<span>' + d + '日：' + escapeHtml(e.place || e.hotel) + '</span>';
+        }).join('');
+      warn.style.display = 'block';
+    } else {
+      warn.style.display = 'none';
+    }
+
+    var list = $('ov-list');
+    list.style.display = 'flex';
+    list.innerHTML = '';
+    ranges.forEach(function(r) {
+      var item = document.createElement('div');
+      item.className = 'ov-item';
+      var label = r.start === r.end ? r.start + '日' : r.start + '日〜' + r.end + '日';
+      item.innerHTML = '<b>' + label + '</b>' + (del ? '　を取り消し' :
+        '<br>' + escapeHtml(state.place) + '　' + escapeHtml(state.client) + '／' + escapeHtml(state.carrier) +
+        (state.hotel ? '<br>ホテル：' + escapeHtml(state.hotel) : ''));
+      list.appendChild(item);
+    });
+    var go = $('ov-go');
+    go.textContent = del ? '取り消す' : '送信する';
+    go.classList.toggle('del', del);
+    $('ov').classList.add('show');
+  }
+
+  function send() {
+    var days = pickedDays();
+    var del = state.mode === 'delete';
+    var payload = {
+      token: SHIFT_TOKEN,
+      action: del ? 'delete' : 'submit',
+      name: state.name,
+      year: state.year,
+      month: state.month,
+      entries: toRanges(days).map(function(r) {
+        return {
+          start: r.start,
+          end: r.end,
+          client: del ? '' : state.client,
+          carrier: del ? '' : state.carrier,
+          place: del ? '' : state.place,
+          hotel: del ? '' : state.hotel
+        };
+      })
+    };
+
+    state.busy = true;
+    syncSend();
+    hideMsg();
+
+    // Content-Type を text/plain にして、CORSの事前確認（preflight）を起こさない
+    fetch(SHIFT_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || !data.ok) throw new Error((data && data.error) || '送信できませんでした');
+        state.picked = {};
+        lsSet(LAST_KEY, JSON.stringify({ client: state.client, carrier: state.carrier, place: state.place }));
+        var extra = '';
+        if (data.skipped && data.skipped.length) {
+          extra += '<br>この月に無い日は飛ばしました：' + data.skipped.join('・') + '日';
+        }
+        if (data.logError) extra += '<br>（送信ログへの記録だけ失敗：' + escapeHtml(data.logError) + '）';
+        showMsg('ok', (del ? '取り消しました' : '送信しました') + '（' + data.days + '日分）' + extra);
+        loadExisting();
+        renderCal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+      .catch(function(err) {
+        showMsg('err', '<b>送信できませんでした。</b><br>' + escapeHtml(err.message) +
+          '<br>電波の良いところでもう一度お試しください。');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+      .then(function() {
+        state.busy = false;
+        syncSend();
+      });
+  }
+
+  /* ═══ 起動 ═══ */
+  (function init() {
+    if (!apiReady()) {
+      showMsg('info', '<b>まだ送信先が設定されていません。</b><br>' +
+        'リポジトリの <code>gas/README.md</code> の手順でGASをデプロイし、' +
+        'このページの <code>SHIFT_API</code> にURLを貼ってください。');
+    }
+
+    $('who-change').addEventListener('click', openNamePicker);
+    $('reload').addEventListener('click', loadExisting);
+    $('ov-cancel').addEventListener('click', closeOv);
+    $('ov-go').addEventListener('click', function() { closeOv(); send(); });
+    $('ov').addEventListener('click', function(e) { if (e.target === $('ov')) closeOv(); });
+    $('send').addEventListener('click', openConfirm);
+
+    Array.prototype.forEach.call(document.querySelectorAll('.modes button'), function(b) {
+      b.addEventListener('click', function() { setMode(b.getAttribute('data-mode')); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-sel]'), function(b) {
+      b.addEventListener('click', function() { quickSelect(b.getAttribute('data-sel')); });
+    });
+    $('place-input').addEventListener('input', function() {
+      state.place = $('place-input').value.trim();
+      renderPick('places', placeCandidates(), 'place', 'place-input');
+      syncSend();
+    });
+    $('hotel-input').addEventListener('input', syncSend);
+
+    // 前回の取引先・キャリア・場所を復元（毎月ほぼ同じなので入力を減らす）
+    try {
+      var last = JSON.parse(lsGet(LAST_KEY) || '{}');
+      state.client = last.client || '';
+      state.carrier = last.carrier || '';
+      state.place = last.place || '';
+      $('place-input').value = state.place;
+    } catch (e) {}
+
+    initMonths();
+    renderChoices();
+    initName();
+    syncSend();
+  })();
+</script>
+</body>
+</html>

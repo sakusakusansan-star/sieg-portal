@@ -38,6 +38,7 @@ function doGet(e) {
   try {
     var p = (e && e.parameter) || {};
     if (p.action === 'ping') return json({ ok: true, message: 'shift-api is alive' });
+    if (p.action === 'months') return json(listMonths());
     if (p.action === 'list') {
       return json(listShift(String(p.name || ''), Number(p.year), Number(p.month)));
     }
@@ -141,6 +142,47 @@ function writeShift(action, name, year, month, entries) {
 }
 
 // ═══ 読み出し ═══
+
+/**
+ * 入力できる月の一覧。
+ * 「日付」の行があるシート＝シフト表 だけを拾うので、
+ * シフト表を1枚作れば、その月がそのままスマホ側の選択肢に出る。
+ */
+function listMonths() {
+  var months = [];
+  book().getSheets().forEach(function(sheet) {
+    var ym = sheetYearMonth(sheet);
+    if (!ym) return;
+    if (!findDayHeader(sheet)) return;   // 集計レポートなどはここで外れる
+    months.push({ year: ym.year, month: ym.month, sheet: sheet.getName() });
+  });
+  months.sort(function(a, b) { return (a.year - b.year) || (a.month - b.month); });
+  return { ok: true, months: months };
+}
+
+/** シートが何年何月のものかを、A1・B1とシート名から読み取る */
+function sheetYearMonth(sheet) {
+  var year = 0, month = 0;
+
+  if (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 2) {
+    var head = sheet.getRange(1, 1, 1, 2).getValues()[0];
+    var y = parseInt(norm(head[0]), 10);
+    var m = norm(head[1]).match(/^(\d{1,2})月$/);
+    if (y >= 2000 && y < 2100 && m) { year = y; month = Number(m[1]); }
+  }
+
+  if (!month) {
+    var name = norm(sheet.getName());
+    var hit = name.match(/(\d{1,2})月/);
+    if (!hit) return null;
+    month = Number(hit[1]);
+    var yearHit = name.match(/(20\d{2})/);
+    year = yearHit ? Number(yearHit[1]) : new Date().getFullYear();
+  }
+
+  if (month < 1 || month > 12) return null;
+  return { year: year, month: month };
+}
 
 function listShift(name, year, month) {
   if (!name) return { ok: false, error: '名前がありません' };
@@ -330,4 +372,5 @@ function testFindRows() {
     Logger.log('%s: %s', name, JSON.stringify(findStaffRows(sheet, name, header.row)));
   });
   Logger.log('送信ログ: %s', findLogSheet(ss).getName());
+  Logger.log('入力できる月: %s', JSON.stringify(listMonths().months));
 }

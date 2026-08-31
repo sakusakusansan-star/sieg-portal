@@ -485,27 +485,59 @@
   function closeOv() { $('ov').classList.remove('show'); }
 
   /* ═══ 月 ═══ */
+
+  /**
+   * 入力できる月は、シフト表のシートがある月。
+   * シートを1枚作れば、その月がここに出てくる。
+   * 取れなかったときだけ、今月と来月を出しておく。
+   */
   function initMonths() {
+    if (!apiReady()) return buildMonths(defaultMonths());
+    fetch(SHIFT_API + '?action=months&v=' + Date.now())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || !data.ok || !data.months || !data.months.length) throw new Error('月が取れません');
+        buildMonths(upcoming(data.months));
+      })
+      .catch(function() { buildMonths(defaultMonths()); });
+  }
+
+  function defaultMonths() {
     var now = new Date();
+    return [0, 1].map(function(i) {
+      var d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      return { year: d.getFullYear(), month: d.getMonth() + 1 };
+    });
+  }
+
+  /** 今月以降のシートだけを残す。過去の月しか無ければ、その一番新しい月を出す。 */
+  function upcoming(months) {
+    var now = new Date();
+    var from = now.getFullYear() * 12 + now.getMonth();
+    var list = months.filter(function(m) { return (m.year * 12 + m.month - 1) >= from; });
+    return list.length ? list : months.slice(-1);
+  }
+
+  function buildMonths(months) {
+    var now = new Date();
+    var thisMonth = now.getFullYear() * 12 + now.getMonth();
     var box = $('months');
     box.innerHTML = '';
-    for (var i = 0; i < 2; i++) {
-      var d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      (function(y, m, i) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.innerHTML = m + '月<span class="month-sub">' +
-          (i === 0 ? '今月' : '来月') + '</span>';
-        b.addEventListener('click', function() { setMonth(y, m); });
-        b.setAttribute('data-ym', y + '-' + m);
-        box.appendChild(b);
-      })(d.getFullYear(), d.getMonth() + 1, i);
-    }
-    // シフトを出すのは月末から月初にかけて。その時期は来月を初期表示にする。
-    var d = now.getDate();
-    var nextMonth = (d >= 25 || d <= 5);
-    var start = new Date(now.getFullYear(), now.getMonth() + (nextMonth ? 1 : 0), 1);
-    setMonth(start.getFullYear(), start.getMonth() + 1);
+
+    months.forEach(function(m) {
+      var diff = (m.year * 12 + m.month - 1) - thisMonth;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = m.month + '月<span class="month-sub">' +
+        (diff === 0 ? '今月' : diff === 1 ? '来月' : diff === 2 ? '再来月' : m.year + '年') + '</span>';
+      b.setAttribute('data-ym', m.year + '-' + m.month);
+      b.addEventListener('click', function() { setMonth(m.year, m.month); });
+      box.appendChild(b);
+    });
+
+    // 用意されている一番新しい月＝いま集めている月。それを開いておく。
+    var last = months[months.length - 1];
+    setMonth(last.year, last.month);
   }
 
   function setMonth(y, m) {

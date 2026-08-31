@@ -12,9 +12,15 @@
 
 // ═══ 設定 ═══
 
+// 書き込み先のシフト表のスプレッドシートID。
+// （URLの /d/ と /edit のあいだの長い文字列）
+// スプレッドシートに紐づいたスクリプトとして使う場合は空でよい。
+// 独立したスクリプトとして作る場合は、必ずここにIDを入れる。
+var SHEET_ID = '1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ';
+
 // 合言葉。shift.html の SHIFT_TOKEN と同じ文字列にする。
 // 空のままでも動くが、URLを知っている人は誰でも送信できる状態になる。
-var TOKEN = '';
+var TOKEN = 'sieg-shift-2026';
 
 // 送信ログのシート名。空にすると「日時／操作／名前…」の見出しから自動で探し、
 // 見つからなければ「送信ログ」を新しく作る。
@@ -42,7 +48,7 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  var lock = LockService.getDocumentLock();
+  var lock = LockService.getScriptLock();
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
 
@@ -75,7 +81,7 @@ function doPost(e) {
 // ═══ 書き込み ═══
 
 function writeShift(action, name, year, month, entries) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = book();
   var sheet = findMonthSheet(ss, year, month);
   if (!sheet) return { ok: false, error: year + '年' + month + '月のシフト表が見つかりません' };
 
@@ -140,7 +146,7 @@ function listShift(name, year, month) {
   if (!name) return { ok: false, error: '名前がありません' };
   if (!year || !month) return { ok: false, error: '年月がありません' };
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = book();
   var sheet = findMonthSheet(ss, year, month);
   if (!sheet) return { ok: false, error: year + '年' + month + '月のシフト表がまだありません' };
 
@@ -289,6 +295,16 @@ function findLogSheet(ss) {
 
 // ═══ 共通 ═══
 
+/**
+ * 書き込み先のスプレッドシート。
+ * SHEET_ID があればそれを開き、無ければ紐づいているシートを使う。
+ */
+function book() {
+  return SHEET_ID
+    ? SpreadsheetApp.openById(SHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
+}
+
 function json(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
@@ -300,7 +316,7 @@ function json(obj) {
  * 実行ログに、見つかったシート名と行番号が出る。
  */
 function testFindRows() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = book();
   var now = new Date();
   var year = now.getFullYear();
   var month = now.getMonth() + 1;

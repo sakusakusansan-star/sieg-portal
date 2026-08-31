@@ -492,8 +492,10 @@
         box.appendChild(b);
       })(d.getFullYear(), d.getMonth() + 1, i);
     }
-    // 月初は翌月シフトを出すことが多いので、1〜5日は来月を初期表示にする
-    var start = new Date(now.getFullYear(), now.getMonth() + (now.getDate() <= 5 ? 1 : 0), 1);
+    // シフトを出すのは月末から月初にかけて。その時期は来月を初期表示にする。
+    var d = now.getDate();
+    var nextMonth = (d >= 25 || d <= 5);
+    var start = new Date(now.getFullYear(), now.getMonth() + (nextMonth ? 1 : 0), 1);
     setMonth(start.getFullYear(), start.getMonth() + 1);
   }
 

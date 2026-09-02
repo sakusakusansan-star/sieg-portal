@@ -1,15 +1,15 @@
 {
   "name": "Sieg 業務ポータル",
   "short_name": "Sieg",
-  "description": "Siegの業務ツール入口。経費精算・シフト入力・交通費計算・日報・緊急連絡先。",
+  "description": "Siegの業務ツール入口。日報・シフト入力・交通費計算・経費精算・掲示板・資料・緊急連絡先。",
   "lang": "ja",
   "start_url": "./",
   "scope": "./",
   "id": "/sieg-portal/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0B1220",
-  "theme_color": "#0B1220",
+  "background_color": "#EFF1F4",
+  "theme_color": "#FFFFFF",
   "categories": ["business", "productivity"],
   "icons": [
     {

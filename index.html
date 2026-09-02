@@ -7,1297 +7,733 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="description" content="Siegの業務ツール入口。経費精算・シフト入力・交通費計算・日報・緊急連絡先。">
-<meta name="theme-color" content="#0B1220">
+<meta name="description" content="Siegの業務ツール入口。日報・シフト入力・交通費計算・経費精算・掲示板・資料・緊急連絡先。">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sieg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap">
 <style>
-  :root {
-    --bg: #0B1220;
-    --bg2: #101B30;
-    --panel: rgba(255,255,255,0.04);
-    --line: rgba(255,255,255,0.10);
-    --amber: #E8A33D;
-    --amber2: #F4C56B;
-    --text: #EDEFF3;
-    --muted: #8A93A6;
-    --muted2: #5C6579;
-    --ink: #0B1220;
-    --green: #4CD97B;
-    --red: #E86A5A;
+/* ═════ 配色・角丸などの基本値 ═════ */
+:root{
+  --bg:#EFF1F4; --surface:#FFF; --sunk:#F4F6F8;
+  --ink:#0E1A2C; --ink2:#3E4A5B; --mute:#79828F; --faint:#A6AEBA;
+  --hair:#E3E6EA; --hair2:#ECEEF1;
+  --amber:#A06400; --amber-tint:#FAF0DF;
+  --red:#AE2B24;   --red-tint:#F9EAE8;
+  --blue:#294780;  --blue-tint:#E9EEF6;
+  --teal:#16645C;  --teal-tint:#E4F0EE;
+  --green:#1B6541; --green-tint:#E6F0EA;
+  --slate:#465162; --slate-tint:#ECEEF1;
+  --lift:0 1px 1px rgba(14,26,44,.035), 0 5px 16px rgba(14,26,44,.05);
+  --r:18px;
+  --inset:69px; /* アイコン幅ぶん、区切り線を内側から始める */
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0C1015; --surface:#161B23; --sunk:#1C222B;
+    --ink:#E9EEF4; --ink2:#B7C1CD; --mute:#818B9A; --faint:#5A6473;
+    --hair:#232A34; --hair2:#1E242C;
+    --amber:#E7AB44; --amber-tint:#2A2115;
+    --red:#F07B6F;   --red-tint:#2B1917;
+    --blue:#84A9E3;  --blue-tint:#182130;
+    --teal:#5FC6B9;  --teal-tint:#142625;
+    --green:#5FC48C; --green-tint:#152621;
+    --slate:#98A3B2; --slate-tint:#1C222B;
+    --lift:none;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html { font-size: 16px; }
-  body {
-    font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
-    background:
-      radial-gradient(1200px 600px at 100% -10%, rgba(232,163,61,0.10), transparent 60%),
-      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 22px 14px 40px;
-  }
-  .wrap { max-width: 520px; margin: 0 auto; }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+  font-feature-settings:"palt"; line-height:1.5; letter-spacing:.012em;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
-  /* ═══ ヘッダー ═══ */
-  .board-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 4px 4px 18px;
-    border-bottom: 1px solid var(--line);
-    margin-bottom: 14px;
-  }
-  .eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: var(--amber);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .eyebrow::before {
-    content: '';
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--amber);
-    box-shadow: 0 0 8px var(--amber);
-    animation: blink 1.6s infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
-  .title {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    margin-top: 6px;
-  }
-  /* ── スプリットフラップ（パタパタ）演出 ── */
-  .title span {
-    display: inline-block;
-    transform-origin: center 55%;
-    will-change: transform;
-  }
-  .flap-run { color: var(--muted2); }
-  .flap-set { animation: flap-settle .26s cubic-bezier(.2,.7,.3,1) both; }
-  @keyframes flap-settle {
-    0%   { transform: rotateX(-74deg); opacity: .4; }
-    62%  { transform: rotateX(9deg);   opacity: 1; }
-    100% { transform: none;            opacity: 1; }
-  }
-  .gate-code {
-    display: inline-block;
-    transform-origin: center 55%;
-  }
-  .greet { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.app{max-width:440px;margin:0 auto;min-height:100dvh;
+  padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+.pad{padding:0 15px}
 
-  /* ═══ 利用者表示（あなた：◯◯） ═══ */
-  .whoami {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin-top: 7px;
-    font-size: 11px;
-    color: var(--muted2);
-  }
-  .whoami-name { color: var(--amber2); font-weight: 700; font-size: 12px; }
-  .whoami-name.unset { color: var(--muted2); font-weight: 400; font-size: 11px; }
-  .whoami-change {
-    font-family: inherit;
-    font-size: 10px;
-    color: var(--muted);
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 3px 9px;
-    cursor: pointer;
-    min-height: 24px;
-  }
-  .whoami-change:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
-  .clock-box { text-align: right; }
-  .clock {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--amber2);
-    letter-spacing: 1px;
-    text-shadow: 0 0 14px rgba(244,197,107,0.35);
-  }
-  .clock .colon { animation: blink 1s infinite; }
-  .clock .d {
-    display: inline-block;
-    transform-origin: center 55%;
-  }
-  .clock .d.flip { animation: digit-flip .42s ease both; }
-  @keyframes digit-flip {
-    0%   { transform: rotateX(0deg);   opacity: 1; }
-    48%  { transform: rotateX(88deg);  opacity: .3; }
-    52%  { transform: rotateX(-88deg); opacity: .3; }
-    100% { transform: rotateX(0deg);   opacity: 1; }
-  }
-  .date {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
+/* ═════ ヘッダー ═════ */
+.bar{
+  position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb,var(--surface) 84%,transparent);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid transparent;
+  padding:calc(11px + env(safe-area-inset-top)) 15px 11px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  transition:border-color .2s;
+}
+.bar.stuck{border-bottom-color:var(--hair)}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand .mk{width:28px;height:28px;flex:none;border-radius:8px;overflow:hidden;
+  background:#fff;box-shadow:0 0 0 1px var(--hair)}
+.brand .mk img{width:100%;height:100%;display:block;object-fit:cover}
+.brand b{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.who{
+  display:flex;align-items:center;gap:8px;flex:none;
+  background:var(--sunk);border-radius:999px;padding:5px 13px 5px 5px;
+  font-size:13px;font-weight:700;transition:transform .12s;
+}
+.who:active{transform:scale(.95)}
+.who i{width:27px;height:27px;border-radius:50%;background:var(--ink);color:var(--surface);
+  display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;flex:none}
+.who.unset{color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.who.unset i{background:var(--amber);color:#fff}
 
-  /* ═══ ティッカー ═══ */
-  .ticker {
-    display: flex;
-    align-items: center;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 14px;
-    height: 34px;
-  }
-  .ticker-tag {
-    background: var(--amber);
-    color: var(--ink);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    padding: 0 10px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .ticker-view { flex: 1; overflow: hidden; position: relative; height: 100%; }
-  .ticker-track {
-    position: absolute;
-    white-space: nowrap;
-    font-size: 12px;
-    color: var(--text);
-    line-height: 34px;
-    padding-left: 100%;
-    animation: scroll-left 22s linear infinite;
-  }
-  @keyframes scroll-left {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-  }
+/* ═════ 画面切り替え ═════ */
+.view{display:none;padding-top:18px}
+.view.on{display:block}
+.view.on.enter > *{animation:rise .36s cubic-bezier(.22,.68,.28,1) backwards}
+.view.on.enter > *:nth-child(2){animation-delay:.055s}
+.view.on.enter > *:nth-child(3){animation-delay:.1s}
+.view.on.enter > *:nth-child(4){animation-delay:.14s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-  /* ═══ お知らせパネル ═══ */
-  .notice {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    margin-bottom: 18px;
-    overflow: hidden;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
-  .notice-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background: rgba(232,163,61,0.07);
-    border-bottom: 1px solid var(--line);
-  }
-  .notice-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--amber2);
-  }
-  .notice-post-link {
-    font-size: 11px;
-    color: var(--muted);
-    text-decoration: none;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 5px 10px;
-    white-space: nowrap;
-  }
-  .notice-post-link:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
-  .notice-list { padding: 2px 0; }
-  .notice-item {
-    display: grid;
-    grid-template-columns: 46px 44px 1fr;
-    gap: 8px;
-    align-items: start;
-    padding: 10px 14px;
-  }
-  .notice-item + .notice-item { border-top: 1px dashed rgba(255,255,255,0.07); }
-  .notice-date {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--amber2);
-    padding-top: 2px;
-    white-space: nowrap;
-    line-height: 1.3;
-  }
-  .notice-date small {
-    display: block;
-    font-size: 9px;
-    color: var(--muted);
-    font-weight: 400;
-  }
-  .notice-chip {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-align: center;
-    border-radius: 6px;
-    padding: 3px 2px;
-    margin-top: 2px;
-    border: 1px solid var(--line);
-    color: var(--muted);
-  }
-  .notice-chip.t-meet { background: rgba(232,163,61,0.15); border-color: rgba(232,163,61,0.5); color: var(--amber2); }
-  .notice-chip.t-imp { background: rgba(232,106,90,0.15); border-color: rgba(232,106,90,0.5); color: var(--red); }
-  .notice-text { font-size: 13px; line-height: 1.6; word-break: break-word; }
-  .notice-name { font-size: 10px; color: var(--muted2); margin-top: 2px; }
-  .notice-empty {
-    padding: 18px 14px;
-    text-align: center;
-    font-size: 12px;
-    color: var(--muted2);
-  }
+.head{padding:2px 5px 16px}
+.head .d{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.head h2{font-size:21px;font-weight:800;margin-top:5px;line-height:1.42;text-wrap:pretty}
+h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;letter-spacing:.07em}
+.view > h3.sec{margin-top:26px}
 
-  /* ═══ カラムヘッダー ═══ */
-  .col-heads {
-    display: grid;
-    grid-template-columns: 52px 1fr 70px 16px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--muted2);
-    padding: 0 14px 8px;
-  }
+/* ═════ 通信状態 ═════ */
+.off{display:none;align-items:center;gap:9px;background:var(--amber-tint);color:var(--amber);
+  border-radius:13px;padding:11px 14px;margin-bottom:14px;font-size:12.5px;font-weight:700}
+.off.show{display:flex}
+.off span{width:7px;height:7px;border-radius:50%;background:var(--amber);flex:none}
 
-  /* ═══ ボード（行） ═══ */
-  .board { display: flex; flex-direction: column; gap: 8px; }
-  .row {
-    display: grid;
-    grid-template-columns: 52px 1fr 70px 16px;
-    align-items: center;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 14px;
-    text-decoration: none;
-    color: var(--text);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    opacity: 0;
-    animation: row-in .45s ease both;
-    transition: background .12s ease, transform .08s ease;
-  }
-  .row:active { background: rgba(232,163,61,0.10); transform: scale(0.985); }
-  @keyframes row-in {
-    0% { opacity: 0; transform: translateY(8px); }
-    100% { opacity: 1; transform: none; }
-  }
-  .gate {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--amber2);
-    line-height: 1;
-  }
-  .gate small {
-    display: block;
-    font-size: 8px;
-    color: var(--muted2);
-    letter-spacing: 1px;
-    font-weight: 600;
-    margin-top: 2px;
-  }
-  .name-block .name { font-size: 16px; font-weight: 700; }
-  .name-block .desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .status {
-    font-size: 11px;
-    color: var(--green);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 5px;
-    white-space: nowrap;
-  }
-  .status .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 6px var(--green);
-  }
-  .arrow { text-align: right; color: var(--muted2); font-size: 18px; }
+/* ═════ お知らせ（掲示板） ═════ */
+.notice{background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);
+  overflow:hidden;margin-bottom:24px;position:relative}
+.notice::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber);z-index:1}
+.nt{position:relative}
+.nt+.nt::before{content:"";position:absolute;left:19px;right:0;top:0;height:1px;background:var(--hair2)}
+.nt>button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:14px 17px 14px 19px;min-height:60px}
+.nt>button:active{background:var(--sunk)}
+.nt .u{width:7px;height:7px;border-radius:50%;background:var(--amber);flex:none}
+.nt .ntx{flex:1;min-width:0}
+.nt .ntx b{display:block;font-size:14.5px;font-weight:800;letter-spacing:.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt .ntx small{display:block;font-size:11.5px;color:var(--faint);margin-top:3px;
+  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nt.read .ntx b{font-weight:700;color:var(--ink2)}
+.nt .tag{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;flex:none;
+  background:var(--slate-tint);color:var(--slate)}
+.nt .tag.imp{background:var(--red-tint);color:var(--red)}
+.nt .tag.meet{background:var(--blue-tint);color:var(--blue)}
+.nt .car{flex:none;width:11px;height:11px;border-right:1.8px solid var(--faint);
+  border-bottom:1.8px solid var(--faint);transform:rotate(45deg) translate(-2px,-2px);
+  transition:transform .24s cubic-bezier(.22,.68,.28,1)}
+.nt[open] .car{transform:rotate(-135deg) translate(-3px,-3px)}
+.nt .wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s cubic-bezier(.22,.68,.28,1)}
+.nt[open] .wrap{grid-template-rows:1fr}
+.nt .wrap>div{overflow:hidden}
+.nt .body{padding:0 17px 17px 19px}
+.nt .body p{font-size:13.5px;line-height:1.85;color:var(--ink2);text-wrap:pretty;white-space:pre-wrap}
+.nt .body .by{font-size:11.5px;color:var(--faint);margin-top:9px}
+.more{display:flex;align-items:center;justify-content:space-between;width:100%;
+  padding:14px 17px 14px 19px;border-top:1px solid var(--hair2);
+  font-size:13px;font-weight:700;color:var(--ink2);background:var(--sunk)}
+.more:active{opacity:.55}
+.more em{color:var(--faint);font-size:12px;font-weight:600;font-style:normal}
+.more.go{color:var(--amber)}
 
-  .foot {
-    text-align: center;
-    font-size: 11px;
-    color: var(--muted2);
-    margin-top: 26px;
-    line-height: 1.7;
-  }
-  .foot b { color: var(--muted); }
+/* ═════ 一覧の行 ═════ */
+.list{background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);
+  overflow:hidden;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:14px;padding:15px 17px;min-height:70px;
+  transition:background .12s,transform .1s;position:relative}
+.row+.row::before{content:"";position:absolute;left:var(--inset);right:0;top:0;
+  height:1px;background:var(--hair2)}
+.row:active{background:var(--sunk);transform:scale(.994)}
+.ic{width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center}
+.ic svg{width:21px;height:21px;stroke-width:1.85;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ic.amber{background:var(--amber-tint)} .ic.amber svg{stroke:var(--amber)}
+.ic.blue {background:var(--blue-tint)}  .ic.blue  svg{stroke:var(--blue)}
+.ic.teal {background:var(--teal-tint)}  .ic.teal  svg{stroke:var(--teal)}
+.ic.green{background:var(--green-tint)} .ic.green svg{stroke:var(--green)}
+.ic.slate{background:var(--slate-tint)} .ic.slate svg{stroke:var(--slate)}
+.ic.red  {background:var(--red-tint)}   .ic.red   svg{stroke:var(--red)}
+.tx{flex:1;min-width:0}
+.tx b{display:block;font-size:16px;font-weight:800;letter-spacing:.02em}
+.tx small{display:block;font-size:12px;color:var(--mute);margin-top:3px;line-height:1.5}
+.tx small.tel{font-size:13.5px;color:var(--ink2);font-weight:600;
+  letter-spacing:.07em;font-variant-numeric:tabular-nums;margin-top:2px}
+.pill{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;flex:none;
+  background:var(--red-tint);color:var(--red);white-space:nowrap}
 
-  /* ═══ オフライン表示 ═══ */
-  .offline-bar {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    background: rgba(232,106,90,0.10);
-    border: 1px solid rgba(232,106,90,0.45);
-    border-radius: 10px;
-    padding: 9px 12px;
-    margin-bottom: 12px;
-    font-size: 12px;
-    color: var(--red);
-  }
-  .offline-bar.show { display: flex; }
-  .offline-bar .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--red);
-    flex-shrink: 0;
-  }
+.empty{padding:34px 18px;text-align:center;color:var(--mute);font-size:13px;line-height:1.9}
+.hint{font-size:12px;color:var(--mute);line-height:1.85;text-align:center;padding:22px 14px 4px}
+.hint b{color:var(--ink2);font-weight:700}
+.foot{text-align:center;font-size:10px;color:var(--faint);letter-spacing:.26em;
+  padding:18px 0 10px;opacity:.6}
 
-  /* ═══ ホーム画面に追加 ═══ */
-  .install-bar {
-    display: none;
-    width: 100%;
-    align-items: center;
-    gap: 10px;
-    background: rgba(232,163,61,0.08);
-    border: 1px solid rgba(232,163,61,0.45);
-    border-radius: 12px;
-    padding: 13px 14px;
-    margin-top: 14px;
-    color: var(--amber2);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    text-align: left;
-    cursor: pointer;
-  }
-  .install-bar.show { display: flex; }
-  .install-bar:active { background: var(--amber); color: var(--ink); border-color: var(--amber); }
-  .install-bar .ib-icon { font-size: 16px; line-height: 1; }
-  .install-bar .ib-sub {
-    display: block;
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-  .install-bar:active .ib-sub { color: var(--ink); }
+/* ホーム画面に追加（Android / PC Chrome だけ出る） */
+.install{display:none;width:100%;align-items:center;gap:13px;background:var(--surface);
+  border-radius:var(--r);box-shadow:var(--lift);padding:15px 17px;margin-bottom:12px;text-align:left}
+.install.show{display:flex}
+.install i{width:40px;height:40px;border-radius:13px;background:var(--amber-tint);color:var(--amber);
+  display:grid;place-items:center;font-style:normal;font-size:20px;font-weight:800;flex:none}
 
-  /* ═══ 搭乗券風オーバーレイ ═══ */
-  .staff-overlay {
-    position: fixed; inset: 0;
-    background: rgba(5,8,16,0.72);
-    backdrop-filter: blur(3px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    z-index: 50;
-  }
-  .staff-overlay.show { display: flex; }
-  .staff-box {
-    width: 100%;
-    max-width: 360px;
-    background: linear-gradient(180deg, #14203A, #0E1830);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    overflow: hidden;
-    animation: box-in .28s ease both;
-  }
-  @keyframes box-in {
-    0% { opacity: 0; transform: translateY(10px) scale(0.97); }
-    100% { opacity: 1; transform: none; }
-  }
-  .pass-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: rgba(232,163,61,0.08);
-  }
-  .ph-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 2px;
-    color: var(--amber2);
-  }
-  .ph-brand {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 1px;
-    color: var(--muted);
-  }
-  .ph-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  /* 間違えて開いた／間違えて選びそうなときに、いつでも抜けられるボタン */
-  .pass-close {
-    font-family: inherit;
-    font-size: 13px;
-    line-height: 1;
-    color: var(--muted);
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    cursor: pointer;
-  }
-  .pass-close:active {
-    background: var(--amber);
-    color: var(--ink);
-    border-color: var(--amber);
-  }
-  .pass-perf {
-    height: 0;
-    border-top: 1px dashed var(--line);
-    margin: 0 20px;
-  }
-  .pass-body { padding: 22px 20px 8px; }
-  .staff-title {
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  .staff-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .staff-btn {
-    width: 100%;
-    padding: 14px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    color: var(--text);
-    font-size: 16px;
-    font-weight: 700;
-    font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
-    cursor: pointer;
-    min-height: 54px;
-    letter-spacing: 1px;
-    transition: transform 0.08s ease;
-  }
-  .staff-btn:active {
-    background: var(--amber);
-    color: var(--ink);
-    border-color: var(--amber);
-    transform: scale(0.97);
-  }
-  /* いま記憶されている名前 */
-  .staff-btn.is-me {
-    border-color: rgba(232,163,61,0.55);
-    color: var(--amber2);
-    background: rgba(232,163,61,0.07);
-  }
-  .staff-btn.is-me::after { content: '　✓'; font-size: 13px; }
-  .contact-btn { text-align: left; }
-  .contact-btn:active { background: var(--red); border-color: var(--red); }
-  .contact-name { font-size: 15px; font-weight: 700; }
-  .contact-tel {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--muted);
-    margin-top: 2px;
-    letter-spacing: 1px;
-  }
-  .contact-btn:active .contact-tel { color: var(--ink); }
-  .staff-back {
-    text-align: center;
-    font-size: 12px;
-    color: var(--muted);
-    text-decoration: underline;
-    cursor: pointer;
-    padding: 6px;
-  }
-  /* 「戻る」「やめる」を並べる行 */
-  .staff-actions {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 18px;
-    margin-top: 16px;
-    flex-wrap: wrap;
-  }
-  .staff-cancel {
-    text-align: center;
-    font-size: 12px;
-    color: var(--muted);
-    text-decoration: underline;
-    cursor: pointer;
-    padding: 6px;
-    background: transparent;
-    border: 0;
-    font-family: inherit;
-  }
-  /* 記憶した名前を消して「未設定」に戻す（人物を間違えたときの取り消し） */
-  .staff-clear {
-    width: 100%;
-    margin-top: 14px;
-    padding: 11px;
-    background: transparent;
-    border: 1px dashed var(--line);
-    border-radius: 10px;
-    color: var(--muted);
-    font-size: 12px;
-    font-family: inherit;
-    cursor: pointer;
-    min-height: 42px;
-  }
-  .staff-clear:active {
-    background: rgba(255,255,255,0.05);
-    color: var(--text);
-  }
-  .pass-foot {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 8px;
-    letter-spacing: 2px;
-    color: var(--muted2);
-    text-align: center;
-    padding: 0 20px 16px;
-  }
+/* ═════ 下のタブ ═════ */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;max-width:440px;margin:0 auto;
+  background:color-mix(in srgb,var(--surface) 88%,transparent);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
+  border-top:1px solid var(--hair);
+  display:grid;grid-template-columns:repeat(4,1fr);
+  padding:9px 0 calc(10px + env(safe-area-inset-bottom))}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:10px;font-weight:800;color:var(--faint);position:relative;padding:2px 0;
+  letter-spacing:.05em;transition:color .18s}
+.tab svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.7;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;transition:stroke-width .18s,transform .18s}
+.tab[aria-selected=true]{color:var(--ink)}
+.tab[aria-selected=true] svg{stroke-width:2.35;transform:translateY(-1px)}
+.tab .n{position:absolute;top:-2px;left:calc(50% + 6px);background:var(--amber);color:#fff;
+  font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:999px;
+  display:grid;place-items:center;padding:0 4px}
 
-  @media (prefers-reduced-motion: reduce) {
-    .title span { animation: none; opacity: 1; transform: none; }
-    .flap-set, .clock .d.flip { animation: none; transform: none; opacity: 1; }
-    .flap-run { color: inherit; }
-    .row { animation: none; opacity: 1; }
-    .ticker-track { animation: none; padding-left: 12px; }
-    .dot, .eyebrow::before, .clock .colon { animation: none; }
-    .staff-box { animation: none; }
-  }
+/* ═════ 下から出るシート ═════ */
+.scrim{position:fixed;inset:0;background:rgba(8,13,21,.4);z-index:40;
+  opacity:0;pointer-events:none;transition:opacity .22s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:440px;margin:0 auto;
+  background:var(--surface);border-radius:24px 24px 0 0;
+  padding:8px 0 calc(16px + env(safe-area-inset-bottom));
+  transform:translateY(101%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  max-height:84dvh;overflow:auto}
+.sheet.on{transform:none}
+.grip{width:36px;height:4px;border-radius:2px;background:var(--hair);margin:6px auto 15px}
+.sheet{position:relative}
+.sheet .x{position:absolute;top:10px;right:12px;width:32px;height:32px;border-radius:50%;
+  background:var(--sunk);color:var(--mute);font-size:13px;display:grid;place-items:center}
+.sheet .x:active{opacity:.55}
+.sheet h4{font-size:16.5px;font-weight:800;padding:0 52px 5px 20px}
+.sheet .lead{font-size:12.5px;color:var(--mute);padding:0 20px 15px;line-height:1.7}
+.pick{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  padding:14px 20px;font-size:16px;font-weight:700;position:relative}
+.pick+.pick::before,.pick.clear::before,.pick.cancel::before{content:"";position:absolute;
+  left:20px;right:0;top:0;height:1px;background:var(--hair2)}
+.pick:active{background:var(--sunk)}
+.pick i{width:31px;height:31px;border-radius:50%;background:var(--sunk);display:grid;
+  place-items:center;font-style:normal;font-size:13px;font-weight:800;color:var(--ink2);flex:none}
+.pick .pt{flex:1;min-width:0}
+.pick .pt small{display:block;font-size:11.5px;color:var(--mute);font-weight:600;margin-top:2px}
+.pick[aria-current=true]{color:var(--amber)}
+.pick[aria-current=true] i{background:var(--amber);color:#fff}
+.pick.clear{color:var(--mute);font-weight:400;font-size:13.5px;margin-top:6px}
+.pick.cancel{color:var(--ink2);font-weight:700;font-size:14.5px;justify-content:center}
 </style>
 </head>
 <body>
+<div class="app">
 
-<div class="wrap">
-
-  <div class="board-head">
-    <div>
-      <div class="eyebrow">SIEG OPS BOARD</div>
-      <div class="title" id="title"></div>
-      <div class="greet" id="greet"></div>
-      <div class="whoami">
-        あなた：<span class="whoami-name unset" id="whoami-name">未設定</span>
-        <button class="whoami-change" id="whoami-change" type="button">選択</button>
-      </div>
+  <div class="bar" id="bar">
+    <div class="brand">
+      <span class="mk"><img src="icons/icon-192.png" alt="" width="28" height="28"></span>
+      <b>Sieg.</b>
     </div>
-    <div class="clock-box">
-      <div class="clock" id="clock">--<span class="colon">:</span>--</div>
-      <div class="date" id="date">----/--/-- ---</div>
+    <button class="who unset" id="whoBtn" type="button"><i id="whoIni">?</i><span id="whoName">名前を選ぶ</span></button>
+  </div>
+
+  <!-- ══ ホーム ══ -->
+  <section class="view on enter pad" id="v-home">
+    <div class="off" id="offline"><span></span>オフラインです。お知らせは最新でない場合があります</div>
+    <div class="notice" id="homeNotice" hidden></div>
+    <div class="head">
+      <div class="d" id="today"></div>
+      <h2 id="greet">おつかれさまです</h2>
     </div>
-  </div>
+    <div class="list" id="homeTools"></div>
+    <button class="install" id="install" type="button">
+      <i>＋</i>
+      <span class="tx"><b>ホーム画面に追加</b><small>アプリのように1タップで開けます</small></span>
+    </button>
+    <p class="hint"><b>ホーム画面に追加すると1タップで開けます</b><br>
+    共有ボタン →「ホーム画面に追加」。開けないときはリンクを長押しして「他のブラウザで開く」を選んでください。</p>
+    <div class="foot">SIEG ／ KUMAMOTO</div>
+  </section>
 
-  <div class="offline-bar" id="offline-bar">
-    <span class="dot"></span>
-    オフラインです。お知らせは最新でない場合があります
-  </div>
+  <!-- ══ ツール ══ -->
+  <section class="view pad" id="v-tool">
+    <div class="head"><h2>ツール</h2></div>
+    <h3 class="sec" style="margin-top:0">申請する</h3>
+    <div class="list" id="toolsA"></div>
+    <h3 class="sec">見る・共有する</h3>
+    <div class="list" id="toolsB"></div>
+  </section>
 
-  <div class="ticker">
-    <div class="ticker-tag">INFO</div>
-    <div class="ticker-view">
-      <div class="ticker-track" id="ticker-track"></div>
-    </div>
-  </div>
+  <!-- ══ お知らせ（掲示板） ══ -->
+  <section class="view pad" id="v-info">
+    <div class="head"><h2>お知らせ</h2></div>
+    <div class="notice" id="allNotice"></div>
+  </section>
 
-  <!-- ═══ お知らせパネル ═══ -->
-  <div class="notice" id="notice">
-    <div class="notice-head">
-      <span class="notice-label">NOTICE / 今月のお知らせ</span>
-      <a class="notice-post-link" href="https://sakusakusansan-star.github.io/notice-form/">＋ 投稿する</a>
-    </div>
-    <div class="notice-list" id="notice-list">
-      <div class="notice-empty" id="notice-empty">現在お知らせはありません</div>
-    </div>
-  </div>
+  <!-- ══ 連絡先 ══ -->
+  <section class="view pad" id="v-call">
+    <div class="head"><div class="d">24時間つながります</div><h2>緊急連絡先</h2></div>
+    <div class="list" id="contacts"></div>
+    <p class="hint">つながらないときは Discord の #連絡 に書き込んでください。</p>
+  </section>
 
-  <div class="col-heads">
-    <div>GATE</div>
-    <div>TOOL</div>
-    <div style="text-align:right;">STATUS</div>
-    <div></div>
-  </div>
-
-  <div class="board" id="board">
-    <a href="#" class="row" data-id="keihi" data-mode="staff"
-       data-url="https://sakusakusansan-star.github.io/keihi23/"
-       data-staff='["福山","古川","清田"]'
-       onclick="return goTo(this)" style="animation-delay:.05s">
-      <div class="gate"><span class="gate-code">K1</span><small>GATE</small></div>
-      <div class="name-block">
-        <div class="name">経費精算</div>
-        <div class="desc">領収書をAIで自動読み取り</div>
-      </div>
-      <div class="status"><span class="dot"></span>運行中</div>
-      <div class="arrow">›</div>
-    </a>
-
-    <a href="#" class="row" data-id="shift" data-mode="category"
-       data-options='[
-         {"label":"Sieg社員","type":"link","url":"shift.html"},
-         {"label":"シフト表を見る","type":"link","url":"https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing"},
-         {"label":"パートナー様","type":"link","url":"https://sakusakusansan-star.github.io/shift-form/"}
-       ]'
-       onclick="return goTo(this)" style="animation-delay:.14s">
-      <div class="gate"><span class="gate-code">S2</span><small>GATE</small></div>
-      <div class="name-block">
-        <div class="name">シフト入力</div>
-        <div class="desc">スマホから稼働日を送信</div>
-      </div>
-      <div class="status"><span class="dot"></span>運行中</div>
-      <div class="arrow">›</div>
-    </a>
-
-    <a href="#" class="row" data-id="commute" data-mode="category"
-       data-options='[
-         {"label":"福山","type":"link","url":"https://sakusakusansan-star.github.io/commute-form/","appendStaff":true},
-         {"label":"古川","type":"link","url":"https://sakusakusansan-star.github.io/commute-form/","appendStaff":true},
-         {"label":"清田","type":"link","url":"https://sakusakusansan-star.github.io/commute-form/","appendStaff":true},
-         {"label":"山口","type":"link","url":"https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing","appendStaff":false}
-       ]'
-       onclick="return goTo(this)" style="animation-delay:.23s">
-      <div class="gate"><span class="gate-code">T3</span><small>GATE</small></div>
-      <div class="name-block">
-        <div class="name">交通費計算</div>
-        <div class="desc">通勤距離・交通費の自動計算</div>
-      </div>
-      <div class="status"><span class="dot"></span>運行中</div>
-      <div class="arrow">›</div>
-    </a>
-
-    <a href="https://sakusakusansan-star.github.io/nippou-form/" class="row" style="animation-delay:.32s">
-      <div class="gate"><span class="gate-code">N4</span><small>GATE</small></div>
-      <div class="name-block">
-        <div class="name">日報</div>
-        <div class="desc">実績・所感をDiscordへ送信</div>
-      </div>
-      <div class="status"><span class="dot"></span>運行中</div>
-      <div class="arrow">›</div>
-    </a>
-
-    <a href="docs/" class="row" style="animation-delay:.41s">
-      <div class="gate"><span class="gate-code">D6</span><small>GATE</small></div>
-      <div class="name-block">
-        <div class="name">資料置き場</div>
-        <div class="desc">予約番号発行方法・料金表など</div>
-      </div>
-      <div class="status"><span class="dot"></span>運行中</div>
-      <div class="arrow">›</div>
-    </a>
-
-    <a href="#" class="row" data-id="emergency" data-mode="contact"
-       data-contacts='[
-         {"name":"福岡","role":"代表","tel":"08017879619"},
-         {"name":"清田","role":"","tel":"09072942546"},
-         {"name":"福山","role":"","tel":"08017513219"},
-         {"name":"古川","role":"","tel":"07089742868"}
-       ]'
-       onclick="return goTo(this)" style="animation-delay:.50s">
-      <div class="gate" style="color:var(--red);"><span class="gate-code">E5</span><small>GATE</small></div>
-      <div class="name-block">
-        <div class="name">緊急連絡先</div>
-        <div class="desc">代表・スタッフへ電話をかける</div>
-      </div>
-      <div class="status" style="color:var(--red);"><span class="dot" style="background:var(--red);box-shadow:0 0 6px var(--red);"></span>24H</div>
-      <div class="arrow">›</div>
-    </a>
-  </div>
-
-  <button class="install-bar" id="install-bar" type="button">
-    <span class="ib-icon">＋</span>
-    <span>
-      ホーム画面に追加
-      <span class="ib-sub">アプリのように1タップで開けます</span>
-    </span>
-  </button>
-
-  <div class="foot">
-    うまく開けない場合は、リンクを長押しして<br>
-    <b>「他のブラウザで開く」</b>を選んでください
-  </div>
-
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-v="home">
+      <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>ホーム</button>
+    <button class="tab" role="tab" aria-selected="false" data-v="tool">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.8"/></svg>ツール</button>
+    <button class="tab" role="tab" aria-selected="false" data-v="info"><span class="n" id="badge" hidden>0</span>
+      <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10.5 21h3"/></svg>お知らせ</button>
+    <button class="tab" role="tab" aria-selected="false" data-v="call">
+      <svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>連絡先</button>
+  </nav>
 </div>
 
-<!-- 搭乗券風 選択オーバーレイ -->
-<div id="staff-overlay" class="staff-overlay" onclick="overlayBgClose(event)">
-  <div class="staff-box">
-    <div class="pass-head">
-      <span class="ph-label" id="ov-eyebrow">BOARDING PASS</span>
-      <span class="ph-right">
-        <span class="ph-brand">SIEG OPS</span>
-        <button class="pass-close" id="ov-close" type="button" aria-label="閉じる" onclick="closeOverlay()">✕</button>
-      </span>
-    </div>
-    <div class="pass-perf"></div>
-    <div class="pass-body">
-      <div class="staff-title" id="ov-title">あなたの名前を選んでください</div>
-      <div class="staff-buttons" id="staff-buttons"></div>
-      <button class="staff-clear" id="ov-clear" type="button" style="display:none;" onclick="clearStaffChoice()">この名前を消して「未設定」に戻す</button>
-      <div class="staff-actions">
-        <span class="staff-back" id="ov-back" style="display:none;" onclick="backToCategory()">‹ 戻る</span>
-        <button class="staff-cancel" id="ov-cancel" type="button" onclick="closeOverlay()">やめる</button>
-      </div>
-    </div>
-    <div class="pass-foot">SIEG OPERATIONS PORTAL ★ KUMAMOTO</div>
-  </div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="選択">
+  <div class="grip"></div>
+  <button class="x" id="sheetX" type="button" aria-label="閉じる">✕</button>
+  <h4 id="sheetTitle">あなたの名前を選んでください</h4>
+  <p class="lead" id="sheetLead">この端末に保存され、次からは自動で表示されます。</p>
+  <div id="picks"></div>
+  <button class="pick clear" id="sheetClear" type="button" hidden>名前を消して「未設定」に戻す</button>
+  <button class="pick cancel" id="sheetCancel" type="button">やめる</button>
 </div>
 
 <script>
-  // ═══ 設定：お知らせGASのデプロイURLを貼る ═══
-  var NOTICE_API = 'https://script.google.com/macros/s/AKfycbxA1xDkeYuLRSo39iZju6-RUirpwAQbou_WjYe2G0t7KAQJAEADPgl8-56FW9jWzSvT/exec';
+/* ══════════ ここだけ書き換えれば運用できます ══════════ */
 
-  // ═══ スプリットフラップ演出（空港のパタパタ表示器） ═══
-  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* お知らせ（掲示板）のGASデプロイURL */
+var NOTICE_API  = 'https://script.google.com/macros/s/AKfycbxA1xDkeYuLRSo39iZju6-RUirpwAQbou_WjYe2G0t7KAQJAEADPgl8-56FW9jWzSvT/exec';
+/* 掲示板への投稿ページ */
+var NOTICE_POST = 'https://sakusakusansan-star.github.io/notice-form/';
 
-  var FLAP_GLYPHS = {
-    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    lower: 'abcdefghijklmnopqrstuvwxyz',
-    digit: '0123456789',
-    kana:  'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン',
-    kanji: '業務空港便運行時刻案内発着搭乗経費交通日報連絡精算'
-  };
+/* スタッフ名簿（増減はここだけ直せば全ツールに反映されます） */
+var ALL_STAFF = ['福山', '古川', '清田', '山口'];
 
-  // 文字種ごとに、めくる候補（同じ種類の文字）を返す。
-  // 記号・空白は候補なし＝めくらずにそのまま出す。
-  function flapPool(ch) {
-    if (ch >= 'A' && ch <= 'Z') return FLAP_GLYPHS.upper;
-    if (ch >= 'a' && ch <= 'z') return FLAP_GLYPHS.lower;
-    if (ch >= '0' && ch <= '9') return FLAP_GLYPHS.digit;
-    if (/[ァ-ヴー]/.test(ch)) return FLAP_GLYPHS.kana;
-    if (/[一-龥]/.test(ch)) return FLAP_GLYPHS.kanji;
-    return null;
-  }
+var TOOLS = [
+  { id:'nippou', name:'日報', desc:'実績・所感をDiscordへ送信', ic:'doc', c:'amber', home:true,
+    url:'https://sakusakusansan-star.github.io/nippou-form/' },
 
-  /**
-   * el の中身を1文字ずつ span に分け、左から順に確定させながらパタパタさせる。
-   * opts: lead=確定が始まるまで(ms)、stagger=文字間の間隔(ms)、cycle=1コマの表示時間(ms)
-   */
-  function splitFlap(el, text, opts) {
-    opts = opts || {};
-    var lead    = opts.lead    != null ? opts.lead    : 240;
-    var stagger = opts.stagger != null ? opts.stagger : 60;
-    var cycle   = opts.cycle   != null ? opts.cycle   : 45;
+  { id:'shift', name:'シフト入力', desc:'スマホから稼働日を送信', ic:'cal', c:'blue', home:true,
+    options:[
+      { label:'Sieg社員',      url:'shift.html' },
+      { label:'シフト表を見る', url:'https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing' },
+      { label:'パートナー様',   url:'https://sakusakusansan-star.github.io/shift-form/' }
+    ] },
 
-    var chars = text.split('');
-    el.textContent = '';
+  { id:'commute', name:'交通費計算', desc:'通勤距離・交通費の自動計算', ic:'car', c:'teal', home:true,
+    options:[
+      { label:'福山', url:'https://sakusakusansan-star.github.io/commute-form/', appendStaff:true },
+      { label:'古川', url:'https://sakusakusansan-star.github.io/commute-form/', appendStaff:true },
+      { label:'清田', url:'https://sakusakusansan-star.github.io/commute-form/', appendStaff:true },
+      { label:'山口', url:'https://docs.google.com/spreadsheets/d/1RRLf47jjFvL1MdFvkt43GdSsw_r7NLQOqOQzRCEwmpA/edit?usp=sharing', appendStaff:false }
+    ] },
 
-    var cells = chars.map(function(ch) {
-      var span = document.createElement('span');
-      span.textContent = ch === ' ' ? '\u00A0' : ch;
-      el.appendChild(span);
-      return { span: span, ch: ch, pool: flapPool(ch), done: false, shown: -1 };
-    });
+  { id:'keihi', name:'経費精算', desc:'領収書をAIで自動読み取り', ic:'rcpt', c:'green', home:true,
+    url:'https://sakusakusansan-star.github.io/keihi23/', staff:['福山','古川','清田'] },
 
-    if (REDUCED) return; // モーション軽減設定では最初から確定表示
+  { id:'docs', name:'資料置き場', desc:'予約番号の発行方法・料金表など', ic:'fold', c:'slate', group:'B',
+    url:'docs/' },
 
-    // めくり中に文字幅が変わって行がガタつかないよう、確定後の幅で仮固定する。
-    // （まとめて計測 → まとめて適用。確定時に解除するのでレイアウトには残さない）
-    var widths = cells.map(function(c) { return c.span.offsetWidth; });
+  { id:'post', name:'掲示板に投稿', desc:'お知らせ・会議予定を全員へ共有', ic:'board', c:'amber', group:'B',
+    url:NOTICE_POST }
+];
 
-    var settleAt = [];
-    cells.forEach(function(c, i) {
-      settleAt.push(lead + i * stagger);
-      if (c.pool) {
-        c.span.style.minWidth = widths[i] + 'px';
-        c.span.style.textAlign = 'center';
-        c.span.classList.add('flap-run');
-      } else {
-        c.done = true; // 空白・記号は最初から確定
-      }
-    });
+var CONTACTS = [
+  { name:'代表　福岡', tel:'080-1787-9619', lead:true },
+  { name:'清田',       tel:'090-7294-2546' },
+  { name:'福山',       tel:'080-1751-3219' },
+  { name:'古川',       tel:'070-8974-2868' }
+];
 
-    var start = performance.now();
+/* ══════════ ここから下は触らなくて大丈夫です ══════════ */
 
-    function frame(now) {
-      var t = now - start;
-      var remaining = false;
-
-      cells.forEach(function(c, i) {
-        if (c.done) return;
-        if (t >= settleAt[i]) {
-          c.span.textContent = c.ch === ' ' ? '\u00A0' : c.ch;
-          c.span.style.minWidth = '';
-          c.span.style.textAlign = '';
-          c.span.classList.remove('flap-run');
-          c.span.classList.add('flap-set');
-          c.done = true;
-          return;
-        }
-        remaining = true;
-        var step = Math.floor(t / cycle);
-        if (step !== c.shown) {
-          c.shown = step;
-          c.span.textContent = c.pool.charAt(Math.floor(Math.random() * c.pool.length));
-        }
-      });
-
-      if (remaining) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  }
-
-  // ═══ タイトル ═══
-  splitFlap(document.getElementById('title'), 'Sieg 業務ポータル', { lead: 260, stagger: 58, cycle: 45 });
-
-  // ═══ GATE番号（各行の登場アニメに合わせて遅らせる） ═══
-  Array.prototype.forEach.call(document.querySelectorAll('.gate-code'), function(el, i) {
-    splitFlap(el, el.textContent.trim(), { lead: 320 + i * 90, stagger: 70, cycle: 40 });
+var ICONS = {
+  doc  :'<path d="M4 4h13l3 3v13H4z"/><path d="M8 10h8M8 14h6"/>',
+  cal  :'<rect x="3" y="5" width="18" height="16" rx="2.2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+  car  :'<rect x="5" y="3" width="14" height="14" rx="2.2"/><path d="M5 11h14M8 21l-1.6-4M16 21l1.6-4"/>',
+  rcpt :'<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  fold :'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  board:'<path d="M4 10v4h3l6 4V6l-6 4H4z"/><path d="M17.5 9.2a4 4 0 0 1 0 5.6"/>',
+  tel  :'<path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/>'
+};
+function $(s){ return document.querySelector(s); }
+function svg(k){ return '<svg viewBox="0 0 24 24">' + ICONS[k] + '</svg>'; }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c];
   });
+}
+function initial(s){ return Array.from(String(s))[0] || '?'; }
 
-  // ═══ 挨拶文（時間帯） ═══
-  (function() {
-    var h = new Date().getHours();
-    var g = h < 5 ? 'お疲れ様です（深夜）' : h < 11 ? 'おはようございます' : h < 18 ? 'お疲れ様です' : 'お疲れ様です（夜間）';
-    document.getElementById('greet').textContent = g;
-  })();
+/* ═══ 日付 ═══ */
+var W = ['日','月','火','水','木','金','土'];
+(function(){
+  var n = new Date();
+  $('#today').textContent = n.getFullYear() + '年' + (n.getMonth() + 1) + '月' + n.getDate() + '日（' + W[n.getDay()] + '）';
+})();
 
-  // ═══ 時計（桁ごとにパタッと切り替わる） ═══
-  var clockDigits = (function() {
-    var clock = document.getElementById('clock');
-    clock.textContent = '';
-    var digits = [];
-    for (var i = 0; i < 4; i++) {
-      if (i === 2) {
-        var colon = document.createElement('span');
-        colon.className = 'colon';
-        colon.textContent = ':';
-        clock.appendChild(colon);
-      }
-      var d = document.createElement('span');
-      d.className = 'd';
-      d.textContent = '-';
-      clock.appendChild(d);
-      digits.push(d);
-    }
-    return digits;
-  })();
+/* ═══ 端末に覚えておくこと（名前・ツールごとの選択） ═══ */
+var STAFF_KEY = 'siegStaff';
+var CHOICE_PREFIX = 'siegChoice_';
+var READ_KEY = 'sieg.read';
 
-  // 変わった桁だけ、めくれる途中（アニメの中間）で文字を差し替える
-  var clockReady = false;
-  function setDigit(el, ch) {
-    if (el.textContent === ch) return;
-    if (REDUCED || !clockReady) { el.textContent = ch; return; }
-    el.classList.remove('flip');
-    void el.offsetWidth; // アニメを再生し直すためのリフロー
-    el.classList.add('flip');
-    setTimeout(function() { el.textContent = ch; }, 200);
-  }
+function lsGet(k){ try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } }
+function lsSet(k, v){ try { localStorage.setItem(k, v); } catch(e) {} }
+function lsDel(k){ try { localStorage.removeItem(k); } catch(e) {} }
 
-  function tick() {
-    var now = new Date();
-    var hhmm = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
-    for (var i = 0; i < 4; i++) setDigit(clockDigits[i], hhmm.charAt(i));
+function getStaff(){ return lsGet(STAFF_KEY); }
+function clearChoices(){
+  try {
+    Object.keys(localStorage).forEach(function(k){
+      if (k.indexOf(CHOICE_PREFIX) === 0) lsDel(k);
+    });
+  } catch(e) {}
+}
+function setStaff(name){
+  if (name !== getStaff()) clearChoices(); // 人が変われば前の人の選択は無効
+  lsSet(STAFF_KEY, name);
+  paintWho();
+}
+function clearStaff(){ lsDel(STAFF_KEY); clearChoices(); paintWho(); }
+function getChoice(id){ return id ? lsGet(CHOICE_PREFIX + id) : ''; }
+function setChoice(id, label){ if (id) lsSet(CHOICE_PREFIX + id, label); }
 
-    var days = ['日','月','火','水','木','金','土'];
-    var y = now.getFullYear();
-    var m = String(now.getMonth() + 1).padStart(2, '0');
-    var d = String(now.getDate()).padStart(2, '0');
-    document.getElementById('date').textContent = y + '/' + m + '/' + d + ' ' + days[now.getDay()];
-  }
-  tick();                  // 初回はアニメなしで現在時刻を表示
-  clockReady = true;
-  setInterval(tick, 1000); // 毎秒確認し、変わった桁だけ描き替える
+/* 旧バージョン（経費精算だけ個別に保存していた）からの引き継ぎ */
+(function(){
+  if (getStaff()) return;
+  var old = lsGet('siegStaff_keihi');
+  if (old) { lsSet(STAFF_KEY, old); lsDel('siegStaff_keihi'); }
+})();
 
-  // ═══ INFOティッカー ═══
-  var tickerMessages = [
-    '経費精算はレシート撮影でAIが自動入力',
-    'シフト入力は月初に早めの登録をお願いします',
-    '交通費計算は距離を自動算出（Maps連携）',
-    'うまく開けない時はリンク長押し→他のブラウザで開く'
-  ];
-  document.getElementById('ticker-track').textContent = tickerMessages.join('　★　');
+/* ═══ ツールの行 ═══ */
+function toolRow(t, showFlag){
+  return '<a class="row" href="' + esc(t.url || '#') + '" data-tool="' + esc(t.id) + '">'
+    + '<span class="ic ' + t.c + '">' + svg(t.ic) + '</span>'
+    + '<span class="tx"><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span>'
+    + (showFlag && t.flag ? '<span class="pill">' + esc(t.flag) + '</span>' : '')
+    + '</a>';
+}
+function paintTools(){
+  $('#homeTools').innerHTML = TOOLS.filter(function(t){ return t.home; })
+    .map(function(t){ return toolRow(t, true); }).join('');
+  $('#toolsA').innerHTML = TOOLS.filter(function(t){ return t.group !== 'B'; })
+    .map(function(t){ return toolRow(t, false); }).join('');
+  $('#toolsB').innerHTML = TOOLS.filter(function(t){ return t.group === 'B'; })
+    .map(function(t){ return toolRow(t, false); }).join('');
 
-  // ═══ お知らせ読み込み ═══
-  (function loadNotices() {
-    if (!NOTICE_API || NOTICE_API.indexOf('http') !== 0) return; // 未設定ならプレースホルダーのまま
-    fetch(NOTICE_API + '?v=' + Date.now())
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (!data || !data.ok || !data.items || !data.items.length) return; // 0件ならプレースホルダーのまま
-        var list = document.getElementById('notice-list');
-        list.innerHTML = '';
-        data.items.forEach(function(it) {
-          var item = document.createElement('div');
-          item.className = 'notice-item';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'), function(a){
+    var t = findTool(a.getAttribute('data-tool'));
+    if (!t || (!t.options && !t.staff)) return; // 直リンクはそのまま開く
+    a.addEventListener('click', function(e){ e.preventDefault(); openTool(t); });
+  });
+}
+function findTool(id){
+  for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].id === id) return TOOLS[i];
+  return null;
+}
 
-          var date = document.createElement('div');
-          date.className = 'notice-date';
-          if (it.when) {
-            // 日程あり：日程を大きく表示、曜日を下に
-            date.textContent = it.when;
-            if (it.youbi) {
-              var yb = document.createElement('small');
-              yb.textContent = '(' + it.youbi + ')';
-              date.appendChild(yb);
-            }
-          } else {
-            // 日程なし：投稿日を表示
-            date.textContent = it.date || '';
-          }
+/* ═══ ツールを開く（名前・行き先の選択つき） ═══ */
+function openTool(t){
+  var me = getStaff();
 
-          var chip = document.createElement('div');
-          chip.className = 'notice-chip' +
-            (it.type === '会議' ? ' t-meet' : it.type === '重要' ? ' t-imp' : '');
-          chip.textContent = it.type || 'お知らせ';
-
-          var body = document.createElement('div');
-          var text = document.createElement('div');
-          text.className = 'notice-text';
-          text.textContent = (it.time ? it.time + '　' : '') + (it.text || '');
-          body.appendChild(text);
-          if (it.name) {
-            var name = document.createElement('div');
-            name.className = 'notice-name';
-            name.textContent = '投稿：' + it.name;
-            body.appendChild(name);
-          }
-
-          item.appendChild(date);
-          item.appendChild(chip);
-          item.appendChild(body);
-          list.appendChild(item);
-        });
-      })
-      .catch(function() { /* 読み込み失敗時はプレースホルダーのまま */ });
-  })();
-
-  // ═══ スタッフ名簿（増減はここだけ直せば全GATEに反映される） ═══
-  var ALL_STAFF = ['福山', '古川', '清田', '山口'];
-
-  // ═══ 利用者の記憶（全GATE共通） ═══
-  // 名前は1つのキーに保存し、どのGATEからでも使い回す。
-  // カテゴリ（Sieg社員／パートナー様など、名前ではない選択肢）はGATEごとに覚える。
-  var STAFF_KEY = 'siegStaff';
-  var CHOICE_PREFIX = 'siegChoice_';
-
-  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
-  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
-
-  function getStaff() { return lsGet(STAFF_KEY); }
-
-  function setStaff(name) {
-    if (name !== getStaff()) clearChoices(); // 人が変われば前の人の選択は無効
-    lsSet(STAFF_KEY, name);
-    renderWhoami();
-  }
-
-  // 記憶した名前を消して「未設定」に戻す（人物を間違えて選んだときの取り消し）
-  function clearStaff() {
-    lsDel(STAFF_KEY);
-    clearChoices();
-    renderWhoami();
-  }
-
-  function getChoice(id) { return id ? lsGet(CHOICE_PREFIX + id) : ''; }
-  function setChoice(id, label) { if (id) lsSet(CHOICE_PREFIX + id, label); }
-
-  function clearChoices() {
-    try {
-      Object.keys(localStorage).forEach(function(k) {
-        if (k.indexOf(CHOICE_PREFIX) === 0) lsDel(k);
-      });
-    } catch (e) {}
-  }
-
-  // 旧バージョン（経費精算だけ個別に保存していた）からの引き継ぎ
-  (function migrateOldKey() {
-    if (getStaff()) return;
-    var old = lsGet('siegStaff_keihi');
-    if (old) { lsSet(STAFF_KEY, old); lsDel('siegStaff_keihi'); }
-  })();
-
-  // ═══ ヘッダーの「あなた：◯◯」表示 ═══
-  function renderWhoami() {
-    var name = getStaff();
-    var nameEl = document.getElementById('whoami-name');
-    var btnEl = document.getElementById('whoami-change');
-    if (name) {
-      nameEl.textContent = name;
-      nameEl.classList.remove('unset');
-      btnEl.textContent = '変更';
-    } else {
-      nameEl.textContent = '未設定';
-      nameEl.classList.add('unset');
-      btnEl.textContent = '選択';
-    }
-  }
-
-  document.getElementById('whoami-change').addEventListener('click', function() {
-    openStaffOverlay(ALL_STAFF, {
+  if (t.staff) { // 名前を添えて渡すツール（経費精算）
+    if (me && t.staff.indexOf(me) >= 0) return navStaff(t.url, me);
+    return sheetOpen({
       title: 'あなたの名前を選んでください',
-      allowClear: true,
-      onPick: function(n) { setStaff(n); closeOverlay(); }
-    });
-  });
-
-  // オーバーレイの「この名前を消して『未設定』に戻す」
-  function clearStaffChoice() {
-    clearStaff();
-    closeOverlay();
-  }
-
-  renderWhoami();
-
-  // ═══ ナビゲーション ═══
-  var pendingRow = null;
-
-  function goTo(el) {
-    var mode = el.getAttribute('data-mode');
-    var id = el.getAttribute('data-id');
-    var me = getStaff();
-    pendingRow = el;
-
-    if (mode === 'staff') {
-      var names = JSON.parse(el.getAttribute('data-staff') || '[]');
-      // 記憶した名前がこのGATEの対象なら、そのまま通す
-      if (me && names.indexOf(me) >= 0) {
-        pendingRow = null;
-        navigateWithStaff(el.getAttribute('data-url'), me);
-      } else {
-        openStaffOverlay(names);
-      }
-
-    } else if (mode === 'category') {
-      var options = JSON.parse(el.getAttribute('data-options') || '[]');
-      var hit = null;
-      // 1) 選択肢がスタッフ名なら、記憶した名前で直行
-      if (me) hit = findOption(options, me);
-      // 2) 名前ではない選択肢（カテゴリ）は、前回の選択を覚えておいて直行
-      if (!hit) hit = findOption(options, getChoice(id));
-      if (hit) {
-        pendingRow = null;
-        followOption(hit, id);
-      } else {
-        openCategoryOverlay(el);
-      }
-
-    } else if (mode === 'contact') {
-      openContactOverlay(el);
-    }
-    return false;
-  }
-
-  function findOption(options, label) {
-    if (!label) return null;
-    for (var i = 0; i < options.length; i++) {
-      if (options[i].label === label) return options[i];
-    }
-    return null;
-  }
-
-  // 選択肢に進む。名前の選択肢なら本人確認として名前も記憶し、
-  // カテゴリの選択肢ならそのGATEの選択として記憶する。
-  function followOption(opt, id) {
-    if (ALL_STAFF.indexOf(opt.label) >= 0) {
-      setStaff(opt.label);
-    } else {
-      setChoice(id, opt.label);
-    }
-    closeOverlay();
-    var url = opt.url;
-    if (opt.appendStaff) {
-      var sep = url.indexOf('?') >= 0 ? '&' : '?';
-      url = url + sep + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
-    }
-    window.location.href = url;
-  }
-
-  function formatTel(tel) {
-    return tel.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
-  }
-
-  function openContactOverlay(el) {
-    var contacts = JSON.parse(el.getAttribute('data-contacts') || '[]');
-    document.getElementById('ov-eyebrow').textContent = 'EMERGENCY';
-    document.getElementById('ov-title').textContent = '緊急連絡先';
-    document.getElementById('ov-back').style.display = 'none';
-    setClearVisible(false);
-    var box = document.getElementById('staff-buttons');
-    box.innerHTML = '';
-    contacts.forEach(function(c) {
-      var btn = document.createElement('button');
-      btn.className = 'staff-btn contact-btn';
-      var nameDiv = document.createElement('div');
-      nameDiv.className = 'contact-name';
-      nameDiv.textContent = (c.role ? c.role + '　' : '') + c.name;
-      var telDiv = document.createElement('div');
-      telDiv.className = 'contact-tel';
-      telDiv.textContent = formatTel(c.tel);
-      btn.appendChild(nameDiv);
-      btn.appendChild(telDiv);
-      btn.onclick = function() {
-        window.location.href = 'tel:' + c.tel;
-      };
-      box.appendChild(btn);
-    });
-    document.getElementById('staff-overlay').classList.add('show');
-  }
-
-  function navigateWithStaff(url, name) {
-    setStaff(name);
-    var sep = url.indexOf('?') >= 0 ? '&' : '?';
-    window.location.href = url + sep + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
-  }
-
-  /**
-   * 名前を選ぶオーバーレイ。
-   * opts.onPick を渡すと画面遷移せず、選ばれた名前を呼び出し側で受け取れる
-   * （ヘッダーの「変更」から使う）。
-   */
-  function openStaffOverlay(names, opts) {
-    opts = opts || {};
-    var me = getStaff();
-    document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
-    document.getElementById('ov-title').textContent = opts.title || 'あなたの名前を選んでください';
-    document.getElementById('ov-back').style.display = 'none';
-    setClearVisible(!!opts.allowClear && !!me);
-    var box = document.getElementById('staff-buttons');
-    box.innerHTML = '';
-    names.forEach(function(n) {
-      var btn = document.createElement('button');
-      btn.className = 'staff-btn' + (n === me ? ' is-me' : '');
-      btn.textContent = n;
-      btn.onclick = function() {
-        if (opts.onPick) { opts.onPick(n); return; }
-        var url = pendingRow.getAttribute('data-url');
-        closeOverlay();
-        navigateWithStaff(url, n);
-      };
-      box.appendChild(btn);
-    });
-    document.getElementById('staff-overlay').classList.add('show');
-  }
-
-  function openCategoryOverlay(el) {
-    var id = el.getAttribute('data-id');
-    var options = JSON.parse(el.getAttribute('data-options') || '[]');
-    var me = getStaff();
-    document.getElementById('ov-eyebrow').textContent = 'SELECT';
-    document.getElementById('ov-title').textContent = '進み先を選んでください';
-    document.getElementById('ov-back').style.display = 'none';
-    setClearVisible(false);
-    var box = document.getElementById('staff-buttons');
-    box.innerHTML = '';
-    options.forEach(function(opt) {
-      var btn = document.createElement('button');
-      btn.className = 'staff-btn' + (opt.label === me ? ' is-me' : '');
-      btn.textContent = opt.label;
-      btn.onclick = function() {
-        if (opt.type === 'staff') {
-          openStaffFromCategory(opt, JSON.parse(el.getAttribute('data-staff') || '[]'));
-        } else {
-          followOption(opt, id);
-        }
-      };
-      box.appendChild(btn);
-    });
-    document.getElementById('staff-overlay').classList.add('show');
-  }
-
-  function openStaffFromCategory(opt, staffList) {
-    var me = getStaff();
-    document.getElementById('ov-eyebrow').textContent = 'BOARDING PASS';
-    document.getElementById('ov-title').textContent = 'あなたの名前を選んでください';
-    document.getElementById('ov-back').style.display = 'block';
-    setClearVisible(false);
-    var box = document.getElementById('staff-buttons');
-    box.innerHTML = '';
-    (opt.staff || staffList).forEach(function(n) {
-      var btn = document.createElement('button');
-      btn.className = 'staff-btn' + (n === me ? ' is-me' : '');
-      btn.textContent = n;
-      btn.onclick = function() {
-        setStaff(n);
-        closeOverlay();
-        var sep = opt.url.indexOf('?') >= 0 ? '&' : '?';
-        window.location.href = opt.url + sep + 'staff=' + encodeURIComponent(n) + '&v=' + Date.now();
-      };
-      box.appendChild(btn);
+      lead: esc(t.name) + 'に名前を引き継ぎます。この端末に保存され、次からは自動で開きます。',
+      items: t.staff.map(function(n){ return { label:n, current:n === me }; }),
+      onPick: function(it){ sheet(false); navStaff(t.url, it.label); }
     });
   }
 
-  function backToCategory() {
-    if (pendingRow) openCategoryOverlay(pendingRow);
-  }
-
-  function setClearVisible(on) {
-    document.getElementById('ov-clear').style.display = on ? 'block' : 'none';
-  }
-
-  function closeOverlay() {
-    document.getElementById('staff-overlay').classList.remove('show');
-    setClearVisible(false);
-    pendingRow = null;
-  }
-
-  function overlayBgClose(e) {
-    if (e.target.id === 'staff-overlay') closeOverlay();
-  }
-
-  // Esc でも抜けられるようにする（PC 利用時の逃げ道）
-  document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Escape' && e.keyCode !== 27) return;
-    if (document.getElementById('staff-overlay').classList.contains('show')) closeOverlay();
-  });
-
-  // ═══ オフライン表示 ═══
-  (function() {
-    var bar = document.getElementById('offline-bar');
-    function sync() { bar.classList.toggle('show', !navigator.onLine); }
-    window.addEventListener('online', sync);
-    window.addEventListener('offline', sync);
-    sync();
-  })();
-
-  // ═══ ホーム画面に追加（Android / デスクトップ Chrome）═══
-  (function() {
-    var bar = document.getElementById('install-bar');
-    var deferred = null;
-
-    window.addEventListener('beforeinstallprompt', function(e) {
-      e.preventDefault();
-      deferred = e;
-      bar.classList.add('show');
+  if (t.options) { // 行き先を選ぶツール（シフト入力・交通費計算）
+    var hit = me ? findOption(t.options, me) : null;      // 名前の選択肢なら直行
+    if (!hit) hit = findOption(t.options, getChoice(t.id)); // 前回の選択に直行
+    if (hit) return followOption(hit, t.id);
+    return sheetOpen({
+      title: '進み先を選んでください',
+      lead: esc(t.name) + '：次からはこの選択で直接開きます。変更したいときは右上の名前から選び直せます。',
+      items: t.options.map(function(o){ return { label:o.label, current:o.label === me, opt:o }; }),
+      onPick: function(it){ followOption(it.opt, t.id); }
     });
+  }
+}
+function findOption(options, label){
+  if (!label) return null;
+  for (var i = 0; i < options.length; i++) if (options[i].label === label) return options[i];
+  return null;
+}
+/* 名前の選択肢なら本人として記憶し、それ以外はそのツールの選択として記憶する */
+function followOption(opt, id){
+  if (ALL_STAFF.indexOf(opt.label) >= 0) setStaff(opt.label);
+  else setChoice(id, opt.label);
+  sheet(false);
+  var url = opt.url;
+  if (opt.appendStaff) {
+    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
+  }
+  location.href = url;
+}
+function navStaff(url, name){
+  setStaff(name);
+  location.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
+}
 
-    bar.addEventListener('click', function() {
-      if (!deferred) return;
-      bar.classList.remove('show');
-      deferred.prompt();
-      deferred.userChoice.then(function() { deferred = null; });
-    });
+/* ═══ 連絡先 ═══ */
+$('#contacts').innerHTML = CONTACTS.map(function(c){
+  return '<a class="row" href="tel:' + c.tel.replace(/-/g, '') + '">'
+    + '<span class="ic ' + (c.lead ? 'red' : 'slate') + '">' + svg('tel') + '</span>'
+    + '<span class="tx"><b>' + esc(c.name) + '</b><small class="tel">' + esc(c.tel) + '</small></span>'
+    + (c.lead ? '<span class="pill">発信</span>' : '')
+    + '</a>';
+}).join('');
 
-    window.addEventListener('appinstalled', function() {
-      deferred = null;
-      bar.classList.remove('show');
-    });
-  })();
+/* ═══ お知らせ（掲示板） ═══ */
+var NOTICES = [];
+var HOME_MAX = 3;
 
-  // ═══ Service Worker（オフライン対応）═══
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('sw.js').catch(function() {
-        /* 登録失敗時も通常のページとして動作する */
+function readSet(){
+  try { return new Set(JSON.parse(localStorage.getItem(READ_KEY) || '[]')); }
+  catch(e) { return new Set(); }
+}
+function markRead(id){
+  var r = readSet(); r.add(id);
+  lsSet(READ_KEY, JSON.stringify(Array.from(r)));
+}
+/* 本文から短く安定した鍵をつくる（既読の記録用。記号や改行が入っても壊れない） */
+function keyOf(str){
+  var h = 5381;
+  for (var i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+  return 'n' + h.toString(36);
+}
+/* GASの1件を、この画面で使う形にそろえる */
+function normalize(it, i){
+  /* 1行目は見出しに使うので、2行目以降を本文にする（見出しの重複を避ける） */
+  var lines = String(it.text || '').split('\n');
+  var title = lines[0] || 'お知らせ';
+  var rest = lines.slice(1).join('\n').replace(/^\s+/, '');
+
+  var when = it.when ? (it.when + (it.youbi ? '（' + it.youbi + '）' : '')) : '';
+  var meta = [];
+  if (when) meta.push(when);
+  if (it.time) meta.push(it.time);
+  if (!when && it.date) meta.push(it.date);
+  return {
+    id: keyOf(String(it.id || '') + '|' + (it.date || '') + '|' + (it.when || '') + '|' + (it.text || '')),
+    type: it.type || 'お知らせ',
+    title: title,
+    body: rest || it.text || '',
+    meta: meta.join('　'),
+    date: it.when || it.date || '',
+    by: it.name || ''
+  };
+}
+function tagClass(type){
+  return type === '重要' ? ' imp' : type === '会議' ? ' meet' : '';
+}
+function noticeRow(n, unread){
+  return '<div class="nt' + (unread ? '' : ' read') + '" data-id="' + esc(n.id) + '">'
+    + '<button type="button" aria-expanded="false">'
+    + (unread ? '<span class="u"></span>' : '')
+    + (n.type === '重要' || n.type === '会議'
+        ? '<span class="tag' + tagClass(n.type) + '">' + esc(n.type) + '</span>' : '')
+    + '<span class="ntx"><b>' + esc(n.title) + '</b>'
+    + (n.meta ? '<small>' + esc(n.meta) + '</small>' : '')
+    + '</span><span class="car"></span></button>'
+    + '<div class="wrap"><div><div class="body"><p>' + esc(n.body) + '</p>'
+    + (n.by ? '<div class="by">投稿：' + esc(n.by) + '</div>' : '')
+    + '</div></div></div></div>';
+}
+function paintNotices(){
+  var r = readSet();
+  var unread = NOTICES.filter(function(n){ return !r.has(n.id); }).length;
+  var b = $('#badge');
+  b.hidden = unread === 0; b.textContent = unread;
+
+  var home = $('#homeNotice');
+  if (NOTICES.length) {
+    var shown = NOTICES.slice(0, HOME_MAX), rest = NOTICES.length - shown.length;
+    home.hidden = false;
+    home.innerHTML = shown.map(function(n){ return noticeRow(n, !r.has(n.id)); }).join('')
+      + (rest ? '<button class="more" type="button" data-goto="info">過去のお知らせを見る<em>ほかに' + rest + '件 ›</em></button>' : '');
+  } else {
+    home.hidden = true; home.innerHTML = '';
+  }
+
+  $('#allNotice').innerHTML =
+    (NOTICES.length
+      ? NOTICES.map(function(n){ return noticeRow(n, !r.has(n.id)); }).join('')
+      : '<div class="empty">現在お知らせはありません。<br>投稿するとここに残ります。</div>')
+    + '<a class="more go" href="' + esc(NOTICE_POST) + '">掲示板に投稿する<em>›</em></a>';
+
+  Array.prototype.forEach.call(document.querySelectorAll('.nt > button'), function(btn){
+    btn.addEventListener('click', function(){
+      var nt = btn.parentElement, open = nt.hasAttribute('open');
+      nt.toggleAttribute('open', !open);
+      btn.setAttribute('aria-expanded', String(!open));
+      if (open) return;
+      var dot = nt.querySelector('.u');
+      if (!dot) return;
+      markRead(nt.dataset.id);
+      var left = NOTICES.filter(function(n){ return !readSet().has(n.id); }).length;
+      b.hidden = left === 0; b.textContent = left;
+      Array.prototype.forEach.call(document.querySelectorAll('.nt'), function(el){
+        if (el.dataset.id !== nt.dataset.id) return; // ホームと一覧の両方を既読にする
+        el.classList.add('read');
+        var d = el.querySelector('.u'); if (d) d.remove();
       });
     });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-goto]'), function(el){
+    el.addEventListener('click', function(){ go(el.dataset.goto); });
+  });
+}
+paintNotices();
+
+(function loadNotices(){
+  if (!NOTICE_API || NOTICE_API.indexOf('http') !== 0) return;
+  fetch(NOTICE_API + '?v=' + Date.now())
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data || !data.ok || !data.items || !data.items.length) return;
+      NOTICES = data.items.map(normalize);
+      paintNotices();
+    })
+    .catch(function(){ /* 読み込み失敗時は現状のまま */ });
+})();
+
+/* ═══ タブ ═══ */
+function go(v){
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(x){
+    x.setAttribute('aria-selected', x.dataset.v === v);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.view'), function(x){
+    x.classList.remove('on', 'enter');
+  });
+  $('#v-' + v).classList.add('on');
+  window.scrollTo({ top: 0 });
+}
+Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(t){
+  t.addEventListener('click', function(){ go(t.dataset.v); });
+});
+
+/* スクロールしたらヘッダーに境界線を出す */
+addEventListener('scroll', function(){
+  $('#bar').classList.toggle('stuck', scrollY > 4);
+}, { passive:true });
+
+/* ═══ シート（名前・行き先の選択） ═══ */
+function sheet(on){
+  $('#sheet').classList.toggle('on', on);
+  $('#scrim').classList.toggle('on', on);
+}
+function sheetOpen(cfg){
+  $('#sheetTitle').textContent = cfg.title;
+  $('#sheetLead').innerHTML = cfg.lead || '';
+  $('#sheetLead').hidden = !cfg.lead;
+
+  var box = $('#picks');
+  box.innerHTML = '';
+  cfg.items.forEach(function(it){
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pick';
+    if (it.current) btn.setAttribute('aria-current', 'true');
+    /* 名前の選択肢は頭文字、それ以外（行き先）は矢印にする */
+    var mark = ALL_STAFF.indexOf(it.label) >= 0 ? esc(initial(it.label)) : '\u203A';
+    btn.innerHTML = '<i>' + mark + '</i><span class="pt">' + esc(it.label)
+      + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '') + '</span>';
+    btn.addEventListener('click', function(){ cfg.onPick(it); });
+    box.appendChild(btn);
+  });
+
+  var clear = $('#sheetClear');
+  clear.hidden = !cfg.allowClear;
+  sheet(true);
+}
+$('#sheetClear').addEventListener('click', function(){ clearStaff(); sheet(false); });
+$('#sheetCancel').addEventListener('click', function(){ sheet(false); });
+$('#sheetX').addEventListener('click', function(){ sheet(false); });
+$('#scrim').addEventListener('click', function(){ sheet(false); });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' || e.keyCode === 27) sheet(false);
+});
+
+/* ═══ 名前 ═══ */
+function word(){
+  var h = new Date().getHours();
+  return h < 10 ? 'おはようございます' : h < 18 ? 'おつかれさまです' : 'おつかれさまでした';
+}
+function paintWho(){
+  var nm = getStaff(), b = $('#whoBtn');
+  if (nm) {
+    b.classList.remove('unset');
+    $('#whoIni').textContent = initial(nm);
+    $('#whoName').textContent = nm;
+    $('#greet').textContent = nm + 'さん、' + word();
+  } else {
+    b.classList.add('unset');
+    $('#whoIni').textContent = '?';
+    $('#whoName').textContent = '名前を選ぶ';
+    $('#greet').textContent = word();
   }
+}
+$('#whoBtn').addEventListener('click', function(){
+  var me = getStaff();
+  sheetOpen({
+    title: 'あなたの名前を選んでください',
+    lead: 'この端末に保存され、次からは自動で表示されます。<br>名前を変えると、各ツールで覚えている行き先もリセットされます。',
+    items: ALL_STAFF.map(function(n){ return { label:n, current:n === me }; }),
+    allowClear: !!me,
+    onPick: function(it){ setStaff(it.label); sheet(false); }
+  });
+});
+
+paintWho();
+paintTools();
+
+/* ═══ オフライン表示 ═══ */
+(function(){
+  var el = $('#offline');
+  function sync(){ el.classList.toggle('show', !navigator.onLine); }
+  addEventListener('online', sync);
+  addEventListener('offline', sync);
+  sync();
+})();
+
+/* ═══ ホーム画面に追加（Android / デスクトップChrome）═══ */
+(function(){
+  var bar = $('#install'), deferred = null;
+  addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); deferred = e; bar.classList.add('show');
+  });
+  bar.addEventListener('click', function(){
+    if (!deferred) return;
+    bar.classList.remove('show');
+    deferred.prompt();
+    deferred.userChoice.then(function(){ deferred = null; });
+  });
+  addEventListener('appinstalled', function(){ deferred = null; bar.classList.remove('show'); });
+})();
+
+/* ═══ Service Worker（オフライン対応）═══ */
+if ('serviceWorker' in navigator) {
+  addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){ /* 失敗しても通常ページとして動く */ });
+  });
+}
 </script>
 </body>
 </html>

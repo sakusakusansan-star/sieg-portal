@@ -172,7 +172,6 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
   letter-spacing:.07em;font-variant-numeric:tabular-nums;margin-top:2px}
 .pill{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;flex:none;
   background:var(--red-tint);color:var(--red);white-space:nowrap}
-.pill.calm{background:var(--sunk);color:var(--mute)}
 
 .empty{padding:34px 18px;text-align:center;color:var(--mute);font-size:13px;line-height:1.9}
 .hint{font-size:12px;color:var(--mute);line-height:1.85;text-align:center;padding:22px 14px 4px}
@@ -216,11 +215,15 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
   max-height:84dvh;overflow:auto}
 .sheet.on{transform:none}
 .grip{width:36px;height:4px;border-radius:2px;background:var(--hair);margin:6px auto 15px}
-.sheet h4{font-size:16.5px;font-weight:800;padding:0 20px 5px}
+.sheet{position:relative}
+.sheet .x{position:absolute;top:10px;right:12px;width:32px;height:32px;border-radius:50%;
+  background:var(--sunk);color:var(--mute);font-size:13px;display:grid;place-items:center}
+.sheet .x:active{opacity:.55}
+.sheet h4{font-size:16.5px;font-weight:800;padding:0 52px 5px 20px}
 .sheet .lead{font-size:12.5px;color:var(--mute);padding:0 20px 15px;line-height:1.7}
 .pick{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
   padding:14px 20px;font-size:16px;font-weight:700;position:relative}
-.pick+.pick::before,.pick.clear::before{content:"";position:absolute;
+.pick+.pick::before,.pick.clear::before,.pick.cancel::before{content:"";position:absolute;
   left:20px;right:0;top:0;height:1px;background:var(--hair2)}
 .pick:active{background:var(--sunk)}
 .pick i{width:31px;height:31px;border-radius:50%;background:var(--sunk);display:grid;
@@ -230,6 +233,7 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
 .pick[aria-current=true]{color:var(--amber)}
 .pick[aria-current=true] i{background:var(--amber);color:#fff}
 .pick.clear{color:var(--mute);font-weight:400;font-size:13.5px;margin-top:6px}
+.pick.cancel{color:var(--ink2);font-weight:700;font-size:14.5px;justify-content:center}
 </style>
 </head>
 <body>
@@ -298,10 +302,12 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-label="選択">
   <div class="grip"></div>
+  <button class="x" id="sheetX" type="button" aria-label="閉じる">✕</button>
   <h4 id="sheetTitle">あなたの名前を選んでください</h4>
   <p class="lead" id="sheetLead">この端末に保存され、次からは自動で表示されます。</p>
   <div id="picks"></div>
   <button class="pick clear" id="sheetClear" type="button" hidden>名前を消して「未設定」に戻す</button>
+  <button class="pick cancel" id="sheetCancel" type="button">やめる</button>
 </div>
 
 <script>
@@ -539,7 +545,7 @@ function tagClass(type){
 }
 function noticeRow(n, unread){
   return '<div class="nt' + (unread ? '' : ' read') + '" data-id="' + esc(n.id) + '">'
-    + '<button type="button">'
+    + '<button type="button" aria-expanded="false">'
     + (unread ? '<span class="u"></span>' : '')
     + (n.type === '重要' || n.type === '会議'
         ? '<span class="tag' + tagClass(n.type) + '">' + esc(n.type) + '</span>' : '')
@@ -576,6 +582,7 @@ function paintNotices(){
     btn.addEventListener('click', function(){
       var nt = btn.parentElement, open = nt.hasAttribute('open');
       nt.toggleAttribute('open', !open);
+      btn.setAttribute('aria-expanded', String(!open));
       if (open) return;
       var dot = nt.querySelector('.u');
       if (!dot) return;
@@ -657,6 +664,8 @@ function sheetOpen(cfg){
   sheet(true);
 }
 $('#sheetClear').addEventListener('click', function(){ clearStaff(); sheet(false); });
+$('#sheetCancel').addEventListener('click', function(){ sheet(false); });
+$('#sheetX').addEventListener('click', function(){ sheet(false); });
 $('#scrim').addEventListener('click', function(){ sheet(false); });
 document.addEventListener('keydown', function(e){
   if (e.key === 'Escape' || e.keyCode === 27) sheet(false);

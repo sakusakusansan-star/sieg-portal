@@ -635,9 +635,23 @@ addEventListener('scroll', function(){
 }, { passive:true });
 
 /* ═══ シート（名前・行き先の選択） ═══ */
+var sheetScrollY = 0;
 function sheet(on){
   $('#sheet').classList.toggle('on', on);
   $('#scrim').classList.toggle('on', on);
+  if (on) {
+    sheetScrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = -sheetScrollY + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+  } else {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    window.scrollTo(0, sheetScrollY);
+  }
 }
 function sheetOpen(cfg){
   $('#sheetTitle').textContent = cfg.title;

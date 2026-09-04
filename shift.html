@@ -253,8 +253,10 @@
   .msg.info { background: rgba(232,163,61,0.09); border-left: 3px solid var(--amber); }
 
   /* 確認オーバーレイ */
+  /* 高さはJSで実寸を入れる（アドレスバーの出入りでズレないように） */
   .ov {
-    position: fixed; inset: 0;
+    position: fixed; left: 0; top: 0;
+    width: 100%; height: 100%;
     background: rgba(6,10,18,0.80);
     backdrop-filter: blur(3px);
     display: none;
@@ -267,8 +269,9 @@
   .ov-box {
     width: 100%;
     max-width: 380px;
-    max-height: 82vh;
+    max-height: 100%;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     background: var(--bg2);
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -448,6 +451,22 @@
   };
 
   function $(id) { return document.getElementById(id); }
+
+  /* 覆いの高さに、いま実際に見えている高さを入れる */
+  function ovFit() {
+    var vv = window.visualViewport;
+    var ov = $('ov');
+    ov.style.height = (vv ? vv.height : window.innerHeight) + 'px';
+    ov.style.top = (vv ? vv.offsetTop : 0) + 'px';
+  }
+  function openOv() {
+    ovFit();
+    $('ov').classList.add('show');
+    var box = document.querySelector('.ov-box');
+    if (box) box.scrollTop = 0;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
   function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function apiReady() { return SHIFT_API.indexOf('http') === 0; }
@@ -495,10 +514,14 @@
       b.addEventListener('click', function() { setName(n); closeOv(); });
       box.appendChild(b);
     });
-    $('ov').classList.add('show');
+    openOv();
   }
 
-  function closeOv() { $('ov').classList.remove('show'); }
+  function closeOv() {
+    $('ov').classList.remove('show');
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
 
   /* ═══ 月 ═══ */
 
@@ -869,7 +892,7 @@
     var go = $('ov-go');
     go.textContent = del ? '取り消す' : '送信する';
     go.classList.toggle('del', del);
-    $('ov').classList.add('show');
+    openOv();
   }
 
   function send() {
@@ -943,6 +966,12 @@
     $('ov-cancel').addEventListener('click', closeOv);
     $('ov-go').addEventListener('click', function() { closeOv(); send(); });
     $('ov').addEventListener('click', function(e) { if (e.target === $('ov')) closeOv(); });
+    var refit = function() { if ($('ov').classList.contains('show')) ovFit(); };
+    window.addEventListener('resize', refit);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', refit);
+      window.visualViewport.addEventListener('scroll', refit);
+    }
     $('send').addEventListener('click', openConfirm);
 
     Array.prototype.forEach.call(document.querySelectorAll('.modes button'), function(b) {

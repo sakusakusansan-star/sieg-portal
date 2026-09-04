@@ -448,6 +448,15 @@
   };
 
   function $(id) { return document.getElementById(id); }
+  var ovScrollY = 0;
+  function openOv() {
+    ovScrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = -ovScrollY + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    $('ov').classList.add('show');
+  }
   function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function apiReady() { return SHIFT_API.indexOf('http') === 0; }
@@ -495,10 +504,17 @@
       b.addEventListener('click', function() { setName(n); closeOv(); });
       box.appendChild(b);
     });
-    $('ov').classList.add('show');
+    openOv();
   }
 
-  function closeOv() { $('ov').classList.remove('show'); }
+  function closeOv() {
+    $('ov').classList.remove('show');
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    window.scrollTo(0, ovScrollY);
+  }
 
   /* ═══ 月 ═══ */
 
@@ -869,7 +885,7 @@
     var go = $('ov-go');
     go.textContent = del ? '取り消す' : '送信する';
     go.classList.toggle('del', del);
-    $('ov').classList.add('show');
+    openOv();
   }
 
   function send() {

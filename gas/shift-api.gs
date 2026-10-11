@@ -32,6 +32,9 @@ var ALLOW_STAFF = ['福岡', '清田', '福山', '古川'];
 // シフト表の各スタッフの見出し（B列）と、送るデータの対応
 var LABEL_KEYS = ['client', 'carrier', 'place', 'hotel'];
 
+// コードの版。?action=ping で表示されるので、再デプロイが反映されたかの確認に使う。
+var CODE_VERSION = '2026-10-11';
+
 // ═══ 入口 ═══
 
 function doGet(e) {
@@ -39,7 +42,7 @@ function doGet(e) {
     var p = (e && e.parameter) || {};
 
     // 疎通確認だけは合言葉なしで通す（中身は何も返さない）
-    if (p.action === 'ping') return json({ ok: true, message: 'shift-api is alive' });
+    if (p.action === 'ping') return json({ ok: true, message: 'shift-api is alive', version: CODE_VERSION });
 
     // シフトの中身は、合言葉が合っているときだけ返す
     if (TOKEN && String(p.token || '') !== TOKEN) {

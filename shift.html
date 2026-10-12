@@ -413,6 +413,7 @@
   </div>
 </div>
 
+<script src="gas-client.js"></script>
 <script>
   /* ═══════════════════════════════════════════════════════════
      設定：Google Apps Script のデプロイURLをここに貼る
@@ -470,7 +471,6 @@
   function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function apiReady() { return SHIFT_API.indexOf('http') === 0; }
-  function tokenParam() { return SHIFT_TOKEN ? '&token=' + encodeURIComponent(SHIFT_TOKEN) : ''; }
 
   function showMsg(kind, html) {
     var el = $('msg');
@@ -532,8 +532,7 @@
    */
   function initMonths() {
     if (!apiReady()) return buildMonths(defaultMonths());
-    fetch(SHIFT_API + '?action=months' + tokenParam() + '&v=' + Date.now())
-      .then(function(r) { return r.json(); })
+    GasClient.get(SHIFT_API, { action: 'months', token: SHIFT_TOKEN })
       .then(function(data) {
         if (!data || !data.ok || !data.months || !data.months.length) throw new Error('月が取れません');
         buildMonths(upcoming(data.months));
@@ -745,13 +744,8 @@
   /* ═══ 登録済みの読み込み ═══ */
   function loadExisting() {
     if (!apiReady() || !state.name || !state.year) return;
-    var url = SHIFT_API + '?action=list' + tokenParam() +
-      '&name=' + encodeURIComponent(state.name) +
-      '&year=' + state.year + '&month=' + state.month +
-      '&v=' + Date.now();
     $('day-list').innerHTML = '<div class="empty-note">読み込み中…</div>';
-    fetch(url)
-      .then(function(r) { return r.json(); })
+    GasClient.get(SHIFT_API, { action: 'list', token: SHIFT_TOKEN, name: state.name, year: state.year, month: state.month })
       .then(function(data) {
         if (!data || !data.ok) throw new Error((data && data.error) || '読み込みに失敗しました');
         state.existing = data.days || {};
@@ -900,6 +894,8 @@
     var del = state.mode === 'delete';
     var payload = {
       token: SHIFT_TOKEN,
+      // 自動でやり直したときに、GAS側で同じ送信と分かるようにする（送信ログの二重記録を防ぐ）
+      requestId: GasClient.newId(),
       action: del ? 'delete' : 'submit',
       name: state.name,
       year: state.year,
@@ -920,14 +916,8 @@
     syncSend();
     hideMsg();
 
-    // Content-Type を text/plain にして、CORSの事前確認（preflight）を起こさない
-    fetch(SHIFT_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-      redirect: 'follow'
-    })
-      .then(function(r) { return r.json(); })
+    // その日のセルを上書き／空にするだけなので、Google側の一時的な失敗は自動でやり直す
+    GasClient.post(SHIFT_API, payload, { retry: true })
       .then(function(data) {
         if (!data || !data.ok) throw new Error((data && data.error) || '送信できませんでした');
         state.picked = {};

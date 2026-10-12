@@ -32,6 +32,9 @@ var ALLOW_STAFF = ['福岡', '清田', '福山', '古川'];
 // シフト表の各スタッフの見出し（B列）と、送るデータの対応
 var LABEL_KEYS = ['client', 'carrier', 'place', 'hotel'];
 
+// コードの版。?action=ping で表示されるので、再デプロイが反映されたかの確認に使う。
+var CODE_VERSION = '2026-10-11';
+
 // ═══ 入口 ═══
 
 function doGet(e) {
@@ -39,7 +42,7 @@ function doGet(e) {
     var p = (e && e.parameter) || {};
 
     // 疎通確認だけは合言葉なしで通す（中身は何も返さない）
-    if (p.action === 'ping') return json({ ok: true, message: 'shift-api is alive' });
+    if (p.action === 'ping') return json({ ok: true, message: 'shift-api is alive', version: CODE_VERSION });
 
     // シフトの中身は、合言葉が合っているときだけ返す
     if (TOKEN && String(p.token || '') !== TOKEN) {
@@ -78,7 +81,20 @@ function doPost(e) {
     if (!entries.length) return json({ ok: false, error: '日にちが選ばれていません' });
 
     lock.waitLock(20000);
-    return json(writeShift(action, name, year, month, entries));
+
+    // 通信が途中で切れたときにスマホ側が自動でやり直すので、同じ送信IDが
+    // もう一度来たら書き込まずに前回の結果を返す（送信ログが2行になるのを防ぐ）。
+    var requestId = String(body.requestId || '').slice(0, 100);
+    var cache = CacheService.getScriptCache();
+    if (requestId) {
+      var done = cache.get('shift:' + requestId);
+      if (done) return json(JSON.parse(done));
+    }
+    var result = writeShift(action, name, year, month, entries);
+    if (result.ok && requestId) {
+      try { cache.put('shift:' + requestId, JSON.stringify(result), 21600); } catch (ignore) {}
+    }
+    return json(result);
 
   } catch (err) {
     return json({ ok: false, error: String(err && err.message || err) });
@@ -111,16 +127,27 @@ function writeShift(action, name, year, month, entries) {
     if (!start) return;
     if (!end || end < start) end = start;
 
+    var cols = [];
     for (var day = start; day <= end; day++) {
       var col = header.days[day];
       if (!col) { skipped.push(day); continue; }
+      cols.push(col);
+      written++;
+    }
+
+    // 1セルずつ書くと「日数×4行」回の書き込みになり遅いので、
+    // 列が隣り合っているかたまりごとに1回で書く。
+    // （ほかのセルを読み直して書き戻すことはしないので、数式などは壊さない）
+    runsOf(cols).forEach(function(run) {
       LABEL_KEYS.forEach(function(key) {
         var row = rows[key];
         if (!row) return;
-        sheet.getRange(row, col).setValue(del ? '' : String(entry[key] || ''));
+        var v = del ? '' : String(entry[key] || '');
+        var line = [];
+        for (var i = 0; i < run.count; i++) line.push(v);
+        sheet.getRange(row, run.col, 1, run.count).setValues([line]);
       });
-      written++;
-    }
+    });
 
     // ログはあくまで控え。ここで失敗してもシフト表への書き込みは生かす。
     try {
@@ -149,6 +176,18 @@ function writeShift(action, name, year, month, entries) {
   };
 }
 
+/** 列番号の並びを、隣り合うかたまり {col, count} に分ける */
+function runsOf(cols) {
+  var sorted = cols.slice().sort(function(a, b) { return a - b; });
+  var runs = [];
+  sorted.forEach(function(c) {
+    var last = runs[runs.length - 1];
+    if (last && c === last.col + last.count) last.count++;
+    else if (!last || c >= last.col + last.count) runs.push({ col: c, count: 1 });
+  });
+  return runs;
+}
+
 // ═══ 読み出し ═══
 
 /**
@@ -157,15 +196,37 @@ function writeShift(action, name, year, month, entries) {
  * シフト表を1枚作れば、その月がそのままスマホ側の選択肢に出る。
  */
 function listMonths() {
-  var months = [];
+  var byYm = {};
   book().getSheets().forEach(function(sheet) {
     var ym = sheetYearMonth(sheet);
     if (!ym) return;
     if (!findDayHeader(sheet)) return;   // 集計レポートなどはここで外れる
-    months.push({ year: ym.year, month: ym.month, sheet: sheet.getName() });
+    var key = ym.year * 100 + ym.month;
+    // 同じ月に「（保存）」の控えと本番があれば本番を出す（書き込み先と揃える）
+    if (byYm[key] && byYm[key].archive && !isArchive(sheet)) byYm[key] = null;
+    if (!byYm[key]) byYm[key] = { year: ym.year, month: ym.month, sheet: sheet.getName(), archive: isArchive(sheet) };
+  });
+  var months = Object.keys(byYm).map(function(k) {
+    var m = byYm[k];
+    return { year: m.year, month: m.month, sheet: m.sheet };
   });
   months.sort(function(a, b) { return (a.year - b.year) || (a.month - b.month); });
   return { ok: true, months: months };
+}
+
+/** 「2026-07（保存）」のような控えのシートか */
+function isArchive(sheet) {
+  return sheet.getName().indexOf('保存') !== -1;
+}
+
+/** 月しか分からないときの年。今日に一番近い年（12月に見る「1月」は翌年）*/
+function nearestYear(month) {
+  var now = new Date();
+  var y = now.getFullYear();
+  var diff = month - (now.getMonth() + 1);
+  if (diff > 6) return y - 1;
+  if (diff < -6) return y + 1;
+  return y;
 }
 
 /** シートが何年何月のものかを、A1・B1とシート名から読み取る */
@@ -175,17 +236,19 @@ function sheetYearMonth(sheet) {
   if (sheet.getLastRow() >= 1 && sheet.getLastColumn() >= 2) {
     var head = sheet.getRange(1, 1, 1, 2).getValues()[0];
     var y = parseInt(norm(head[0]), 10);
-    var m = norm(head[1]).match(/^(\d{1,2})月$/);
+    // B1 は「9月」の文字でも、数字の 9 でもよい
+    var m = norm(head[1]).match(/^(\d{1,2})月?$/);
     if (y >= 2000 && y < 2100 && m) { year = y; month = Number(m[1]); }
   }
 
   if (!month) {
     var name = norm(sheet.getName());
-    var hit = name.match(/(\d{1,2})月/);
+    // 「11月」の中の「1月」に当たらないよう、数字の途中からは拾わない
+    var hit = name.match(/(?:^|[^\d])(\d{1,2})月/);
     if (!hit) return null;
     month = Number(hit[1]);
     var yearHit = name.match(/(20\d{2})/);
-    year = yearHit ? Number(yearHit[1]) : new Date().getFullYear();
+    year = yearHit ? Number(yearHit[1]) : nearestYear(month);
   }
 
   if (month < 1 || month > 12) return null;
@@ -206,6 +269,13 @@ function listShift(name, year, month) {
   var rows = findStaffRows(sheet, name, header.row);
   if (!rows) return { ok: false, error: '「' + name + '」の行が見つかりません' };
 
+  // 1セルずつ読むと最大で「31日×4行」回の読み込みになり遅いので、
+  // そのスタッフの行をまとめて1回で読む。
+  var rowNums = LABEL_KEYS.map(function(key) { return rows[key]; }).filter(function(r) { return r; });
+  var top = Math.min.apply(null, rowNums);
+  var bottom = Math.max.apply(null, rowNums);
+  var block = sheet.getRange(top, 1, bottom - top + 1, sheet.getLastColumn()).getDisplayValues();
+
   var days = {};
   Object.keys(header.days).forEach(function(day) {
     var col = header.days[day];
@@ -213,7 +283,7 @@ function listShift(name, year, month) {
     var any = false;
     LABEL_KEYS.forEach(function(key) {
       var row = rows[key];
-      var v = row ? String(sheet.getRange(row, col).getValue()).trim() : '';
+      var v = row ? String(block[row - top][col - 1]).trim() : '';
       out[key] = v;
       if (v) any = true;
     });
@@ -231,25 +301,22 @@ function listShift(name, year, month) {
  * 「日付」の行がある＝実際のシフト表であることまで確かめてから返す。
  */
 function findMonthSheet(ss, year, month) {
-  var y = String(year);
-  var m = String(month) + '月';
-
-  var candidates = ss.getSheets().filter(function(sh) {
-    var n = norm(sh.getName());
-    if (n.indexOf(y) >= 0 && n.indexOf(m) >= 0) return true;   // 例）2026年9月 シフト表
-    if (n === m) return true;                                   // 例）9月
-    if (sh.getLastRow() >= 1 && sh.getLastColumn() >= 2) {      // 例）A1に年・B1に「9月」
-      var head = sh.getRange(1, 1, 1, 2).getValues()[0];
-      if (norm(head[0]) === y && norm(head[1]) === m) return true;
-    }
-    return false;
-  });
-
-  // 「日付」の行を持つものだけがシフト表。集計レポートはここで外れる。
-  for (var i = 0; i < candidates.length; i++) {
-    if (findDayHeader(candidates[i])) return candidates[i];
+  // 年月の読み取りは月一覧（listMonths）と同じ sheetYearMonth を使う。
+  // 以前は名前の部分一致で探していたため、「1月」が「11月」に当たったり、
+  // 「（保存）」の控えのシートに書き込んだりするおそれがあった。
+  var archived = null;
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    var sh = sheets[i];
+    var ym = sheetYearMonth(sh);
+    if (!ym || ym.year !== Number(year) || ym.month !== Number(month)) continue;
+    // 「日付」の行を持つものだけがシフト表。集計レポートはここで外れる。
+    if (!findDayHeader(sh)) continue;
+    // 本番のシートを優先し、控えしか無いときだけ控えを使う（shift-form のGASと同じ決め方）
+    if (isArchive(sh)) { archived = archived || sh; continue; }
+    return sh;
   }
-  return null;
+  return archived;
 }
 
 /** 「日付」の行を探し、日にち → 列番号 の対応表を作る */

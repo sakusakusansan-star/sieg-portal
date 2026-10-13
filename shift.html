@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>シフト入力｜Sieg 業務ポータル</title>
 <meta name="description" content="スマホからシフトを送信して、シフト表に直接書き込むページ。">
-<meta name="theme-color" content="#0B1220">
+<meta name="theme-color" content="#EFF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="sieg-theme.css">
 <link rel="stylesheet" href="docs/docs.css">
 <style>
   /* ═══ このページ専用（配色・土台は docs.css と共通） ═══ */
@@ -33,7 +32,7 @@
     gap: 8px;
   }
   .card-head .req {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--sg-font); font-variant-numeric: tabular-nums;
     font-size: 10px;
     letter-spacing: 1px;
     color: var(--muted2);
@@ -61,7 +60,7 @@
     font-size: 13px;
     font-weight: 700;
     color: var(--text);
-    background: rgba(255,255,255,0.05);
+    background: var(--sg-sunk);
     border: 1px solid var(--line);
     border-radius: 9px;
     padding: 9px 13px;
@@ -78,7 +77,7 @@
     font-size: 13px;
     font-weight: 700;
     color: var(--text);
-    background: rgba(255,255,255,0.05);
+    background: var(--sg-sunk);
     border: 1px solid var(--line);
     border-radius: 9px;
     padding: 9px 13px;
@@ -88,7 +87,6 @@
     background: var(--amber);
     border-color: var(--amber);
     color: var(--ink);
-    box-shadow: 0 0 12px rgba(232,163,61,0.30);
   }
 
   /* 入力欄 */
@@ -97,7 +95,7 @@
     font-family: inherit;
     font-size: 16px; /* iOSで自動ズームさせない */
     color: var(--text);
-    background: rgba(255,255,255,0.05);
+    background: var(--sg-sunk);
     border: 1px solid var(--line);
     border-radius: 9px;
     padding: 11px 12px;
@@ -126,8 +124,8 @@
     color: var(--muted2);
     letter-spacing: 1px;
   }
-  .cal-dow .sun { color: rgba(232,106,90,0.75); }
-  .cal-dow .sat { color: rgba(110,165,235,0.75); }
+  .cal-dow .sun { color: var(--sg-red-tint); }
+  .cal-dow .sat { color: var(--sg-sat); }
   .cal-cell {
     position: relative;
     aspect-ratio: 1 / 1;
@@ -136,36 +134,33 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--sg-font); font-variant-numeric: tabular-nums;
     font-size: 15px;
     font-weight: 700;
     color: var(--text);
-    background: rgba(255,255,255,0.04);
+    background: var(--sg-sunk);
     border: 1px solid var(--line);
     border-radius: 9px;
     cursor: pointer;
     padding: 0;
   }
   .cal-cell.blank { background: none; border: none; cursor: default; }
-  .cal-cell.sun { color: #E86A5A; }
-  .cal-cell.sat { color: #6EA5EB; }
+  .cal-cell.sun { color: var(--sg-sun); }
+  .cal-cell.sat { color: var(--sg-sat); }
   .cal-cell .mark {
     width: 5px; height: 5px; border-radius: 50%;
     background: var(--green);
-    box-shadow: 0 0 6px var(--green);
   }
   .cal-cell .mark.hold { background: var(--red); box-shadow: 0 0 6px var(--red); }
   .cal-cell.on {
     background: var(--amber);
     border-color: var(--amber);
     color: var(--ink);
-    box-shadow: 0 0 12px rgba(232,163,61,0.30);
   }
   .cal-cell.on .mark { background: var(--ink); box-shadow: none; }
   .cal-cell.on.del {
     background: var(--red);
     border-color: var(--red);
-    box-shadow: 0 0 12px rgba(232,106,90,0.30);
   }
   .cal-legend {
     display: flex;
@@ -189,13 +184,13 @@
     gap: 10px;
     align-items: center;
     font-size: 12px;
-    background: rgba(255,255,255,0.03);
+    background: var(--sg-sunk);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 8px 10px;
   }
   .day-row .d {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--sg-font); font-variant-numeric: tabular-nums;
     font-size: 13px;
     font-weight: 800;
     color: var(--amber2);
@@ -211,7 +206,7 @@
     bottom: 0;
     margin: 18px -14px 0;
     padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
-    background: linear-gradient(180deg, rgba(11,18,32,0) 0%, var(--bg2) 30%);
+    background: linear-gradient(180deg, transparent 0%, var(--sg-bg) 30%);
   }
   .send {
     width: 100%;
@@ -225,10 +220,10 @@
     border-radius: 11px;
     padding: 15px;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(232,163,61,0.25);
+    box-shadow: none;
   }
-  .send:disabled { background: rgba(255,255,255,0.10); color: var(--muted2); box-shadow: none; cursor: default; }
-  .send.del { background: var(--red); color: #fff; box-shadow: 0 6px 20px rgba(232,106,90,0.25); }
+  .send:disabled { background: var(--sg-hair); color: var(--muted2); box-shadow: none; cursor: default; }
+  .send.del { background: var(--red); color: #fff; box-shadow: none; }
   .send-sub { text-align: center; font-size: 11px; color: var(--muted2); margin-top: 8px; line-height: 1.6; }
 
   /* モード切替 */
@@ -247,17 +242,17 @@
     display: none;
   }
   .msg.show { display: block; }
-  .msg.ok { background: rgba(76,217,123,0.10); border-left: 3px solid var(--green); color: var(--green); font-weight: 700; }
-  .msg.err { background: rgba(232,106,90,0.10); border-left: 3px solid var(--red); }
+  .msg.ok { background: var(--sg-green-tint); border-left: 3px solid var(--green); color: var(--green); font-weight: 700; }
+  .msg.err { background: var(--sg-red-tint); border-left: 3px solid var(--red); }
   .msg.err b { color: var(--red); }
-  .msg.info { background: rgba(232,163,61,0.09); border-left: 3px solid var(--amber); }
+  .msg.info { background: var(--sg-amber-tint); border-left: 3px solid var(--amber); }
 
   /* 確認オーバーレイ */
   /* 高さはJSで実寸を入れる（アドレスバーの出入りでズレないように） */
   .ov {
     position: fixed; left: 0; top: 0;
     width: 100%; height: 100%;
-    background: rgba(6,10,18,0.80);
+    background: var(--sg-scrim);
     backdrop-filter: blur(3px);
     display: none;
     align-items: center;
@@ -280,7 +275,7 @@
   .ov-title { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
   .ov-lede { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
   .ov-warn {
-    background: rgba(232,106,90,0.10);
+    background: var(--sg-red-tint);
     border-left: 3px solid var(--red);
     border-radius: 0 8px 8px 0;
     padding: 10px 12px;
@@ -293,19 +288,29 @@
   .ov-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
   .ov-item {
     font-size: 12px;
-    background: rgba(255,255,255,0.04);
+    background: var(--sg-sunk);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 9px 11px;
     line-height: 1.6;
   }
-  .ov-item b { font-family: 'JetBrains Mono', monospace; color: var(--amber2); font-size: 13px; }
+  .ov-item b { font-family: var(--sg-font); font-variant-numeric: tabular-nums; color: var(--amber2); font-size: 13px; }
   .ov-acts { display: flex; gap: 8px; }
   .ov-acts button { flex: 1; padding: 12px; font-size: 14px; font-weight: 800; }
   .ov-acts .go { background: var(--amber); border-color: var(--amber); color: var(--ink); }
   .ov-acts .go.del { background: var(--red); border-color: var(--red); color: #fff; }
   .ov-names { display: flex; flex-direction: column; gap: 8px; }
   .ov-names button { width: 100%; padding: 14px; font-size: 16px; font-weight: 800; letter-spacing: 2px; }
+
+  /* ═══ 共通の見た目（sieg-theme.css）に合わせる ═══ */
+  .card, .whoami { border-radius: var(--sg-r); box-shadow: var(--sg-lift); padding: 16px; }
+  .card-head { color: var(--sg-ink); font-size: 13px; }
+  .ov-box { background: var(--sg-surface); border-radius: var(--sg-r); }
+  .btn, .pick button, .input, .cal-cell { border-radius: var(--sg-r-sm); }
+  .day-row .d { color: var(--sg-ink); }
+  .ov-item b { color: var(--sg-ink); }
+  .send { border-radius: var(--sg-r-sm); }
+  .send:disabled { background: var(--sg-hair); color: var(--sg-faint); }
 </style>
 </head>
 <body>

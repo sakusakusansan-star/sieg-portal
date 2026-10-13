@@ -311,10 +311,10 @@
 <body>
 <div class="wrap">
 
-  <a class="back" href="./">‹ ポータルへ戻る</a>
+  <div data-sieg-back="dark"></div>
 
   <div class="page-head">
-    <div class="eyebrow">SHIFT ENTRY</div>
+    <div class="eyebrow">Sieg 業務ポータル</div>
     <h1>シフト入力</h1>
     <div class="lede">選んで押すだけ。シフト表に直接書き込まれます。</div>
   </div>
@@ -344,7 +344,7 @@
 
   <!-- 稼働内容 -->
   <div class="card" id="detail-card">
-    <div class="card-head"><span>2. 稼働の内容</span><span class="req">REQUIRED</span></div>
+    <div class="card-head"><span>2. 稼働の内容</span><span class="req">必須</span></div>
 
     <div class="guide-note" style="margin:0 0 6px;">取引先</div>
     <div class="pick" id="clients"></div>
@@ -414,6 +414,7 @@
 </div>
 
 <script src="gas-client.js"></script>
+<script src="sieg-nav.js"></script>
 <script>
   /* ═══════════════════════════════════════════════════════════
      設定：Google Apps Script のデプロイURLをここに貼る

@@ -325,6 +325,7 @@ var NOTICE_API  = 'https://script.google.com/macros/s/AKfycbxA1xDkeYuLRSo39iZju6
 var NOTICE_POST = 'https://sakusakusansan-star.github.io/notice-form/';
 
 /* スタッフ名簿（このポータルの名前選択用）
+   ここで選んだ名前は、各ツールでも初期値として使われます（sieg-nav.js の SiegNav.staff）。
    ※ 各ツールはそれぞれ自分の名簿を持っています。人が増減したときは次も直してください。
      ・シフト入力（Sieg社員）  … shift.html の STAFF と gas/shift-api.gs の ALLOW_STAFF
      ・掲示板への投稿          … notice-form の NAMES

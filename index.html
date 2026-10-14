@@ -342,7 +342,7 @@ var TOOLS = [
     options:[
       { label:'Sieg社員',      url:'shift.html' },
       { label:'シフト表を見る', url:'https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing' },
-      { label:'パートナー様',   url:'https://sakusakusansan-star.github.io/shift-form/' }
+      { label:'パートナー様',   url:'https://sakusakusansan-star.github.io/shift-form/', partner:true }
     ] },
 
   { id:'commute', name:'交通費計算', desc:'通勤距離・交通費の自動計算', ic:'car', c:'teal', home:true,
@@ -474,10 +474,15 @@ function openTool(t){
   if (t.options) { // 行き先を選ぶツール（シフト入力・交通費計算）
     var hit = me ? findOption(t.options, me) : null;      // 名前の選択肢なら直行
     if (!hit) hit = findOption(t.options, getChoice(t.id)); // 前回の選択に直行
+    /* 名前を選んでいない端末で直行するのはパートナー様向けの行き先だけ。
+       社員用の画面を一度開いただけで、パートナー様が選び直せなくなるのを防ぐ */
+    if (hit && !me && !hit.partner) hit = null;
     if (hit) return followOption(hit, t.id);
     return sheetOpen({
       title: '進み先を選んでください',
-      lead: esc(t.name) + '：次からはこの選択で直接開きます。変更したいときは右上の名前から選び直せます。',
+      lead: esc(t.name) + '：' + (me
+        ? '次からはこの選択で直接開きます。変更したいときは右上の名前から選び直せます。'
+        : 'パートナー様は次から直接開きます。Sieg社員の方は右上で名前を選ぶと、次から直接開きます。'),
       items: t.options.map(function(o){ return { label:o.label, current:o.label === me, opt:o }; }),
       onPick: function(it){ followOption(it.opt, t.id); }
     });
@@ -488,10 +493,11 @@ function findOption(options, label){
   for (var i = 0; i < options.length; i++) if (options[i].label === label) return options[i];
   return null;
 }
-/* 名前の選択肢なら本人として記憶し、それ以外はそのツールの選択として記憶する */
+/* 名前の選択肢なら本人として記憶し、それ以外はそのツールの選択として記憶する
+   （名前を選んでいない端末では、パートナー様向けの行き先だけ記憶する） */
 function followOption(opt, id){
   if (ALL_STAFF.indexOf(opt.label) >= 0) setStaff(opt.label);
-  else setChoice(id, opt.label);
+  else if (getStaff() || opt.partner) setChoice(id, opt.label);
   sheet(false);
   var url = opt.url;
   if (opt.appendStaff) {

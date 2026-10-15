@@ -441,7 +441,8 @@
     'サンコミ': { carrier: 'au' },
     'ダル':     { carrier: 'docomo' }
   };
-  var STAFF_KEY = 'siegStaff';   // ポータル本体と共通（名前を1回選べば使い回せる）
+  var STAFF_KEY = 'siegStaff';      // ポータルで選んだ名前（読むだけ。書き換えるのはポータルだけ）
+  var NAME_KEY  = 'siegShiftName';  // このページで選んだ名前
   var LAST_KEY  = 'siegShiftLast';
 
   var DOW = ['日', '月', '火', '水', '木', '金', '土'];
@@ -486,16 +487,21 @@
   function hideMsg() { $('msg').className = 'msg'; }
 
   /* ═══ 名前 ═══ */
+  /* URLの ?staff= → ポータルで選んだ名前 → 前にこのページで選んだ名前 の順に使う。
+     ここで名前を選んでもポータルの名前は変えない（パートナー様が間違えて開いて
+     社員の名前を選んでも、ポータルがその社員として動かないように） */
   function initName() {
     var q = new URLSearchParams(location.search).get('staff');
-    var name = (q && STAFF.indexOf(q) >= 0) ? q : lsGet(STAFF_KEY);
-    if (name && STAFF.indexOf(name) >= 0) setName(name, true);
-    else openNamePicker();
+    var cands = [q, lsGet(STAFF_KEY), lsGet(NAME_KEY)];
+    for (var i = 0; i < cands.length; i++) {
+      if (cands[i] && STAFF.indexOf(cands[i]) >= 0) return setName(cands[i], true);
+    }
+    openNamePicker();
   }
 
   function setName(name, quiet) {
     state.name = name;
-    lsSet(STAFF_KEY, name);
+    lsSet(NAME_KEY, name);
     $('who-name').textContent = name;
     $('who-name').classList.remove('unset');
     $('who-change').textContent = '変更';

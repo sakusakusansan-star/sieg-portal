@@ -105,9 +105,13 @@
   .input:focus { outline: none; border-color: var(--amber); }
 
   /* 月切り替え */
-  .months { display: flex; gap: 7px; }
-  .months button { flex: 1; text-align: center; }
-  .month-sub { display: block; font-size: 10px; font-weight: 500; opacity: .75; margin-top: 2px; }
+  /* カレンダー上部の月（入力できる月が複数あるときだけ ‹ › で切り替える） */
+  .cal-month { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .cal-title { flex: 1; text-align: center; }
+  .cal-title b { font-size: 17px; font-weight: 900; }
+  .cal-title span { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .cal-nav { min-width: 44px; min-height: 40px; font-size: 18px; line-height: 1; }
+  .cal-nav[hidden] { display: inline-block !important; visibility: hidden; }
 
   /* カレンダー */
   .cal-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -341,33 +345,14 @@
     <button class="btn" type="button" data-mode="delete">取り消す</button>
   </div>
 
-  <!-- 月 -->
-  <div class="card">
-    <div class="card-head"><span>1. 月をえらぶ</span></div>
-    <div class="months pick" id="months"></div>
-  </div>
-
-  <!-- 稼働内容 -->
-  <div class="card" id="detail-card">
-    <div class="card-head"><span>2. 稼働の内容</span><span class="req">必須</span></div>
-
-    <div class="guide-note" style="margin:0 0 6px;">取引先</div>
-    <div class="pick" id="clients"></div>
-
-    <div class="guide-note" style="margin:12px 0 6px;">キャリア／店舗</div>
-    <div class="pick" id="carriers"></div>
-
-    <div class="guide-note" style="margin:12px 0 6px;">開催場所</div>
-    <div class="pick" id="places"></div>
-    <input class="input" id="place-input" type="text" placeholder="開催場所（例：近見／下通）" autocomplete="off">
-
-    <div class="guide-note" style="margin:12px 0 6px;">ホテル（泊まりのときだけ）</div>
-    <input class="input" id="hotel-input" type="text" placeholder="未入力でOK" autocomplete="off" style="margin-top:0;">
-  </div>
-
   <!-- カレンダー -->
   <div class="card">
-    <div class="card-head"><span id="cal-step">3. 日にちをえらぶ</span><span class="req" id="picked-count">0日</span></div>
+    <div class="card-head"><span id="cal-step">1. 日にちをえらぶ</span><span class="req" id="picked-count">0日</span></div>
+    <div class="cal-month">
+      <button class="btn small cal-nav" type="button" id="m-prev" aria-label="前の月">‹</button>
+      <div class="cal-title"><b id="cal-title"></b><span id="cal-sub"></span></div>
+      <button class="btn small cal-nav" type="button" id="m-next" aria-label="次の月">›</button>
+    </div>
     <div class="cal-tools">
       <button class="btn small" type="button" data-sel="all">全部</button>
       <button class="btn small" type="button" data-sel="weekday">平日</button>
@@ -383,6 +368,24 @@
       <span><i style="background:var(--green);"></i>登録済み</span>
       <span><i style="background:var(--red);"></i>希望休・店休日など</span>
     </div>
+  </div>
+
+  <!-- 稼働内容 -->
+  <div class="card" id="detail-card">
+    <div class="card-head"><span>2. 稼働の内容</span><span class="req">必須</span></div>
+
+    <div class="guide-note" style="margin:0 0 6px;">取引先</div>
+    <div class="pick" id="clients"></div>
+
+    <div class="guide-note" style="margin:12px 0 6px;">キャリア／店舗</div>
+    <div class="pick" id="carriers"></div>
+
+    <div class="guide-note" style="margin:12px 0 6px;">開催場所</div>
+    <div class="pick" id="places"></div>
+    <input class="input" id="place-input" type="text" placeholder="ほかの場所はここに入力" autocomplete="off">
+
+    <div class="guide-note" style="margin:12px 0 6px;">ホテル（泊まりのときだけ）</div>
+    <input class="input" id="hotel-input" type="text" placeholder="未入力でOK" autocomplete="off" style="margin-top:0;">
   </div>
 
   <!-- 登録済み -->
@@ -431,7 +434,11 @@
   var STAFF    = ['福岡', '清田', '福山', '古川'];
   var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル'];
   var CARRIERS = ['docomo', 'SoftBank', 'au'];
-  var PLACES   = ['近見', '下通', '健軍', '未確定'];   // よく使う場所。登録済みの場所も自動で足す
+  // 開催場所のボタンは3つだけ。近見・下通は固定で、3つ目はよく選ぶ場所に入れ替わる
+  // （この端末で送った回数＋その月にもう登録されている回数で決める）。それ以外は入力欄に書く。
+  var PLACES_FIXED = ['近見', '下通'];
+  var PLACE_FALLBACK = '健軍';   // まだ何も送っていないときの3つ目
+  var PLACE_COUNT_KEY = 'siegShiftPlaceCount';
 
   // 取引先を選んだときに、いつもの組み合わせを自動で入れる。
   // 場所が毎回変わる取引先は、キャリアだけ入れて場所は選んでもらう。
@@ -562,26 +569,36 @@
     return list.length ? list : months.slice(-1);
   }
 
+  var monthList = [];   // 入力できる月（古い順）
+
   function buildMonths(months) {
-    var now = new Date();
-    var thisMonth = now.getFullYear() * 12 + now.getMonth();
-    var box = $('months');
-    box.innerHTML = '';
-
-    months.forEach(function(m) {
-      var diff = (m.year * 12 + m.month - 1) - thisMonth;
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.innerHTML = m.month + '月<span class="month-sub">' +
-        (diff === 0 ? '今月' : diff === 1 ? '来月' : diff === 2 ? '再来月' : m.year + '年') + '</span>';
-      b.setAttribute('data-ym', m.year + '-' + m.month);
-      b.addEventListener('click', function() { setMonth(m.year, m.month); });
-      box.appendChild(b);
-    });
-
+    monthList = months;
     // 用意されている一番新しい月＝いま集めている月。それを開いておく。
     var last = months[months.length - 1];
     setMonth(last.year, last.month);
+  }
+
+  function monthIndex() {
+    for (var i = 0; i < monthList.length; i++) {
+      if (monthList[i].year === state.year && monthList[i].month === state.month) return i;
+    }
+    return -1;
+  }
+
+  /* カレンダー上部の「2026年11月（来月）」と ‹ ›。月が1つしか無ければ矢印は出さない */
+  function renderMonthNav() {
+    var now = new Date();
+    var diff = (state.year * 12 + state.month - 1) - (now.getFullYear() * 12 + now.getMonth());
+    $('cal-title').textContent = state.year + '年' + state.month + '月';
+    $('cal-sub').textContent = diff === 0 ? '今月' : diff === 1 ? '来月' : diff === 2 ? '再来月' : '';
+    var i = monthIndex();
+    $('m-prev').hidden = !(i > 0);
+    $('m-next').hidden = !(i >= 0 && i < monthList.length - 1);
+  }
+
+  function stepMonth(delta) {
+    var m = monthList[monthIndex() + delta];
+    if (m) setMonth(m.year, m.month);
   }
 
   function setMonth(y, m) {
@@ -589,9 +606,7 @@
     state.month = m;
     state.picked = {};
     state.existing = {};
-    Array.prototype.forEach.call($('months').children, function(b) {
-      b.classList.toggle('on', b.getAttribute('data-ym') === y + '-' + m);
-    });
+    renderMonthNav();
     renderCal();
     renderDayList();
     loadExisting();
@@ -643,17 +658,38 @@
     return Object.keys(PRESET).some(function(c) { return PRESET[c].place === place; });
   }
 
-  function placeCandidates() {
-    var list = PLACES.slice();
-    Object.keys(PRESET).forEach(function(c) {
-      var p = PRESET[c].place;
-      if (p && list.indexOf(p) < 0) list.push(p);
-    });
+  function placeCounts() {
+    var counts = {};
+    try { counts = JSON.parse(lsGet(PLACE_COUNT_KEY) || '{}') || {}; } catch (e) { counts = {}; }
+    return counts;
+  }
+
+  function countPlace(place) {
+    if (!place || PLACES_FIXED.indexOf(place) >= 0) return;
+    var counts = placeCounts();
+    counts[place] = (counts[place] || 0) + 1;
+    lsSet(PLACE_COUNT_KEY, JSON.stringify(counts));
+  }
+
+  /** 3つ目のボタン：よく選ぶ場所（近見・下通以外）。希望休など稼働でない記載は数えない */
+  function favoritePlace() {
+    var score = {};
+    var counts = placeCounts();
+    Object.keys(counts).forEach(function(p) { score[p] = (score[p] || 0) + counts[p]; });
     Object.keys(state.existing).forEach(function(d) {
-      var p = state.existing[d].place;
-      if (p && list.indexOf(p) < 0) list.push(p);
+      var e = state.existing[d];
+      if (e && e.client && e.place) score[e.place] = (score[e.place] || 0) + 1;
     });
-    return list;
+    var best = '', bestScore = 0;
+    Object.keys(score).forEach(function(p) {
+      if (PLACES_FIXED.indexOf(p) >= 0) return;
+      if (score[p] > bestScore) { best = p; bestScore = score[p]; }
+    });
+    return best || PLACE_FALLBACK;
+  }
+
+  function placeCandidates() {
+    return PLACES_FIXED.concat([favoritePlace()]);
   }
 
   function renderChoices() {
@@ -847,8 +883,8 @@
     });
     $('detail-card').style.display = (mode === 'delete') ? 'none' : '';
     $('cal-step').textContent = (mode === 'delete')
-      ? '2. 取り消す日にちをえらぶ'
-      : '3. 日にちをえらぶ';
+      ? '1. 取り消す日にちをえらぶ'
+      : '1. 日にちをえらぶ';
     renderCal();
     syncSend();
   }
@@ -928,6 +964,7 @@
         if (!data || !data.ok) throw new Error((data && data.error) || '送信できませんでした');
         state.picked = {};
         lsSet(LAST_KEY, JSON.stringify({ client: state.client, carrier: state.carrier, place: state.place }));
+        if (!del) countPlace(state.place);
         var extra = '';
         if (data.skipped && data.skipped.length) {
           extra += '<br>この月に無い日は飛ばしました：' + data.skipped.join('・') + '日';
@@ -958,6 +995,8 @@
     }
 
     $('who-change').addEventListener('click', openNamePicker);
+    $('m-prev').addEventListener('click', function() { stepMonth(-1); });
+    $('m-next').addEventListener('click', function() { stepMonth(1); });
     $('reload').addEventListener('click', loadExisting);
     $('ov-cancel').addEventListener('click', closeOv);
     $('ov-go').addEventListener('click', function() { closeOv(); send(); });

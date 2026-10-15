@@ -328,11 +328,14 @@ var NOTICE_POST = 'https://sakusakusansan-star.github.io/notice-form/';
    ここで選んだ名前は、各ツールでも初期値として使われます（sieg-nav.js の SiegNav.staff）。
    ※ 各ツールはそれぞれ自分の名簿を持っています。人が増減したときは次も直してください。
      ・シフト入力（Sieg社員）  … shift.html の STAFF と gas/shift-api.gs の ALLOW_STAFF
+     ・シフト入力（パートナー様）… shift-form の名前ボタン と 下の PARTNER_STAFF
      ・掲示板への投稿          … notice-form の NAMES
      ・日報                    … nippou-form の NAMES
      ・交通費計算              … commute-form の GASの STAFF_HOME（フルネーム）
      ・経費精算                … このファイルの TOOLS の staff と、経費精算のスプレッドシート */
 var ALL_STAFF = ['福山', '古川', '清田', '山口'];
+/* このうちパートナー様。シフト入力はパートナー様用フォームへ名前つきで直接開く */
+var PARTNER_STAFF = ['山口'];
 
 var TOOLS = [
   { id:'nippou', name:'日報', desc:'実績・所感をDiscordへ送信', ic:'doc', c:'amber', home:true,
@@ -407,6 +410,7 @@ function lsSet(k, v){ try { localStorage.setItem(k, v); } catch(e) {} }
 function lsDel(k){ try { localStorage.removeItem(k); } catch(e) {} }
 
 function getStaff(){ return lsGet(STAFF_KEY); }
+function isPartner(name){ return !!name && PARTNER_STAFF.indexOf(name) >= 0; }
 function clearChoices(){
   try {
     Object.keys(localStorage).forEach(function(k){
@@ -465,14 +469,22 @@ function openTool(t){
     if (me && t.staff.indexOf(me) >= 0) return navStaff(t.url, me);
     return sheetOpen({
       title: 'あなたの名前を選んでください',
-      lead: esc(t.name) + 'に名前を引き継ぎます。この端末に保存され、次からは自動で開きます。',
-      items: t.staff.map(function(n){ return { label:n, current:n === me }; }),
-      onPick: function(it){ sheet(false); navStaff(t.url, it.label); }
+      /* 名前を選んでいる人がここで別の名前を選んでも、ポータルの名前は書き換えない */
+      lead: me
+        ? esc(t.name) + 'の名簿に「' + esc(me) + '」さんはいません。ここで選んでも右上の名前は変わりません。'
+        : esc(t.name) + 'に名前を引き継ぎます。この端末に保存され、次からは自動で開きます。',
+      items: t.staff.map(function(n){ return { label:n }; }),
+      onPick: function(it){
+        sheet(false);
+        if (me) location.href = withStaff(t.url, it.label);
+        else navStaff(t.url, it.label);
+      }
     });
   }
 
   if (t.options) { // 行き先を選ぶツール（シフト入力・交通費計算）
     var hit = me ? findOption(t.options, me) : null;      // 名前の選択肢なら直行
+    if (!hit && isPartner(me)) hit = partnerOption(t.options); // パートナー様は専用の行き先へ直行
     if (!hit) hit = findOption(t.options, getChoice(t.id)); // 前回の選択に直行
     /* 名前を選んでいない端末で直行するのはパートナー様向けの行き先だけ。
        社員用の画面を一度開いただけで、パートナー様が選び直せなくなるのを防ぐ */
@@ -493,21 +505,27 @@ function findOption(options, label){
   for (var i = 0; i < options.length; i++) if (options[i].label === label) return options[i];
   return null;
 }
+function partnerOption(options){
+  for (var i = 0; i < options.length; i++) if (options[i].partner) return options[i];
+  return null;
+}
 /* 名前の選択肢なら本人として記憶し、それ以外はそのツールの選択として記憶する
    （名前を選んでいない端末では、パートナー様向けの行き先だけ記憶する） */
 function followOption(opt, id){
   if (ALL_STAFF.indexOf(opt.label) >= 0) setStaff(opt.label);
   else if (getStaff() || opt.partner) setChoice(id, opt.label);
   sheet(false);
-  var url = opt.url;
-  if (opt.appendStaff) {
-    url += (url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
-  }
+  var url = opt.url, me = getStaff();
+  if (opt.appendStaff) url = withStaff(url, opt.label);
+  else if (opt.partner && isPartner(me)) url = withStaff(url, me); // パートナー様の名前を引き継ぐ
   location.href = url;
 }
 function navStaff(url, name){
   setStaff(name);
-  location.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
+  location.href = withStaff(url, name);
+}
+function withStaff(url, name){
+  return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
 }
 
 /* ═══ 連絡先 ═══ */

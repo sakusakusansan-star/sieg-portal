@@ -334,6 +334,10 @@ var NOTICE_POST = 'https://sakusakusansan-star.github.io/notice-form/';
      ・経費精算                … このファイルの TOOLS の staff と、経費精算のスプレッドシート */
 var ALL_STAFF = ['福山', '古川', '清田', '山口'];
 
+/* パートナー様（シフト入力で「パートナー様」を選んだあとに出す名前）
+   ※ shift-form（パートナー様用シフト入力）の名前ボタンと同じ並びにしておく */
+var PARTNERS = ['山口', '鈴木', '毛利', '山内'];
+
 var TOOLS = [
   { id:'nippou', name:'日報', desc:'実績・所感をDiscordへ送信', ic:'doc', c:'amber', home:true,
     url:'https://sakusakusansan-star.github.io/nippou-form/' },
@@ -342,7 +346,7 @@ var TOOLS = [
     options:[
       { label:'Sieg社員',      url:'shift.html' },
       { label:'シフト表を見る', url:'https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing' },
-      { label:'パートナー様',   url:'https://sakusakusansan-star.github.io/shift-form/', partner:true }
+      { label:'パートナー様',   url:'https://sakusakusansan-star.github.io/shift-form/', partner:true, names:PARTNERS }
     ] },
 
   { id:'commute', name:'交通費計算', desc:'通勤距離・交通費の自動計算', ic:'car', c:'teal', home:true,
@@ -477,7 +481,7 @@ function openTool(t){
     /* 名前を選んでいない端末で直行するのはパートナー様向けの行き先だけ。
        社員用の画面を一度開いただけで、パートナー様が選び直せなくなるのを防ぐ */
     if (hit && !me && !hit.partner) hit = null;
-    if (hit) return followOption(hit, t.id);
+    if (hit) return followOption(hit, t.id, true);
     return sheetOpen({
       title: '進み先を選んでください',
       lead: esc(t.name) + '：' + (me
@@ -495,7 +499,8 @@ function findOption(options, label){
 }
 /* 名前の選択肢なら本人として記憶し、それ以外はそのツールの選択として記憶する
    （名前を選んでいない端末では、パートナー様向けの行き先だけ記憶する） */
-function followOption(opt, id){
+function followOption(opt, id, direct){
+  if (opt.names) return openPartner(opt, id, direct);
   if (ALL_STAFF.indexOf(opt.label) >= 0) setStaff(opt.label);
   else if (getStaff() || opt.partner) setChoice(id, opt.label);
   sheet(false);
@@ -504,6 +509,26 @@ function followOption(opt, id){
     url += (url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(opt.label) + '&v=' + Date.now();
   }
   location.href = url;
+}
+/* パートナー様：名前を選ぶと、その人だけのシフト入力（?staff=名前）を開く。
+   選んだ名前はこの端末に覚え、次からは名前を選ばずに直接開く。
+   別の人に変えるときは、シフト入力の画面の「別の人にする」か、ここで選び直す。 */
+var PARTNER_KEY = 'siegPartnerName';   // shift-form でも同じキーを使う
+function openPartner(opt, id, direct){
+  var saved = lsGet(PARTNER_KEY);
+  if (direct && opt.names.indexOf(saved) >= 0) return goPartner(opt, id, saved);
+  sheetOpen({
+    title: 'お名前を選んでください',
+    lead: 'あなたのシフトだけを入力する画面が開きます。次からは選ばずに直接開きます。',
+    items: opt.names.map(function(n){ return { label:n, current:n === saved, person:true }; }),
+    onPick: function(it){ goPartner(opt, id, it.label); }
+  });
+}
+function goPartner(opt, id, name){
+  lsSet(PARTNER_KEY, name);
+  if (getStaff() || opt.partner) setChoice(id, opt.label);
+  sheet(false);
+  location.href = opt.url + (opt.url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
 }
 function navStaff(url, name){
   setStaff(name);
@@ -715,7 +740,7 @@ function sheetOpen(cfg){
     btn.className = 'pick';
     if (it.current) btn.setAttribute('aria-current', 'true');
     /* 名前の選択肢は頭文字、それ以外（行き先）は矢印にする */
-    var mark = ALL_STAFF.indexOf(it.label) >= 0 ? esc(initial(it.label)) : '\u203A';
+    var mark = (it.person || ALL_STAFF.indexOf(it.label) >= 0) ? esc(initial(it.label)) : '\u203A';
     btn.innerHTML = '<i>' + mark + '</i><span class="pt">' + esc(it.label)
       + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '') + '</span>';
     btn.addEventListener('click', function(){ cfg.onPick(it); });

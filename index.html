@@ -329,7 +329,7 @@ var NOTICE_POST = 'https://sakusakusansan-star.github.io/notice-form/';
    ※ 各ツールはそれぞれ自分の名簿を持っています。人が増減したときは次も直してください。
      ・シフト入力（Sieg社員）  … shift.html の STAFF と gas/shift-api.gs の ALLOW_STAFF
      ・掲示板への投稿          … notice-form の NAMES
-     ・日報                    … nippou-form の NAMES
+     ・日報                    … nippou-form の NAMES と、下の NIPPOU_NAMES
      ・交通費計算              … commute-form の GASの STAFF_HOME（フルネーム）
      ・経費精算                … このファイルの TOOLS の staff と、経費精算のスプレッドシート */
 var ALL_STAFF = ['福山', '古川', '清田', '山口'];
@@ -338,9 +338,13 @@ var ALL_STAFF = ['福山', '古川', '清田', '山口'];
    ※ shift-form（パートナー様用シフト入力）の名前ボタンと同じ並びにしておく */
 var PARTNERS = ['山口', '鈴木', '毛利', '山内'];
 
+/* 日報で選べる名前（日報を開く前に出す名前の一覧）
+   ※ nippou-form の NAMES と同じ並びにしておく */
+var NIPPOU_NAMES = ['鈴木', '毛利', '山口', '山内', '福山', '古川'];
+
 var TOOLS = [
   { id:'nippou', name:'日報', desc:'実績・所感をDiscordへ送信', ic:'doc', c:'amber', home:true,
-    url:'https://sakusakusansan-star.github.io/nippou-form/' },
+    url:'https://sakusakusansan-star.github.io/nippou-form/', people:NIPPOU_NAMES },
 
   { id:'shift', name:'シフト入力', desc:'スマホから稼働日を送信', ic:'cal', c:'blue', home:true,
     options:[
@@ -452,7 +456,7 @@ function paintTools(){
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'), function(a){
     var t = findTool(a.getAttribute('data-tool'));
-    if (!t || (!t.options && !t.staff)) return; // 直リンクはそのまま開く
+    if (!t || (!t.options && !t.staff && !t.people)) return; // 直リンクはそのまま開く
     a.addEventListener('click', function(e){ e.preventDefault(); openTool(t); });
   });
 }
@@ -464,6 +468,8 @@ function findTool(id){
 /* ═══ ツールを開く（名前・行き先の選択つき） ═══ */
 function openTool(t){
   var me = getStaff();
+
+  if (t.people) return openPerson(t, me);
 
   if (t.staff) { // 名前を添えて渡すツール（経費精算）
     if (me && t.staff.indexOf(me) >= 0) return navStaff(t.url, me);
@@ -529,6 +535,26 @@ function goPartner(opt, id, name){
   if (getStaff() || opt.partner) setChoice(id, opt.label);
   sheet(false);
   location.href = opt.url + (opt.url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
+}
+/* 人を選んでから開くツール（日報）。社員・パートナー様のどちらも選べる。
+   この端末で前に選んだ人 → ポータルで選んだ名前 → シフト入力で選んだパートナー様の名前
+   の順に一覧にあれば、選ばずにその人で直接開く。無ければ名前の一覧を出す。
+   選んだ人は siegChoice_<id> に覚える（日報の画面で名前を変えたときも、日報側が同じキーを書き換える）。 */
+function openPerson(t, me){
+  var list = t.people;
+  var known = [getChoice(t.id), me, lsGet(PARTNER_KEY)].filter(function(n){ return list.indexOf(n) >= 0; });
+  if (known.length) return goPerson(t, known[0]);
+  sheetOpen({
+    title: 'お名前を選んでください',
+    lead: esc(t.name) + 'をこの名前で開きます。次からは選ばずに直接開きます。',
+    items: list.map(function(n){ return { label:n, person:true }; }),
+    onPick: function(it){ goPerson(t, it.label); }
+  });
+}
+function goPerson(t, name){
+  setChoice(t.id, name);
+  sheet(false);
+  location.href = t.url + (t.url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
 }
 function navStaff(url, name){
   setStaff(name);

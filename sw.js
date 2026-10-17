@@ -7,7 +7,7 @@
  *  - お知らせAPI（GAS）は一切キャッシュせず、常にネットワークへ通す。
  */
 
-var VERSION = 'v15'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
+var VERSION = 'v16'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
 var SHELL_CACHE = 'sieg-shell-' + VERSION;
 var ASSET_CACHE = 'sieg-asset-' + VERSION;
 var FONT_CACHE = 'sieg-font-' + VERSION;
@@ -61,8 +61,10 @@ function isFontHost(url) {
 // ページ本体：ネットワーク優先 → 失敗したらキャッシュ
 // ポータルと資料ページで複数あるため、必ずリクエストごとに保存する
 // （ここを固定キーにすると、資料を開いた後にトップがその資料に化ける）
+// ブラウザ自身のキャッシュ（GitHub Pages は10分）を使わず、毎回サーバーに新しい版があるか確かめる。
+// これをしないと、更新してから最大10分は古い画面が出る。
 function networkFirst(req) {
-  return fetch(req)
+  return fetch(new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' }))
     .then(function(res) {
       if (res && res.ok) {
         var copy = res.clone();

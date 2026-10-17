@@ -537,17 +537,18 @@ function goPartner(opt, id, name){
   location.href = opt.url + (opt.url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(name) + '&v=' + Date.now();
 }
 /* 人を選んでから開くツール（日報）。社員・パートナー様のどちらも選べる。
-   この端末で前に選んだ人 → ポータルで選んだ名前 → シフト入力で選んだパートナー様の名前
-   の順に一覧にあれば、選ばずにその人で直接開く。無ければ名前の一覧を出す。
-   選んだ人は siegChoice_<id> に覚える（日報の画面で名前を変えたときも、日報側が同じキーを書き換える）。 */
+   はじめは必ず名前の一覧を出し、選んだ人は siegChoice_<id> に覚えて次からは直接開く
+   （日報の画面で名前を変えたときも、日報側が同じキーを書き換える）。
+   ポータル右上の名前やシフト入力で選んだ名前では飛ばさない（一覧で印を付けるだけ）。 */
 function openPerson(t, me){
   var list = t.people;
-  var known = [getChoice(t.id), me, lsGet(PARTNER_KEY)].filter(function(n){ return list.indexOf(n) >= 0; });
-  if (known.length) return goPerson(t, known[0]);
+  var chosen = getChoice(t.id);
+  if (list.indexOf(chosen) >= 0) return goPerson(t, chosen);
+  var hint = list.indexOf(me) >= 0 ? me : lsGet(PARTNER_KEY);
   sheetOpen({
     title: 'お名前を選んでください',
     lead: esc(t.name) + 'をこの名前で開きます。次からは選ばずに直接開きます。',
-    items: list.map(function(n){ return { label:n, person:true }; }),
+    items: list.map(function(n){ return { label:n, current:n === hint, person:true }; }),
     onPick: function(it){ goPerson(t, it.label); }
   });
 }

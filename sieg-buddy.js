@@ -38,8 +38,8 @@
 
   /* 部品ごとの動き。回転の中心は絵の中の位置（％）で指定する */
   var CSS =
-    '#v-home .head{position:relative;padding-right:62px}' +
-    '.sb{position:absolute;right:6px;bottom:-2px;width:50px;height:86px;cursor:pointer;' +
+    '#v-home .head{position:relative;padding-right:74px}' +
+    '.sb{position:absolute;right:10px;bottom:-6px;width:50px;height:86px;cursor:pointer;' +
       '-webkit-tap-highlight-color:transparent;touch-action:manipulation;z-index:2}' +
     '.sb .me,.sb .ly,.sb svg{position:absolute;left:0;top:0;width:100%;height:100%;display:block}' +
     '.sb .ly{pointer-events:none;-webkit-user-drag:none;user-select:none}' +
@@ -57,7 +57,7 @@
     '.sb.run .tail{animation:sb-tail .3s ease-in-out infinite alternate}' +
     '.sb.jump .me{animation:sb-jump .6s cubic-bezier(.3,.6,.4,1)}' +
     '.sb.jump .hold{animation:sb-raise .6s ease-out}' +
-    '.sb-say{position:absolute;right:58px;bottom:26px;max-width:170px;padding:7px 11px;border-radius:14px 14px 4px 14px;' +
+    '.sb-say{position:absolute;right:62px;bottom:26px;max-width:170px;padding:7px 11px;border-radius:14px 14px 4px 14px;' +
       'background:var(--surface,#fff);color:var(--ink,#0E1A2C);box-shadow:0 2px 10px rgba(14,26,44,.12);' +
       'border:1px solid var(--hair,#E3E6EA);font-weight:700;font-size:12.5px;line-height:1.45;white-space:nowrap;' +
       'opacity:0;transform:translateY(4px) scale(.96);transform-origin:100% 100%;transition:opacity .2s,transform .2s;pointer-events:none;z-index:3}' +

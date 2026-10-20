@@ -149,6 +149,10 @@
     padding: 0;
   }
   .cal-cell.blank { background: none; border: none; cursor: default; }
+  /* タップで1日ずつ・横になぞるとまとめて選ぶ。縦に動かしたときはスクロール */
+  #cal { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .cal-cell { -webkit-tap-highlight-color: transparent; }
+  .cal-hint { margin-top: 8px; font-size: 12px; color: var(--sg-mute); text-align: center; }
   .cal-cell.sun { color: var(--sg-sun); }
   .cal-cell.sat { color: var(--sg-sat); }
   .cal-cell .mark {
@@ -368,6 +372,7 @@
       <span><i style="background:var(--green);"></i>登録済み</span>
       <span><i style="background:var(--red);"></i>希望休・店休日など</span>
     </div>
+    <div class="cal-hint">続いた日は、横になぞるとまとめて選べます</div>
   </div>
 
   <!-- 稼働内容 -->
@@ -716,6 +721,7 @@
         var dow = new Date(state.year, state.month - 1, day).getDay();
         var b = document.createElement('button');
         b.type = 'button';
+        b.setAttribute('data-day', day);
         b.className = 'cal-cell' + (dow === 0 ? ' sun' : dow === 6 ? ' sat' : '') +
           (state.picked[day] ? ' on' : '') + (state.mode === 'delete' ? ' del' : '');
         var num = document.createElement('span');
@@ -727,7 +733,9 @@
           mark.className = 'mark' + (isHold(entry) ? ' hold' : '');
           b.appendChild(mark);
         }
-        b.addEventListener('click', function() {
+        // 指・マウスでの操作は下の setupCalendarPicking が受け持つ。ここはキーボード操作（Enter・スペース）だけ
+        b.addEventListener('click', function(e) {
+          if (e.detail !== 0) return;
           if (state.picked[day]) delete state.picked[day];
           else state.picked[day] = true;
           renderCal();
@@ -738,6 +746,66 @@
     }
     $('picked-count').textContent = pickedDays().length + '日';
   }
+
+  /* 日にちの選び方
+   *   ・タップ … その日を選ぶ／外す
+   *   ・なぞる … なぞり始めた日から指のある日まで、続けてまとめて選ぶ（始めの日が選んであれば、まとめて外す）
+   * 縦に動かしたときはページのスクロールになる（touch-action: pan-y）。
+   * 横に動かし始めれば、そのあと下の週へ動かしてもなぞりが続く。 */
+  (function setupCalendarPicking() {
+    var grid = $('cal');
+    var drag = null;
+
+    function dayAt(x, y) {
+      var el = document.elementFromPoint(x, y);
+      el = el && el.closest ? el.closest('.cal-cell[data-day]') : null;
+      return el && grid.contains(el) ? Number(el.getAttribute('data-day')) : 0;
+    }
+    function paint() {
+      grid.querySelectorAll('.cal-cell[data-day]').forEach(function(el) {
+        el.classList.toggle('on', !!state.picked[Number(el.getAttribute('data-day'))]);
+      });
+      $('picked-count').textContent = pickedDays().length + '日';
+    }
+
+    grid.addEventListener('pointerdown', function(e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      var day = dayAt(e.clientX, e.clientY);
+      if (!day) return;
+      drag = { from: day, to: day, add: !state.picked[day], base: Object.assign({}, state.picked), moved: false };
+    });
+    grid.addEventListener('pointermove', function(e) {
+      if (!drag) return;
+      var day = dayAt(e.clientX, e.clientY);
+      if (!day || day === drag.to) return;
+      drag.to = day;
+      drag.moved = true;
+      state.picked = Object.assign({}, drag.base);
+      var a = Math.min(drag.from, day), b = Math.max(drag.from, day);
+      for (var d = a; d <= b; d++) {
+        if (drag.add) state.picked[d] = true; else delete state.picked[d];
+      }
+      paint();
+    });
+    function end(e) {
+      if (!drag) return;
+      var dr = drag;
+      drag = null;
+      if (e.type === 'pointercancel') {   // スクロールに変わったときは元に戻す
+        state.picked = dr.base;
+        paint();
+        return;
+      }
+      if (!dr.moved) {
+        if (dr.add) state.picked[dr.from] = true; else delete state.picked[dr.from];
+      }
+      if (navigator.vibrate) navigator.vibrate(10);
+      renderCal();
+      syncSend();
+    }
+    grid.addEventListener('pointerup', end);
+    grid.addEventListener('pointercancel', end);
+  })();
 
   /**
    * 「希望休」「店休日」「打ち合わせ」など、稼働ではない記載かどうか。

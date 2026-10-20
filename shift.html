@@ -435,7 +435,6 @@
      （gas/shift-api.gs を貼り付けてデプロイ → /exec のURL）
      ═══════════════════════════════════════════════════════════ */
   var SHIFT_API   = 'https://script.google.com/macros/s/AKfycbz_aHJ4v0Q-s5_m_i7G7gomrJeicz_iRWPF1qcafrG16gQtTV8VA7dU2ViTNgcbtTgYTg/exec';
-  var SHIFT_TOKEN = 'sieg-shift-2026';   // GAS側の TOKEN と同じ文字列
 
   var STAFF    = window.SiegRoster ? SiegRoster.forTool('shiftStaff') : [];   // 名簿は sieg-roster.js
   var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル'];
@@ -551,7 +550,7 @@
    */
   function initMonths() {
     if (!apiReady()) return buildMonths(defaultMonths());
-    GasClient.get(SHIFT_API, { action: 'months', token: SHIFT_TOKEN })
+    GasClient.get(SHIFT_API, { action: 'months' })
       .then(function(data) {
         if (!data || !data.ok || !data.months || !data.months.length) throw new Error('月が取れません');
         buildMonths(upcoming(data.months));
@@ -856,7 +855,7 @@
   function loadExisting() {
     if (!apiReady() || !state.name || !state.year) return;
     $('day-list').innerHTML = '<div class="empty-note">読み込み中…</div>';
-    GasClient.get(SHIFT_API, { action: 'list', token: SHIFT_TOKEN, name: state.name, year: state.year, month: state.month })
+    GasClient.get(SHIFT_API, { action: 'list', name: state.name, year: state.year, month: state.month })
       .then(function(data) {
         if (!data || !data.ok) throw new Error((data && data.error) || '読み込みに失敗しました');
         state.existing = data.days || {};
@@ -1004,7 +1003,6 @@
     var days = pickedDays();
     var del = state.mode === 'delete';
     var payload = {
-      token: SHIFT_TOKEN,
       // 自動でやり直したときに、GAS側で同じ送信と分かるようにする（送信ログの二重記録を防ぐ）
       requestId: GasClient.newId(),
       action: del ? 'delete' : 'submit',

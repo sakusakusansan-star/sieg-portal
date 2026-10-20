@@ -318,6 +318,7 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
 </div>
 
 <script src="gas-client.js"></script>
+<script src="sieg-roster.js"></script>
 <script>
 /* ══════════ ここだけ書き換えれば運用できます ══════════ */
 
@@ -326,18 +327,11 @@ var NOTICE_API  = 'https://script.google.com/macros/s/AKfycbxA1xDkeYuLRSo39iZju6
 /* 掲示板への投稿ページ */
 var NOTICE_POST = 'https://sakusakusansan-star.github.io/notice-form/';
 
-/* 名簿（はじめにポータルで1回選んでもらう。各ツールはその人で開く）
-   ここで選んだ名前は localStorage の siegStaff に入り、各ツールでも初期値として使われます。
-   ※ 各ツールはそれぞれ自分の名簿を持っています。人が増減したときは次も直してください。
-     ・シフト入力（Sieg社員）    … shift.html の STAFF と gas/shift-api.gs の ALLOW_STAFF
-     ・シフト入力（パートナー様）… shift-form の名前ボタン
-     ・掲示板への投稿            … notice-form の NAMES
-     ・日報                      … nippou-form の NAMES
-     ・交通費計算                … commute-form の GASの STAFF_HOME（フルネーム）
-     ・経費精算                  … 経費精算のスプレッドシート */
-var STAFF    = ['福山', '古川', '清田', '福岡'];   // Sieg社員
-var PARTNERS = ['山口', '鈴木', '毛利', '山内'];   // パートナー様
-var EVERYONE = STAFF.concat(PARTNERS);
+/* 名簿は sieg-roster.js（ポータルと全ツールで共通）。人の増減はそちらだけ直す */
+var R = window.SiegRoster || { staff: [], partners: [], everyone: [], forTool: function(){ return []; } };
+var STAFF    = R.staff;      // Sieg社員
+var PARTNERS = R.partners;   // パートナー様
+var EVERYONE = R.everyone;
 
 /* ツール
    for     … このツールを使う人（ホームやツール一覧には、選んだ人が使うものだけ出す）
@@ -345,17 +339,17 @@ var EVERYONE = STAFF.concat(PARTNERS);
    withName… 開くときに ?staff=名前 を付ける */
 var TOOLS = [
   { id:'nippou', name:'日報', desc:'実績・所感をDiscordへ送信', ic:'doc', c:'amber', home:true,
-    for:PARTNERS, withName:true, url:'https://sakusakusansan-star.github.io/nippou-form/' },
+    for:R.forTool('nippou'), withName:true, url:'https://sakusakusansan-star.github.io/nippou-form/' },
 
   { id:'shift', name:'シフト入力', desc:'スマホから稼働日を送信', ic:'cal', c:'blue', home:true,
     for:EVERYONE, withName:true, url:'shift.html',
     partnerUrl:'https://sakusakusansan-star.github.io/shift-form/' },
 
   { id:'commute', name:'交通費計算', desc:'通勤距離・交通費の自動計算', ic:'car', c:'teal', home:true,
-    for:['福山', '古川', '清田', '山口'], withName:true, url:'https://sakusakusansan-star.github.io/commute-form/' },
+    for:R.forTool('commute'), withName:true, url:'https://sakusakusansan-star.github.io/commute-form/' },
 
   { id:'keihi', name:'経費精算', desc:'領収書をAIで自動読み取り', ic:'rcpt', c:'green', home:true,
-    for:['福山', '古川', '清田'], withName:true, url:'https://sakusakusansan-star.github.io/keihi23/' },
+    for:R.forTool('keihi'), withName:true, url:'https://sakusakusansan-star.github.io/keihi23/' },
 
   { id:'sheet', name:'シフト表を見る', desc:'みんなのシフト（スプレッドシート）', ic:'grid', c:'blue', group:'B',
     for:EVERYONE, url:'https://docs.google.com/spreadsheets/d/1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ/edit?usp=sharing' },
@@ -364,7 +358,7 @@ var TOOLS = [
     for:EVERYONE, url:'docs/' },
 
   { id:'post', name:'掲示板に投稿', desc:'お知らせ・会議予定を全員へ共有', ic:'board', c:'amber', group:'B',
-    for:STAFF, url:NOTICE_POST }
+    for:R.forTool('notice'), url:NOTICE_POST }
 ];
 
 var CONTACTS = [

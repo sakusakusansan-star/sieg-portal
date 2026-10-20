@@ -428,6 +428,7 @@
 
 <script src="gas-client.js"></script>
 <script src="sieg-nav.js"></script>
+<script src="sieg-roster.js"></script>
 <script>
   /* ═══════════════════════════════════════════════════════════
      設定：Google Apps Script のデプロイURLをここに貼る
@@ -436,7 +437,7 @@
   var SHIFT_API   = 'https://script.google.com/macros/s/AKfycbz_aHJ4v0Q-s5_m_i7G7gomrJeicz_iRWPF1qcafrG16gQtTV8VA7dU2ViTNgcbtTgYTg/exec';
   var SHIFT_TOKEN = 'sieg-shift-2026';   // GAS側の TOKEN と同じ文字列
 
-  var STAFF    = ['福岡', '清田', '福山', '古川'];
+  var STAFF    = window.SiegRoster ? SiegRoster.forTool('shiftStaff') : [];   // 名簿は sieg-roster.js
   var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル'];
   var CARRIERS = ['docomo', 'SoftBank', 'au'];
   // 開催場所のボタンは3つだけ。近見・下通は固定で、3つ目はよく選ぶ場所に入れ替わる

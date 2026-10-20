@@ -171,12 +171,13 @@ test('同じ送信IDが2回来ても、送信ログは1行だけ', () => {
   assert.strictEqual(ss.getSheetByName('送信ログ').getLastRow(), 2);
 });
 
-test('合言葉が違えば読み書きできない', () => {
+test('合言葉なしで読み書きできる（合言葉は使わない）', () => {
   setup([makeShiftSheet('シフト表　10月', '2026', '10月', 31)]);
-  const res = JSON.parse(doPost({ postData: { contents: JSON.stringify({ token: 'x', name: '清田', year: 2026, month: 10, entries: [{ start: 1 }] }) } }).text);
-  assert.strictEqual(res.ok, false);
-  const got = JSON.parse(doGet({ parameter: { action: 'list', token: 'x', name: '清田', year: '2026', month: '10' } }).text);
-  assert.strictEqual(got.ok, false);
+  const res = JSON.parse(doPost({ postData: { contents: JSON.stringify({ name: '清田', year: 2026, month: 10, entries: [{ start: 1, client: 'ダル', carrier: 'docomo', place: '下通' }] }) } }).text);
+  assert.strictEqual(res.ok, true, JSON.stringify(res));
+  const got = JSON.parse(doGet({ parameter: { action: 'list', name: '清田', year: '2026', month: '10' } }).text);
+  assert.strictEqual(got.ok, true, JSON.stringify(got));
+  assert.strictEqual(got.days['1'].client, 'ダル');
 });
 
 console.log('\n' + passed + '件すべて成功');

@@ -18,9 +18,9 @@
 // 独立したスクリプトとして作る場合は、必ずここにIDを入れる。
 var SHEET_ID = '1wRBlTC_U2Mek5xj1YDFUEuAdRRlcVGZGIy_3WmmJLsQ';
 
-// 合言葉。shift.html の SHIFT_TOKEN と同じ文字列にする。
-// 空のままでも動くが、URLを知っている人は誰でも送信できる状態になる。
-var TOKEN = 'sieg-shift-2026';
+// 合言葉。空なら確かめない（2026-10 から合言葉なしで運用）。
+// 使う場合は shift.html から同じ文字列を token として送ること。
+var TOKEN = '';
 
 // 送信ログのシート名。空にすると「日時／操作／名前…」の見出しから自動で探し、
 // 見つからなければ「送信ログ」を新しく作る。
@@ -33,7 +33,7 @@ var ALLOW_STAFF = ['福岡', '清田', '福山', '古川'];
 var LABEL_KEYS = ['client', 'carrier', 'place', 'hotel'];
 
 // コードの版。?action=ping で表示されるので、再デプロイが反映されたかの確認に使う。
-var CODE_VERSION = '2026-10-11';
+var CODE_VERSION = '2026-10-20';
 
 // ═══ 入口 ═══
 

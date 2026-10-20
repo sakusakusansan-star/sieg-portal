@@ -13,6 +13,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -103,6 +106,43 @@ button{font-family:inherit;border:none;background:none;color:inherit;cursor:poin
 .head{padding:2px 5px 16px}
 .head .d{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums;letter-spacing:.05em}
 .head h2{font-size:21px;font-weight:800;margin-top:5px;line-height:1.42;text-wrap:pretty}
+/* あいさつ：時間帯で色が変わるカード（朝・昼・夜は data-tod） */
+#v-home .head{margin:0 0 16px;padding:18px 74px 20px 18px;border-radius:22px;background:var(--hero);box-shadow:var(--lift)}
+#v-home .head .d{color:var(--hero-sub)}
+#v-home .head h2{color:var(--hero-ink);font-size:21px;font-weight:900;letter-spacing:.01em;word-break:keep-all;overflow-wrap:anywhere}
+#v-home .head .sub{display:block;margin-top:6px;font-size:12.5px;font-weight:700;color:var(--hero-sub)}
+:root[data-tod="morning"]{--hero:linear-gradient(135deg,#FFE7BF 0%,#FFF4E0 55%,#FFFFFF 100%);--hero-ink:#5A3A00;--hero-sub:#9A6A1A}
+:root[data-tod="day"]{--hero:linear-gradient(135deg,#DDEBFF 0%,#F2F7FF 60%,#FFFFFF 100%);--hero-ink:#13305E;--hero-sub:#4F6A93}
+:root[data-tod="night"]{--hero:linear-gradient(135deg,#1C2B4D 0%,#14203A 60%,#101826 100%);--hero-ink:#F3F6FB;--hero-sub:#A9B8D3}
+@media (prefers-color-scheme:dark){
+  :root[data-tod="morning"]{--hero:linear-gradient(135deg,#3A2A12 0%,#251C10 70%);--hero-ink:#FFE3B0;--hero-sub:#C9A36A}
+  :root[data-tod="day"]{--hero:linear-gradient(135deg,#17284A 0%,#121C30 70%);--hero-ink:#E6EEFB;--hero-sub:#93A7C8}
+}
+/* 見出しは丸みのある書体（読めないときは端末の書体） */
+.brand b,#v-home .head h2,#homeTools .tx b{font-family:"Zen Maru Gothic","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif}
+
+/* ホームのツール：2列のタイル。数が奇数なら最後は横長 */
+#homeTools{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:none;box-shadow:none;overflow:visible}
+#homeTools .row{flex-direction:column;align-items:flex-start;gap:10px;min-height:128px;padding:15px 15px 13px;
+  border-radius:20px;background:var(--surface);box-shadow:var(--lift);border:1px solid var(--hair2);
+  transition:transform .14s cubic-bezier(.3,.7,.4,1);animation:tile-in .42s cubic-bezier(.22,.68,.28,1) backwards}
+#homeTools .row::before{display:none}
+#homeTools .row:active{transform:scale(.96)}
+#homeTools .row:nth-child(2){animation-delay:.05s}
+#homeTools .row:nth-child(3){animation-delay:.1s}
+#homeTools .row:nth-child(4){animation-delay:.15s}
+#homeTools .row:last-child:nth-child(odd){grid-column:span 2;flex-direction:row;align-items:center;min-height:0}
+#homeTools .ic{width:42px;height:42px;border-radius:14px}
+#homeTools .tx{flex:none}
+#homeTools .tx b{font-size:16.5px;font-weight:900}
+#homeTools .tx small{display:none}
+#homeTools .st{margin-top:auto;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;
+  padding:4px 9px;border-radius:999px;background:var(--amber-tint);color:var(--amber)}
+#homeTools .st.ok{background:var(--green-tint);color:var(--green)}
+#homeTools .st i{width:6px;height:6px;border-radius:50%;background:currentColor}
+#homeTools .row:last-child:nth-child(odd) .st{margin:0 0 0 auto}
+@keyframes tile-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+
 h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;letter-spacing:.07em}
 .view > h3.sec{margin-top:26px}
 
@@ -260,6 +300,7 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
     <div class="head">
       <div class="d" id="today"></div>
       <h2 id="greet">おつかれさまです</h2>
+      <span class="sub" id="greetSub"></span>
     </div>
     <div class="list" id="homeTools"></div>
     <button class="install" id="install" type="button">
@@ -436,7 +477,23 @@ function toolRow(t, showFlag){
     + '<span class="ic ' + t.c + '">' + svg(t.ic) + '</span>'
     + '<span class="tx"><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span>'
     + (showFlag && t.flag ? '<span class="pill">' + esc(t.flag) + '</span>' : '')
+    + (showFlag && t.id === 'nippou' ? nippouState() : '')
     + '</a>';
+}
+
+/* 日報の「提出済み／未提出」（ホームのタイルだけに出す）。
+   日報を送ると、日報の画面がこの端末に送った日付を残す（siegNippouSubmitted）。
+   ほかのスマホから送った分はわからないので、そのときは未提出のまま出る。 */
+function todayYmd(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function nippouState(){
+  var me = getStaff();
+  if (!me) return '';
+  var sent = false;
+  try { sent = (JSON.parse(lsGet('siegNippouSubmitted') || '{}')[me] || []).indexOf(todayYmd()) >= 0; } catch(e) {}
+  return sent ? '<span class="st ok"><i></i>提出済み</span>' : '<span class="st"><i></i>未提出</span>';
 }
 function usable(t, me){ return !me || !t.for || t.for.indexOf(me) >= 0; }
 function paintTools(){
@@ -724,8 +781,13 @@ function word(){
   var h = new Date().getHours();
   return h < 10 ? 'おはようございます' : h < 18 ? 'おつかれさまです' : 'おつかれさまでした';
 }
+/* 時間帯（あいさつのカードの色と、下のひとこと） */
+function timeOfDay(){ var h = new Date().getHours(); return h < 10 ? 'morning' : h < 18 ? 'day' : 'night'; }
 function paintWho(){
   var nm = getStaff(), b = $('#whoBtn');
+  var tod = timeOfDay();
+  document.documentElement.setAttribute('data-tod', tod);
+  $('#greetSub').textContent = { morning:'今日もよろしくお願いします', day:'午後もいい調子でいきましょう', night:'今日もおつかれさまでした' }[tod];
   if (nm) {
     b.classList.remove('unset');
     $('#whoIni').textContent = initial(nm);

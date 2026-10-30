@@ -38,7 +38,9 @@
     shiftPartner: 'partner',                        // シフト入力（パートナー様）
     commute:      ['福山', '古川', '清田', '山口'],  // 交通費計算
     keihi:        ['福山', '古川', '清田'],          // 経費精算
-    notice:       'staff'                           // 掲示板への投稿
+    notice:       'staff',                          // 掲示板への投稿
+    gain:         'everyone',                       // 獲得報告
+    power:        'everyone'                        // 戦闘力（ランキングに出る人）
   };
 
   function names(group) {

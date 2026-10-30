@@ -32,7 +32,7 @@
       { label: 'ドコモ光',         cat: '固定', pt: 100 },
       { label: 'HOME5G',           cat: '固定', pt: 100 },
       { label: 'ハイエンド',       cat: '端末', pt: 50 },
-      { label: 'Dカードプラチナ',  cat: 'カード', pt: 80 },
+      { label: 'Dカードプラチナ',  cat: 'カード', pt: 100 },
       { label: 'Dカードゴールド',  cat: 'カード', pt: 80 },
       { label: 'DカードゴールドU', cat: 'カード', pt: 80 },
       { label: '新規',             cat: '新規', pt: 30 }

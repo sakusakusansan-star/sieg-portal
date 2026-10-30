@@ -308,7 +308,9 @@
   var state = { name: '', carrier: '', date: todayStr(), counts: {}, memo: '' };
   state.name = NAMES.indexOf(urlName) >= 0 ? urlName : SiegNav.staff(NAMES);
 
+  // 開いたときのキャリア：名簿で決めてあればそれ（sieg-roster.js の carrier）、無ければ前回選んだもの
   function rememberedCarrier(name) {
+    if (R.carrier && validCarrier(R.carrier(name))) return R.carrier(name);
     var all = load(CARRIER_KEY) || {};
     if (all[name]) return all[name];
     var np = load('nippou.prefs.v1');   // 日報で前回選んだキャリア（同じアドレスなので読める）

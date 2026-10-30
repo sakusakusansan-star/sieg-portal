@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>戦闘力｜Sieg 業務ポータル</title>
+<meta name="description" content="獲得報告から計算した今月の戦闘力とランキング。">
+<meta name="theme-color" content="#0B0E1A">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* 対戦アクションゲーム風。斜めに切ったパネル、プレイヤー色、太い斜体の数字。ゲーム画面としてあえて暗い一色（スマホの明暗設定によらない） */
+:root{
+  --bg:#0B0E1A;
+  --bg2:#141A2E;
+  --panel:#171F36;
+  --line:#2A3556;
+  --ink:#FFFFFF;
+  --mute:#9AA6C4;
+  --gold:#FFC93C;
+  --p1:#F0453F; --p2:#3D7DF2; --p3:#F4C431; --p4:#35B866; --p5:#A66BFF; --p6:#FF8A3D; --p7:#29C4D8; --p8:#FF5FA2;
+  --mnp:#FF7A45; --kotei:#3ED39A; --tan:#5BA4FF; --card:#FFC93C; --new:#B6F06A;
+  /* 「‹ ポータル」ボタン（sieg-nav.js）をこの画面の色に合わせる */
+  --sg-surface:#171F36; --sg-ink:#FFFFFF; --sg-hair:#2A3556; --sg-lift:none;
+  --disp:"Dela Gothic One","Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;
+  --body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);overflow-x:hidden;
+  background-image:radial-gradient(120% 60% at 50% -10%,#24305A 0%,transparent 60%),repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px)}
+.wrap{max-width:480px;margin:0 auto;padding-block:12px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:16px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.it{font-style:italic;display:inline-block;transform:skewX(-8deg)}
+
+.note{font-size:11.5px;color:var(--mute);text-align:center}
+.note b{color:var(--gold)}
+
+/* 見出しの帯 */
+.band{font-family:var(--disp);font-size:15px;letter-spacing:.06em;padding:6px 18px 6px 14px;align-self:flex-start;
+  background:var(--ink);color:var(--bg);clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+
+/* タブ */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tab{font-family:var(--disp);font-size:16px;padding:11px 0;color:var(--mute);background:var(--panel);
+  clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.tab[aria-selected="true"]{background:var(--gold);color:#1A1405}
+
+/* ファイター選択 */
+.roster{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.slot{position:relative;aspect-ratio:3/4;max-width:100%;background:linear-gradient(160deg,var(--c) 0%,color-mix(in srgb,var(--c) 35%,var(--bg)) 100%);
+  clip-path:polygon(0 0,100% 0,100% 88%,88% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;opacity:.5;transition:opacity .15s,transform .15s}
+.slot .fig{position:absolute;inset:16% 6% 20%;width:auto;height:auto}
+.slot .tag{position:absolute;left:6px;top:4px;font-family:var(--disp);font-size:11px;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.slot .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);font-family:var(--disp);font-size:12px;padding:3px 0 4px;text-align:center}
+.slot[aria-pressed="true"]{opacity:1;transform:translateY(-3px)}
+.slot[aria-pressed="true"] .nm{background:#fff;color:var(--bg)}
+
+/* ファイターパネル */
+.fighter{position:relative;overflow:hidden;background:var(--panel);min-height:300px;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%)}
+.fighter .bgc{position:absolute;inset:0;background:linear-gradient(115deg,var(--c) 0 46%,color-mix(in srgb,var(--c) 28%,var(--bg)) 46% 100%)}
+.fighter .lines{position:absolute;inset:0;width:100%;height:100%;opacity:.32}
+.fighter .chara{position:absolute;left:0;bottom:0;width:50%;height:92%;display:flex;align-items:flex-end;justify-content:center;animation:idle 2.4s ease-in-out infinite}
+.fig{display:flex;align-items:flex-end;justify-content:center;width:100%;height:100%;color:rgba(255,255,255,.22)}
+.fig svg{width:72%;height:auto;max-height:100%}
+.fig img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:drop-shadow(5px 5px 0 rgba(0,0,0,.35))}
+@keyframes idle{50%{transform:translateY(-4px)}}
+.fighter .info{position:relative;margin-left:48%;padding:16px 14px 18px 4px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:300px}
+.fighter .pl{font-family:var(--disp);font-size:13px;color:var(--c);background:#fff;padding:2px 12px 2px 10px;clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.fighter .name{font-family:var(--disp);font-size:38px;line-height:1;letter-spacing:.02em;text-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.fighter .cls{font-size:12px;font-weight:900;color:var(--gold)}
+.fighter .lvrow{display:flex;align-items:center;gap:10px}
+.fighter .lv{font-family:var(--disp);font-size:16px}
+.fighter .lv b{font-size:30px;margin-left:2px;font-weight:400}
+.rank{font-family:var(--disp);font-size:20px;width:40px;height:40px;display:grid;place-items:center;color:#1A1405;background:var(--gold);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.rank.S{background:linear-gradient(135deg,#FFF0A8,#FFC93C 45%,#FF7A45 75%,#C69CFF)}
+.rank.B{background:#D3DBEA} .rank.C{background:#C98A55}
+.exp{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;transform:skewX(-14deg);width:100%}
+.exp i{height:9px;background:rgba(255,255,255,.18)}
+.exp i.on{background:#fff}
+.fighter .nx{font-size:11.5px;font-weight:700;color:#E6ECFA}
+.power{margin-top:auto}
+.power .lbl{font-size:11px;font-weight:900;letter-spacing:.2em;color:#E6ECFA}
+.power .num{font-family:var(--disp);font-size:50px;line-height:1;color:#fff;font-variant-numeric:tabular-nums;
+  text-shadow:4px 4px 0 var(--c),6px 6px 0 rgba(0,0,0,.35)}
+.power .num.hit{animation:hit .35s steps(3)}
+@keyframes hit{30%{transform:scale(1.15) skewX(-8deg);color:var(--gold)}}
+.power .diff{display:inline-block;margin-top:8px;font-family:var(--disp);font-size:12.5px;padding:2px 12px;background:#fff;color:#0B8A55;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.power .diff.down{color:#C33}
+
+/* キャラを選ぶ */
+.picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pick{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px 6px;background:var(--panel);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);opacity:.7}
+.pick .fig{height:52px}
+.pick span{font-size:10.5px;font-weight:900;white-space:nowrap}
+.pick[aria-pressed="true"]{opacity:1;background:var(--gold);color:#1A1405}
+
+
+/* 実績（アイコンを並べる） */
+.stocks{display:grid;gap:12px;background:var(--panel);padding:14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
+.stk{display:grid;grid-template-columns:4.4em 1fr auto;gap:10px;align-items:center}
+.stk .k{font-family:var(--disp);font-size:16px}
+.stk .k small{display:block;font-family:var(--body);font-size:10.5px;font-weight:700;color:var(--mute)}
+.stk .icons{display:flex;flex-wrap:wrap;gap:3px;min-width:0}
+.stk .icons canvas{width:18px;height:18px}
+.stk .icons .more{font-family:var(--disp);font-size:13px;color:var(--mute);align-self:center;margin-left:2px}
+.stk .v{font-family:var(--disp);font-size:30px;line-height:1;color:var(--c)}
+.stk .v small{font-family:var(--body);font-size:12px;color:var(--mute);margin-left:2px}
+
+/* 成長の記録 */
+.growth{background:var(--panel);padding:14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
+.growth svg{display:block;width:100%;height:auto;overflow:visible}
+.growth .grid{stroke:var(--line);stroke-width:1}
+.growth .axis{fill:var(--mute);font-family:var(--body);font-size:10px;font-weight:700}
+.growth .mon{fill:var(--mute);font-family:var(--disp);font-size:11px}
+.growth .mon.now{fill:var(--gold)}
+.growth .val{fill:var(--ink);font-family:var(--disp);font-size:11px}
+.growth .best{fill:var(--gold);font-family:var(--disp);font-size:11px}
+.growth .none{fill:var(--line);font-family:var(--disp);font-size:11px}
+.growth .bar{fill:#4A5A86;transform-box:fill-box;transform-origin:50% 100%;animation:grow .6s cubic-bezier(.3,.7,.3,1) backwards}
+.growth .bar.now{fill:var(--gold)}
+@keyframes grow{from{transform:scaleY(0)}}
+.gsum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.gsum div{background:var(--bg2);padding:8px 11px;clip-path:polygon(0 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.gsum small{display:block;font-size:11px;color:var(--mute);font-weight:700}
+.gsum b{font-family:var(--disp);font-weight:400;font-size:17px}
+.gsum b.up{color:var(--kotei)} .gsum b.dn{color:var(--mnp)}
+
+/* 称号（斜めのチップ） */
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{font-family:var(--disp);font-size:13px;padding:7px 16px;background:var(--gold);color:#1A1405;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.badge.off{background:var(--panel);color:#56628A}
+
+details{font-size:12.5px;color:var(--mute);background:var(--panel);padding:12px 14px}
+details summary{cursor:pointer;font-weight:900;color:var(--ink);list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"＋ ";color:var(--gold)}
+details[open] summary::before{content:"－ "}
+.formula{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:10px}
+.formula span:nth-of-type(even){text-align:right;color:var(--ink);font-family:var(--disp)}
+details p{margin:10px 0 0;line-height:1.7}
+
+.go{display:block;text-align:center;text-decoration:none;font-family:var(--disp);font-size:17px;padding:14px 0;background:var(--gold);color:#1A1405;
+  clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%)}
+.go:active{transform:scale(.98)}
+.title-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:-4px}
+.title-row h1{margin:0;font-family:var(--disp);font-weight:400;font-size:30px;letter-spacing:.04em;text-shadow:3px 3px 0 var(--p1)}
+.title-row .month{font-family:var(--disp);font-size:14px;color:var(--gold)}
+.col{display:flex;flex-direction:column;gap:16px}
+.state{font-family:var(--disp);font-size:15px;color:var(--mute);text-align:center;padding:48px 0;line-height:1.7}
+.state[hidden],#picker-box[hidden]{display:none}
+#picker-box{display:flex;flex-direction:column;gap:12px}
+.note.left{text-align:left;margin:0;min-height:1.2em}
+.formula .fh{grid-column:auto;color:var(--gold);font-family:var(--disp);font-weight:400;margin-top:6px}
+
+/* ランキング */
+.champ{position:relative;overflow:hidden;background:linear-gradient(115deg,var(--c) 0 55%,color-mix(in srgb,var(--c) 28%,var(--bg)) 55%);
+  padding:16px 16px 14px;min-height:156px;clip-path:polygon(0 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%)}
+.champ .fig{position:absolute;right:2%;bottom:0;width:42%;height:100%;animation:idle 2.4s ease-in-out infinite}
+.champ .w{font-family:var(--disp);font-size:13px;background:#fff;color:var(--c);display:inline-block;padding:2px 12px 2px 10px;clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.champ .n{font-family:var(--disp);font-size:40px;line-height:1.1;margin-top:8px;text-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.champ .p{font-family:var(--disp);font-size:22px;margin-top:2px}
+.hud{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hp{position:relative;background:var(--panel);padding:10px 10px 10px 12px;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center;
+  border-left:6px solid var(--c);clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
+.hp.me{background:color-mix(in srgb,var(--c) 22%,var(--panel))}
+.hp .fig{width:40px;height:48px}
+.hp .pl{font-family:var(--disp);font-size:11px;color:var(--c)}
+.hp .nm{font-family:var(--disp);font-size:15px;line-height:1.2}
+.hp .pw{font-family:var(--disp);font-size:24px;line-height:1.05;text-shadow:2px 2px 0 var(--c)}
+.hp .pos{position:absolute;right:10px;top:6px;font-family:var(--disp);font-size:16px;color:var(--mute)}
+.hp .pos.first{color:var(--gold)}
+.hp .sub{font-size:10.5px;color:var(--mute);font-weight:700}
+.kings{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.king{background:var(--panel);padding:10px 14px 10px 12px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;
+  clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.king canvas{width:26px;height:26px}
+.king .t{font-size:11px;color:var(--mute);font-weight:900}
+.king .n{font-family:var(--disp);font-size:16px}
+.king .n span{color:var(--c);font-size:13px;margin-left:4px}
+
+/* 演出 */
+.burst{position:fixed;inset:0;z-index:20;display:grid;place-items:center;pointer-events:none;padding:20px}
+.burst .txt{font-family:var(--disp);font-size:min(16vw,76px);color:#fff;text-shadow:5px 5px 0 var(--gold),9px 9px 0 rgba(0,0,0,.45);
+  animation:slam 1.6s cubic-bezier(.2,.9,.2,1) forwards;text-align:center;line-height:1.05}
+.burst .txt small{display:block;font-size:.34em;margin-top:6px;text-shadow:3px 3px 0 var(--gold)}
+@keyframes slam{0%{transform:skewX(-10deg) scale(2.4);opacity:0}12%{transform:skewX(-10deg) scale(1);opacity:1}80%{opacity:1;transform:skewX(-10deg) scale(1)}100%{transform:skewX(-10deg) scale(1.05) translateY(-10px);opacity:0}}
+.shake{animation:shake .4s steps(4)}
+@keyframes shake{25%{transform:translate(4px,-3px)}50%{transform:translate(-4px,2px)}75%{transform:translate(3px,3px)}}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:19;pointer-events:none}
+
+.view[hidden],.burst[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <div data-sieg-back></div>
+
+  <div class="title-row">
+    <h1 class="it">戦闘力</h1>
+    <span class="month" id="month-label"></span>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" id="tab-status" role="tab" aria-selected="true" aria-controls="view-status">ファイター</button>
+    <button class="tab" id="tab-rank" role="tab" aria-selected="false" aria-controls="view-rank">ランキング</button>
+  </div>
+
+  <div class="state" id="state">読み込み中…</div>
+
+  <section class="view" id="view-status" role="tabpanel" aria-labelledby="tab-status" hidden>
+    <div class="col">
+      <div class="roster" id="roster" aria-label="見る人を選ぶ"></div>
+
+      <div class="fighter" id="fighter">
+        <div class="bgc"></div>
+        <canvas class="lines" id="lines"></canvas>
+        <div class="chara" id="chara"></div>
+        <div class="info">
+          <span class="pl" id="pl"></span>
+          <div class="name it" id="name"></div>
+          <div class="cls" id="cls"></div>
+          <div class="lvrow"><div class="lv it">LV<b id="lv"></b></div><div class="rank" id="rank"></div></div>
+          <div class="exp" id="exp"></div>
+          <div class="nx" id="nx"></div>
+          <div class="power">
+            <div class="lbl">今月の戦闘力</div>
+            <div class="num it" id="power">0</div><br>
+            <span class="diff" id="diff"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="picker-box">
+        <span class="band">キャラを選ぶ</span>
+        <div class="picker" id="picker" aria-label="キャラを選ぶ"></div>
+        <p class="note left" id="picker-msg"></p>
+      </div>
+
+      <span class="band">今月の実績</span>
+      <div class="stocks" id="stocks"></div>
+
+      <span class="band">成長の記録</span>
+      <div class="growth"><div id="growth"></div><div class="gsum" id="gsum"></div></div>
+
+      <span class="band">称号</span>
+      <div class="badges" id="badges"></div>
+
+      <details>
+        <summary>戦闘力の計算のしかた</summary>
+        <div class="formula" id="formula"></div>
+        <p>ポータルの「獲得報告」で送った件数から計算します（日報の数字は使いません）。ランクは S（2,000以上）・A（1,500以上）・B（1,000以上）・C です。毎月1日に0から始まります。</p>
+      </details>
+
+      <a class="go" id="go-gain" href="gain.html">獲得報告を送る</a>
+    </div>
+  </section>
+
+  <section class="view" id="view-rank" role="tabpanel" aria-labelledby="tab-rank" hidden>
+    <div class="col">
+      <div class="champ" id="champ"></div>
+      <span class="band">今月の順位</span>
+      <div class="hud" id="hud"></div>
+      <span class="band">部門賞</span>
+      <div class="kings" id="kings"></div>
+      <div class="note">順位は毎月1日にリセットされます。</div>
+    </div>
+  </section>
+</div>
+
+<canvas id="fx"></canvas>
+<div class="burst" id="burst" hidden><div class="txt" id="bursttxt"></div></div>
+
+<script src="gas-client.js"></script>
+<script src="sieg-nav.js"></script>
+<script src="sieg-roster.js"></script>
+<script src="sieg-products.js"></script>
+<script>
+(function(){
+  'use strict';
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var R = window.SiegRoster, PR = window.SiegProducts;
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function fmt(n){ return Number(n).toLocaleString('ja-JP'); }
+  function load(k){ try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
+  function store(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+
+  if (!R || !PR) { $('state').textContent = '読み込みに失敗しました。電波のよいところで再読み込みしてください。'; return; }
+
+  /* ── キャラの枠（10体）──
+     画像は fighters/ フォルダに 01.png 〜 10.png の名前で置く（背景が透明な PNG がきれい）。
+     名前を付けたいときは、下の NAMES を書き換える。画像が無い枠はシルエットと「？」を出す。 */
+  var NAMES = ['キャラ1','キャラ2','キャラ3','キャラ4','キャラ5','キャラ6','キャラ7','キャラ8','キャラ9','キャラ10'];
+  var FIGHTERS = NAMES.map(function(n, i){ var no = (i < 9 ? '0' : '') + (i + 1); return { id: no, name: n, img: 'fighters/' + no + '.png' }; });
+  function fighterOf(id){ for (var i = 0; i < FIGHTERS.length; i++) if (FIGHTERS[i].id === id) return FIGHTERS[i]; return FIGHTERS[0]; }
+  var SIL = '<svg viewBox="0 0 100 120" aria-hidden="true"><g fill="currentColor">' +
+    '<circle cx="50" cy="30" r="17"/><path d="M22 112c0-30 10-50 28-50s28 20 28 50z"/></g>' +
+    '<text x="50" y="38" text-anchor="middle" font-size="22" font-family="Dela Gothic One, sans-serif" fill="var(--bg)">?</text></svg>';
+  var imgOk = {};   // 一度読めなかった画像は、何度も取りに行かない
+  function figEl(id){
+    var f = fighterOf(id), box = document.createElement('span');
+    box.className = 'fig'; box.innerHTML = SIL;
+    if (imgOk[f.id] === false) return box;
+    var img = new Image(); img.alt = f.name; img.decoding = 'async';
+    img.onload = function(){ imgOk[f.id] = true; box.innerHTML = ''; box.appendChild(img); };
+    img.onerror = function(){ imgOk[f.id] = false; };
+    img.src = f.img;
+    return box;
+  }
+
+  /* ── ドット絵の小さいアイコン（区分ごと）── */
+  var PX = {
+    'MNP':  { map:['......kk','.....kwk','....kwk.','.k.kwk..','..kwk...','..kgk...','.kgkk...','kk......'], pal:{k:'#1B1424',w:'#FFFFFF',g:'#FFC93C'} },
+    '固定': { map:['.kkkkkk.','kggggggk','kgccccgk','kgcwwcgk','kgccccgk','.kgccgk.','..kggk..','...kk...'], pal:{k:'#1B1424',g:'#FFC93C',c:'#3ED39A',w:'#FFFFFF'} },
+    '端末': { map:['.kkkkkk.','.kbbbbk.','.kbwwbk.','.kbbbbk.','.kbbbbk.','.kbbbbk.','.kkwwkk.','.kkkkkk.'], pal:{k:'#1B1424',b:'#5BA4FF',w:'#FFFFFF'} },
+    'カード':{ map:['........','kkkkkkkk','kggggggk','kkkkkkkk','kggggggk','kgwwgggk','kggggggk','kkkkkkkk'], pal:{k:'#1B1424',g:'#FFC93C',w:'#FFFFFF'} },
+    '新規': { map:['...kk...','...kk...','..kyyk..','kkkyykkk','.kyyyyk.','..kyyk..','.kyk.kyk','.kk...kk'], pal:{k:'#1B1424',y:'#B6F06A'} }
+  };
+  function drawPx(cv, cat){
+    var d = PX[cat] || PX['新規'], h = d.map.length, w = d.map[0].length, c = cv.getContext('2d');
+    cv.width = w; cv.height = h; c.clearRect(0, 0, w, h);
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) { var col = d.pal[d.map[y][x]]; if (col) { c.fillStyle = col; c.fillRect(x, y, 1, 1); } }
+    return cv;
+  }
+  var CAT_UI = { 'MNP':['攻撃','--mnp'], '固定':['守備','--kotei'], '端末':['装備','--tan'], 'カード':['魔法','--card'], '新規':['すばやさ','--new'] };
+
+  /* ── 数字の組み立て ── */
+  var COLS = ['--p1','--p2','--p3','--p4','--p5','--p6','--p7','--p8'];
+  var PEOPLE = R.forTool('power');
+  var urlName = new URLSearchParams(location.search).get('staff') || '';
+  var ME = PEOPLE.indexOf(urlName) >= 0 ? urlName : SiegNav.staff(PEOPLE);
+  var P = [], MONTHS = [], CUR = '', cur = 0;
+
+  function monthList(from, to){
+    var out = [], y = +from.slice(0, 4), m = +from.slice(5, 7);
+    for (var i = 0; i < 24; i++) {
+      var k = y + '-' + (m < 10 ? '0' : '') + m; out.push(k);
+      if (k >= to) break;
+      m++; if (m > 12) { m = 1; y++; }
+    }
+    return out;
+  }
+  function build(data){
+    CUR = data.month; MONTHS = monthList(data.from, data.month).slice(-6);
+    var byPM = {};   // 名前 → 月 → [{carrier,label,count}]
+    (data.rows || []).forEach(function(r){
+      if (PEOPLE.indexOf(r[1]) < 0) return;
+      var pm = byPM[r[1]] = byPM[r[1]] || {};
+      (pm[r[0]] = pm[r[0]] || []).push({ carrier: r[2], label: r[3], count: Number(r[4]) || 0 });
+    });
+    var fighters = data.fighters || {};
+    P = PEOPLE.map(function(name, i){
+      var months = byPM[name] || {};
+      var now = PR.score(months[CUR]);
+      var prevKey = MONTHS[MONTHS.length - 2];
+      var hist = MONTHS.map(function(m){ return months[m] ? PR.score(months[m]).power : null; });
+      var labels = {};
+      (months[CUR] || []).forEach(function(x){ var k = x.label; labels[k] = (labels[k] || 0) + x.count; });
+      var ch = fighters[name] && fighterOf(fighters[name]).id === fighters[name] ? fighters[name] : FIGHTERS[i % FIGHTERS.length].id;
+      return { name:name, i:i, pl:'P' + (i + 1), col:COLS[i % COLS.length], char:ch, pw:now.power, cats:now.cats, total:now.total,
+        last: prevKey && months[prevKey] ? PR.score(months[prevKey]).power : 0, hist:hist, labels:labels };
+    });
+    cur = Math.max(0, PEOPLE.indexOf(ME));
+  }
+
+  function rankOf(v){ return v >= 2000 ? 'S' : v >= 1500 ? 'A' : v >= 1000 ? 'B' : 'C'; }
+  var STEP = 200;   // この戦闘力ごとにレベルが1上がる（毎月1から）
+  function lvOf(p){ return Math.floor(p.pw / STEP) + 1; }
+  function cls(p){
+    if (p.total < 5) return 'かけだしファイター';
+    var top = PR.CATS.slice().sort(function(a, b){ return p.cats[b] - p.cats[a]; })[0];
+    if (p.cats[top] * 2 < p.total) return 'オールラウンダー';
+    return { 'MNP':'MNPハンター', '固定':'固定の守り人', '端末':'端末マスター', 'カード':'カード使い', '新規':'新規ハンター' }[top];
+  }
+  function mlabel(k){ return Number(k.slice(5, 7)) + '月'; }
+
+  function countUp(el, to){
+    if (reduce) { el.textContent = fmt(to); return; }
+    var t0 = performance.now(), d = 900;
+    (function step(t){ var k = Math.min(1, (t - t0) / d); el.textContent = fmt(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      if (k < 1) requestAnimationFrame(step); else { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); } })(t0);
+  }
+
+  /* 集中線（ファイターパネルの背景） */
+  function drawLines(){
+    var cv = $('lines'), r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1);
+    if (!r.width) return;
+    cv.width = r.width * dpr; cv.height = r.height * dpr;
+    var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var cx = r.width * .24, cy = r.height * .62, seed = 3;
+    function rnd(){ seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    c.fillStyle = 'rgba(255,255,255,.55)';
+    for (var i = 0; i < 54; i++) {
+      var a = rnd() * Math.PI * 2, w = .01 + rnd() * .025, R2 = Math.max(r.width, r.height) * 1.2, r0 = 70 + rnd() * 60;
+      c.beginPath(); c.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      c.lineTo(cx + Math.cos(a - w) * R2, cy + Math.sin(a - w) * R2); c.lineTo(cx + Math.cos(a + w) * R2, cy + Math.sin(a + w) * R2); c.closePath(); c.fill();
+    }
+  }
+
+  function renderRoster(){
+    var box = $('roster'); box.innerHTML = '';
+    P.forEach(function(p, i){
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'slot';
+      b.style.setProperty('--c', 'var(' + p.col + ')'); b.setAttribute('aria-pressed', String(i === cur)); b.setAttribute('aria-label', p.name);
+      b.innerHTML = '<span class="tag">' + p.pl + '</span>';
+      b.appendChild(figEl(p.char));
+      b.insertAdjacentHTML('beforeend', '<span class="nm">' + esc(p.name) + '</span>');
+      b.onclick = function(){ cur = i; renderRoster(); renderFighter(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderFighter(){
+    var p = P[cur], f = $('fighter');
+    f.style.setProperty('--c', 'var(' + p.col + ')');
+    var ch = $('chara'); ch.innerHTML = ''; ch.appendChild(figEl(p.char));
+    $('pl').textContent = p.pl + (p.name === ME ? '　あなた' : '');
+    $('name').textContent = p.name; $('cls').textContent = cls(p); $('lv').textContent = lvOf(p);
+    var rk = $('rank'); rk.textContent = rankOf(p.pw); rk.className = 'rank ' + rankOf(p.pw);
+    var e = '', on = Math.round((p.pw % STEP) / STEP * 12); for (var i = 0; i < 12; i++) e += '<i' + (i < on ? ' class="on"' : '') + '></i>'; $('exp').innerHTML = e;
+    $('nx').textContent = 'あと ' + fmt(STEP - p.pw % STEP) + ' でレベルアップ';
+    countUp($('power'), p.pw);
+    var d = p.pw - p.last, de = $('diff'); de.textContent = (d >= 0 ? '▲ +' : '▼ ') + fmt(d) + '（先月比）'; de.className = 'diff' + (d < 0 ? ' down' : '');
+    drawLines();
+    renderPicker(p);
+
+    var box = $('stocks'); box.innerHTML = '';
+    PR.CATS.forEach(function(cat){
+      var v = p.cats[cat] || 0, u = CAT_UI[cat], row = document.createElement('div'); row.className = 'stk'; row.style.setProperty('--c', 'var(' + u[1] + ')');
+      row.innerHTML = '<div class="k it">' + u[0] + '<small>' + esc(cat) + '</small></div>';
+      var ic = document.createElement('div'); ic.className = 'icons';
+      for (var i = 0; i < Math.min(v, 10); i++) { var cv = document.createElement('canvas'); cv.className = 'px'; ic.appendChild(drawPx(cv, cat)); }
+      if (v > 10) ic.insertAdjacentHTML('beforeend', '<span class="more">＋' + (v - 10) + '</span>');
+      if (!v) ic.insertAdjacentHTML('beforeend', '<span class="more">—</span>');
+      row.appendChild(ic);
+      row.insertAdjacentHTML('beforeend', '<div class="v it">' + v + '<small>件</small></div>');
+      box.appendChild(row);
+    });
+    renderGrowth(p);
+    var c = p.cats;
+    var B = [['はじめてのMNP', c['MNP'] > 0], ['はじめての固定', c['固定'] > 0], ['MNP 10件', c['MNP'] >= 10], ['固定 10件', c['固定'] >= 10],
+      ['5つの区分を制覇', PR.CATS.every(function(k){ return c[k] > 0; })], ['合計 20件', p.total >= 20], ['戦闘力 2,000', p.pw >= 2000]];
+    $('badges').innerHTML = B.map(function(b){ return '<span class="badge' + (b[1] ? '' : ' off') + '">' + (b[1] ? '★ ' : '？ ') + b[0] + '</span>'; }).join('');
+  }
+
+  /* キャラを選ぶ（自分のときだけ。選ぶと Google に保存して、みんなの画面にも出る） */
+  function renderPicker(p){
+    var mine = p.name === ME;
+    $('picker-box').hidden = !mine;
+    if (!mine) return;
+    var box = $('picker'); box.innerHTML = '';
+    FIGHTERS.forEach(function(f){
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'pick';
+      b.setAttribute('aria-pressed', String(p.char === f.id));
+      b.appendChild(figEl(f.id));
+      b.insertAdjacentHTML('beforeend', '<span>' + esc(f.name) + '</span>');
+      b.onclick = function(){
+        if (p.char === f.id) return;
+        var before = p.char;
+        p.char = f.id; renderRoster(); renderFighter();
+        $('picker-msg').textContent = '保存中…';
+        GasClient.post(PR.API, { action: 'fighter', name: p.name, id: f.id }, { retry: true }).then(function(d){
+          if (!d || !d.ok) throw new Error((d && d.error) || '保存できませんでした');
+          $('picker-msg').textContent = '保存しました。ランキングにもこのキャラで出ます。';
+        }).catch(function(err){
+          p.char = before; renderRoster(); renderFighter();
+          $('picker-msg').textContent = '保存できませんでした：' + err.message;
+        });
+      };
+      box.appendChild(b);
+    });
+  }
+
+  /* 成長の記録：直近6か月（今月は今の値）。目盛りは同じ尺度で引く */
+  function niceMax(v){ var s = [500,1000,1500,2000,2500,3000,4000,5000,6000,8000,10000]; for (var i = 0; i < s.length; i++) if (v <= s[i]) return s[i]; return Math.ceil(v / 1000) * 1000; }
+  function renderGrowth(p){
+    var vals = p.hist.slice(); vals[vals.length - 1] = p.pw;
+    var real = vals.filter(function(v){ return v != null; });
+    var best = Math.max.apply(null, real.concat([0])), top = niceMax(Math.max(best, 1) * 1.12);
+    var W = 320, H = 176, L = 36, Rr = 8, T = 20, B = 24, ch = H - T - B, cw = W - L - Rr, slot = cw / vals.length, bw = Math.min(28, slot * .52);
+    function y(v){ return T + ch - (v / top) * ch; }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(p.name) + 'さんの月ごとの戦闘力">';
+    [0, top / 2, top].forEach(function(t){ s += '<line class="grid" x1="' + L + '" x2="' + (W - Rr) + '" y1="' + y(t) + '" y2="' + y(t) + '"/><text class="axis" x="' + (L - 6) + '" y="' + (y(t) + 3.5) + '" text-anchor="end">' + fmt(t) + '</text>'; });
+    var shown = false;
+    vals.forEach(function(v, i){
+      var cx = L + slot * i + slot / 2, now = i === vals.length - 1, c = now ? ' now' : '';
+      s += '<text class="mon' + c + '" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle">' + mlabel(MONTHS[i]) + '</text>';
+      if (v == null) { s += '<text class="none" x="' + cx + '" y="' + (T + ch - 4) + '" text-anchor="middle">—</text>'; return; }
+      var h = Math.max(2, (v / top) * ch);
+      s += '<path class="bar' + c + '" d="M' + (cx - bw / 2 + 3) + ' ' + (T + ch - h) + 'h' + bw + 'l-6 ' + h + 'h-' + bw + 'z" style="animation-delay:' + (i * 60) + 'ms"/>';
+      var isBest = v === best && v > 0 && !shown; if (isBest) shown = true;
+      s += '<text class="' + (isBest ? 'best' : 'val') + '" x="' + cx + '" y="' + (T + ch - h - 5) + '" text-anchor="middle">' + (isBest ? '★' : '') + fmt(v) + '</text>';
+    });
+    $('growth').innerHTML = s + '</svg>';
+    var fi = -1; for (var i = 0; i < vals.length; i++) if (vals[i] != null) { fi = i; break; }
+    var bi = vals.indexOf(best), gain = p.pw - (fi >= 0 ? vals[fi] : 0);
+    $('gsum').innerHTML = '<div><small>いちばん高かった月</small><b>' + (best > 0 ? mlabel(MONTHS[bi]) + '　' + fmt(best) : '—') + '</b></div>' +
+      '<div><small>' + (fi >= 0 && fi < vals.length - 1 ? mlabel(MONTHS[fi]) + 'から' : '先月から') + '</small><b class="' + (gain >= 0 ? 'up' : 'dn') + '">' +
+      (fi >= 0 && fi < vals.length - 1 ? (gain >= 0 ? '+' : '') + fmt(gain) : (p.pw - p.last >= 0 ? '+' : '') + fmt(p.pw - p.last)) + '</b></div>';
+  }
+
+  function renderRank(){
+    var list = P.slice().sort(function(a, b){ return b.pw - a.pw || a.i - b.i; });
+    var c = list[0], ch = $('champ'); ch.style.setProperty('--c', 'var(' + c.col + ')'); ch.innerHTML = '';
+    if (!c.pw) {
+      ch.insertAdjacentHTML('beforeend', '<span class="w">今月のチャンピオン</span><div><div class="n it">まだいません</div></div><div><div class="p it">最初の報告で1位！</div></div>');
+    } else {
+      ch.insertAdjacentHTML('beforeend', '<span class="w">今月のチャンピオン</span><div><div class="n it">' + esc(c.name) + '</div></div><div><div class="p it">' + fmt(c.pw) + '</div></div>');
+      ch.appendChild(figEl(c.char));
+    }
+    var hud = $('hud'); hud.innerHTML = '';
+    var pos = 0, lastPw = null;
+    list.forEach(function(r, i){
+      if (r.pw !== lastPw) { pos = i + 1; lastPw = r.pw; }
+      var d = r.pw - r.last, el = document.createElement('div');
+      el.className = 'hp' + (r.name === ME ? ' me' : ''); el.style.setProperty('--c', 'var(' + r.col + ')');
+      el.appendChild(figEl(r.char));
+      el.insertAdjacentHTML('beforeend', '<div><div class="pl">' + r.pl + '</div><div class="nm">' + esc(r.name) + '</div><div class="pw it">' + fmt(r.pw) + '</div>' +
+        '<div class="sub">MNP ' + r.cats['MNP'] + '・固定 ' + r.cats['固定'] + '　' + (d >= 0 ? '▲+' : '▼') + fmt(d) + '</div></div><div class="pos it' + (pos === 1 && r.pw ? ' first' : '') + '">' + pos + '位</div>');
+      hud.appendChild(el);
+    });
+    var kb = $('kings'); kb.innerHTML = '';
+    [['MNP王','MNP'],['固定王','固定'],['端末王','端末'],['カード王','カード']].forEach(function(k){
+      var t = P.slice().sort(function(a, b){ return b.cats[k[1]] - a.cats[k[1]] || a.i - b.i; })[0];
+      var el = document.createElement('div'); el.className = 'king';
+      var ic = document.createElement('canvas'); ic.className = 'px'; el.appendChild(drawPx(ic, k[1]));
+      el.insertAdjacentHTML('beforeend', '<div><div class="t">' + k[0] + '</div><div class="n" style="--c:var(' + CAT_UI[k[1]][1] + ')">' +
+        (t && t.cats[k[1]] ? esc(t.name) + '<span>' + t.cats[k[1]] + '件</span>' : '—') + '</div></div>');
+      kb.appendChild(el);
+    });
+  }
+
+  function tab(w){
+    ['status','rank'].forEach(function(n){ $('tab-' + n).setAttribute('aria-selected', String(n === w)); $('view-' + n).hidden = n !== w; });
+    if (w === 'rank') renderRank(); else renderFighter();
+  }
+  $('tab-status').onclick = function(){ tab('status'); };
+  $('tab-rank').onclick = function(){ tab('rank'); };
+  addEventListener('resize', function(){ if (!$('view-status').hidden) drawLines(); });
+
+  /* 計算のしかた（商品表から作る） */
+  $('formula').innerHTML = PR.carriers.map(function(c){
+    return '<b class="fh">' + esc(c.label) + '</b><b class="fh"></b>' + PR.items(c.id).map(function(it){ return '<span>' + esc(it.label) + '</span><span>' + it.pt + '</span>'; }).join('');
+  }).join('');
+
+  /* 前に見たときより戦闘力が上がっていたら、大きな文字で知らせる */
+  var fx = $('fx'), fc = fx.getContext('2d'), parts = [];
+  function sparks(color){
+    if (reduce) return;
+    fx.width = innerWidth; fx.height = innerHeight;
+    for (var i = 0; i < 70; i++) { var a = Math.random() * 6.28, v = 3 + Math.random() * 7; parts.push({ x:innerWidth / 2, y:innerHeight * .42, vx:Math.cos(a) * v, vy:Math.sin(a) * v, life:40 + Math.random() * 25, c:i % 3 ? color : '#FFFFFF', w:3 + Math.random() * 3 }); }
+    (function tick(){
+      fc.clearRect(0, 0, fx.width, fx.height);
+      parts = parts.filter(function(q){ q.x += q.vx; q.y += q.vy; q.vx *= .95; q.vy *= .95; q.life--; fc.globalAlpha = Math.max(0, q.life / 60); fc.fillStyle = q.c; fc.fillRect(q.x, q.y, q.w, q.w); return q.life > 0; });
+      fc.globalAlpha = 1; if (parts.length) requestAnimationFrame(tick);
+    })();
+  }
+  function celebrate(){
+    var p = P[PEOPLE.indexOf(ME)];
+    if (!p) return;
+    var seen = load('siegPowerSeen') || {}, key = ME + '@' + CUR, before = seen[key];
+    seen = {}; seen[key] = p.pw; store('siegPowerSeen', seen);
+    if (before == null || p.pw <= before) return;
+    var up = lvOf(p) > Math.floor(before / STEP) + 1;
+    var b = $('burst'), t = $('bursttxt');
+    t.innerHTML = (up ? 'レベルアップ！' : 'ナイス！') + '<small>戦闘力 +' + fmt(p.pw - before) + '</small>';
+    b.hidden = false; t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
+    var w = $('wrap'); w.classList.remove('shake'); void w.offsetWidth; if (!reduce) w.classList.add('shake');
+    sparks(getComputedStyle(document.documentElement).getPropertyValue(p.col).trim() || '#FFC93C');
+    setTimeout(function(){ b.hidden = true; }, reduce ? 1200 : 1600);
+  }
+
+  if (ME) $('go-gain').href = 'gain.html?staff=' + encodeURIComponent(ME);
+  GasClient.get(PR.API, { action: 'gainStats' }).then(function(data){
+    if (!data || !data.ok || !data.rows) throw new Error('準備中です。もうしばらくお待ちください');
+    build(data);
+    $('month-label').textContent = Number(CUR.slice(0, 4)) + '年' + mlabel(CUR);
+    $('state').hidden = true;
+    renderRoster();
+    tab('status');
+    celebrate();
+  }).catch(function(err){
+    $('state').textContent = '読み込めませんでした：' + err.message;
+  });
+})();
+</script>
+</body>
+</html>

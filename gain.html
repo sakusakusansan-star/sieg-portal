@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>獲得報告｜Sieg 業務ポータル</title>
+<meta name="description" content="獲得した商品の件数を Discord の獲得報告チャンネルに送るページ。">
+<meta name="theme-color" content="#EFF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="sieg-theme.css">
+<style>
+  /* 区分ごとの色（sieg-products.js の cat と対応） */
+  :root {
+    --c-mnp: var(--sg-red);   --c-mnp-t: var(--sg-red-tint);
+    --c-kotei: var(--sg-teal); --c-kotei-t: var(--sg-teal-tint);
+    --c-tan: var(--sg-blue);  --c-tan-t: var(--sg-blue-tint);
+    --c-card: var(--sg-amber); --c-card-t: var(--sg-amber-tint);
+    --c-new: var(--sg-green); --c-new-t: var(--sg-green-tint);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; -webkit-tap-highlight-color: transparent; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .app {
+    max-width: 560px; margin: 0 auto;
+    padding: 4px max(16px, env(safe-area-inset-right)) calc(110px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 8px; }
+  .eyebrow { font-size: 11px; letter-spacing: .14em; color: var(--sg-mute); font-weight: 700; }
+  h1 { margin: 2px 0 0; font-size: 26px; font-weight: 900; letter-spacing: .04em; }
+  .date-pill {
+    position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
+    border-radius: 999px; background: var(--sg-surface); border: 1px solid var(--sg-hair); font-weight: 700; font-size: 14px;
+  }
+  .date-pill svg { width: 16px; height: 16px; color: var(--sg-mute); }
+  .date-pill input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; }
+  .date-pill.past { background: var(--sg-amber-tint); border-color: transparent; color: var(--sg-amber); }
+
+  .card { background: var(--sg-surface); border: 1px solid var(--sg-hair); border-radius: var(--sg-r); box-shadow: var(--sg-lift); }
+  .who { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    background: var(--sg-primary); color: var(--sg-on-primary); font-weight: 900; font-size: 17px;
+  }
+  .who-name { flex: 1; font-weight: 900; font-size: 17px; }
+  .who-name small { display: block; font-size: 12px; color: var(--sg-mute); font-weight: 700; }
+  .link-btn {
+    background: var(--sg-sunk); border: 1px solid var(--sg-hair); border-radius: 10px;
+    padding: 8px 12px; font-size: 13px; font-weight: 700; color: var(--sg-ink2);
+  }
+  .names { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 14px; }
+  .names[hidden] { display: none; }
+  .chip {
+    min-height: 44px; padding: 8px 16px; border-radius: 11px; background: var(--sg-sunk);
+    border: 1px solid var(--sg-hair); font-size: 15px; font-weight: 700;
+  }
+  .chip[aria-pressed="true"] { background: var(--sg-primary); color: var(--sg-on-primary); border-color: var(--sg-primary); }
+
+  /* キャリア */
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--sg-sunk); border-radius: 14px; border: 1px solid var(--sg-hair); }
+  .seg button {
+    min-height: 46px; border: 0; border-radius: 11px; background: none; font-size: 16px; font-weight: 900; color: var(--sg-mute);
+  }
+  .seg button[aria-pressed="true"] { background: var(--sg-surface); color: var(--sg-ink); box-shadow: 0 1px 4px rgba(14,26,44,.12); }
+  .seg.invalid { border-color: var(--sg-red); animation: shake .35s ease; }
+  @keyframes shake { 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  .pick-carrier { text-align: center; color: var(--sg-mute); font-size: 14px; padding: 26px 0; }
+
+  /* 商品 */
+  .cat-head { display: flex; align-items: center; gap: 8px; margin: 6px 2px -4px; font-size: 13px; font-weight: 900; color: var(--c); }
+  .cat-head::before { content: ''; width: 8px; height: 8px; border-radius: 3px; background: var(--c); }
+  .cat-head .sum { margin-left: auto; color: var(--sg-mute); font-weight: 700; font-size: 12px; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { position: relative; }
+  .tile-hit {
+    width: 100%; min-height: 92px; padding: 11px 12px; text-align: left; position: relative;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+    background: var(--sg-surface); border: 1px solid var(--sg-hair); border-radius: 16px;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    transition: transform .08s ease, background .15s ease, border-color .15s ease;
+  }
+  .tile-hit:active { transform: scale(.97); }
+  .t-label { font-size: 14px; font-weight: 800; line-height: 1.25; padding-right: 30px; word-break: break-all; }
+  .t-pt { font-size: 11px; font-weight: 700; color: var(--sg-faint); }
+  .t-num { font-size: 32px; font-weight: 800; line-height: 1; }
+  .tile-plus {
+    position: absolute; right: 9px; bottom: 9px; width: 42px; height: 42px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 24px; font-weight: 700;
+    background: var(--c-t); color: var(--c);
+  }
+  .tile.zero .t-num { color: var(--sg-faint); }
+  .tile:not(.zero) .tile-hit { background: var(--c-t); border-color: transparent; }
+  .tile:not(.zero) .t-num, .tile:not(.zero) .t-label { color: var(--c); }
+  .tile:not(.zero) .tile-plus { background: var(--c); color: var(--sg-surface); }
+  .tile-minus {
+    position: absolute; top: 7px; right: 7px; width: 32px; height: 32px; border-radius: 10px;
+    background: var(--sg-surface); border: 1px solid var(--sg-hair); color: var(--sg-mute);
+    font-size: 18px; font-weight: 700; display: grid; place-items: center;
+  }
+  .tile.zero .tile-minus { visibility: hidden; }
+  .t-num.bump { animation: bump .22s ease; }
+  @keyframes bump { 40% { transform: scale(1.25); } }
+
+  .memo label { display: block; font-size: 13px; font-weight: 700; color: var(--sg-mute); margin: 0 2px 6px; }
+  textarea {
+    width: 100%; min-height: 64px; resize: vertical; background: var(--sg-surface); border: 1px solid var(--sg-hair);
+    border-radius: 14px; padding: 12px; font-size: 16px;
+  }
+  textarea:focus { outline: none; border-color: var(--sg-ink2); }
+  ::placeholder { color: var(--sg-faint); }
+
+  /* 今日送った報告 */
+  .sent h2 { margin: 6px 2px 8px; font-size: 15px; font-weight: 900; display: flex; align-items: baseline; gap: 8px; }
+  .sent h2 small { margin-left: auto; font-size: 12px; color: var(--sg-mute); font-weight: 700; }
+  .sent-list { display: flex; flex-direction: column; }
+  .rep { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--sg-hair2); }
+  .rep:first-child { border-top: 0; }
+  .rep .at { font-size: 12px; color: var(--sg-mute); font-weight: 700; min-width: 3.4em; padding-top: 2px; }
+  .rep .body { flex: 1; min-width: 0; font-size: 14px; line-height: 1.6; }
+  .rep .body b { font-size: 12px; color: var(--sg-mute); margin-right: 6px; }
+  .rep .body .memo-l { color: var(--sg-mute); font-size: 12.5px; }
+  .rep .undo {
+    flex: none; border: 1px solid var(--sg-hair); background: none; border-radius: 9px; padding: 6px 10px;
+    font-size: 12px; font-weight: 700; color: var(--sg-mute);
+  }
+  .rep .undo.armed { background: var(--sg-red); border-color: var(--sg-red); color: #fff; }
+  .empty { padding: 16px 14px; font-size: 13px; color: var(--sg-mute); }
+
+  .banner { border-radius: 14px; padding: 12px 14px; font-size: 14px; font-weight: 700; line-height: 1.55; }
+  .banner[hidden] { display: none; }
+  .banner.ok { background: var(--sg-green-tint); color: var(--sg-green); }
+  .banner.warn { background: var(--sg-amber-tint); color: var(--sg-amber); }
+  .banner.bad { background: var(--sg-red-tint); color: var(--sg-red); }
+  .banner a { color: inherit; }
+
+  /* 下の送信バー */
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: color-mix(in srgb, var(--sg-surface) 92%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+    border-top: 1px solid var(--sg-hair);
+    padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  .bar-inner { max-width: 528px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .bar .tot { flex: none; line-height: 1.2; }
+  .bar .tot b { font-size: 22px; font-weight: 900; }
+  .bar .tot small { display: block; font-size: 12px; color: var(--sg-mute); font-weight: 700; }
+  .primary {
+    flex: 1; min-height: 52px; border: 0; border-radius: 14px; background: var(--sg-primary); color: var(--sg-on-primary);
+    font-size: 16px; font-weight: 900; letter-spacing: .04em;
+  }
+  .primary:disabled { opacity: .35; }
+
+  /* 確認のシート */
+  .scrim { position: fixed; inset: 0; background: var(--sg-scrim); z-index: 40; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41; }
+  .scrim[hidden], .sheet[hidden] { display: none; }
+  .sheet-inner {
+    max-width: 560px; margin: 0 auto; background: var(--sg-surface); border-radius: 22px 22px 0 0;
+    padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px;
+    max-height: 88vh; overflow: auto;
+  }
+  .grabber { width: 40px; height: 5px; border-radius: 3px; background: var(--sg-hair); margin: 0 auto 2px; }
+  .sheet h3 { margin: 0; font-size: 18px; font-weight: 900; }
+  .sheet .sub { font-size: 13px; color: var(--sg-mute); margin-top: 2px; }
+  .dc { background: #313338; color: #DBDEE1; border-radius: 12px; padding: 14px; display: flex; gap: 12px;
+    font-family: "gg sans", "Hiragino Sans", "Noto Sans JP", sans-serif; }
+  .dc-av { width: 38px; height: 38px; border-radius: 50%; background: #5865F2; color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
+  .dc-name { color: #F2F3F5; font-weight: 700; font-size: 15px; }
+  .dc-name .tag { background: #5865F2; color: #fff; font-size: 10px; border-radius: 3px; padding: 1px 4px; margin-left: 6px; vertical-align: 1px; }
+  .dc-name time { color: #949BA4; font-size: 12px; font-weight: 500; margin-left: 6px; }
+  .dc-text { white-space: pre-wrap; font-size: 15px; line-height: 1.45; margin-top: 2px; word-break: break-word; }
+  .actions { display: flex; flex-direction: column; gap: 8px; }
+  .text-btn { min-height: 44px; border: 0; background: none; font-weight: 700; color: var(--sg-mute); }
+  .msg { font-size: 13px; color: var(--sg-red); font-weight: 700; line-height: 1.55; }
+  .msg[hidden] { display: none; }
+
+  /* 送れたときの「＋〇〇pt」 */
+  .pop { position: fixed; left: 50%; top: 38%; z-index: 50; transform: translate(-50%, -50%); pointer-events: none;
+    font-size: 40px; font-weight: 900; color: var(--sg-amber); text-shadow: 0 2px 0 var(--sg-surface);
+    animation: pop 1.3s cubic-bezier(.2,.9,.3,1) forwards; white-space: nowrap; }
+  .pop small { display: block; text-align: center; font-size: 14px; color: var(--sg-ink); }
+  @keyframes pop { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    75% { opacity: 1; transform: translate(-50%, -55%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .pop { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div data-sieg-back></div>
+
+  <header class="head">
+    <div>
+      <div class="eyebrow">Sieg 業務ポータル</div>
+      <h1>獲得報告</h1>
+    </div>
+    <label class="date-pill" id="date-pill" for="date">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+      <span id="date-text"></span>
+      <input type="date" id="date" aria-label="獲得した日">
+    </label>
+  </header>
+
+  <div class="banner bad" id="setup-msg" hidden></div>
+
+  <section class="card">
+    <div class="who">
+      <div class="avatar" id="avatar">?</div>
+      <div class="who-name" id="who-name"></div>
+      <button type="button" class="link-btn" id="name-change">変更</button>
+    </div>
+    <div class="names" id="names" hidden></div>
+  </section>
+
+  <div class="seg" id="carriers" role="group" aria-label="キャリア"></div>
+
+  <div id="products"></div>
+
+  <section class="memo" id="memo-box" hidden>
+    <label for="memo">メモ（なくてもよい）</label>
+    <textarea id="memo" maxlength="500" placeholder="例：達成のため11月まわし"></textarea>
+  </section>
+
+  <div class="banner ok" id="result" hidden></div>
+
+  <section class="sent" id="sent">
+    <h2>きょう送った報告 <small id="sent-sum"></small></h2>
+    <div class="card sent-list" id="sent-list"><div class="empty">読み込み中…</div></div>
+  </section>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <div class="tot"><b class="num" id="tot-n">0</b><span>件</span><small class="num" id="tot-pt">0pt</small></div>
+    <button type="button" class="primary" id="to-confirm" disabled>Discordに送る</button>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="sheet-inner">
+    <div class="grabber"></div>
+    <div>
+      <h3 id="sheet-title">この内容で送ります</h3>
+      <div class="sub">獲得報告チャンネルにはこのように出ます</div>
+    </div>
+    <div class="dc">
+      <div class="dc-av" id="dc-av"></div>
+      <div>
+        <div class="dc-name"><span id="dc-name"></span><span class="tag">APP</span><time id="dc-time"></time></div>
+        <div class="dc-text" id="dc-text"></div>
+      </div>
+    </div>
+    <div class="msg" id="send-msg" hidden></div>
+    <div class="actions">
+      <button type="button" class="primary" id="send">送信する</button>
+      <button type="button" class="text-btn" id="cancel">なおす</button>
+    </div>
+  </div>
+</div>
+
+<script src="gas-client.js"></script>
+<script src="sieg-nav.js"></script>
+<script src="sieg-roster.js"></script>
+<script src="sieg-products.js"></script>
+<script>
+(function () {
+  'use strict';
+  var R = window.SiegRoster, P = window.SiegProducts;
+  function $(id) { return document.getElementById(id); }
+  function load(k) { try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function drop(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  function reduced() { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return Number(n).toLocaleString('ja-JP'); }
+
+  if (!R || !P) {
+    $('setup-msg').hidden = false;
+    $('setup-msg').textContent = '読み込みに失敗しました。電波のよいところで再読み込みしてください。';
+    return;
+  }
+
+  var NAMES = R.forTool('gain');
+  var CAT_CSS = { 'MNP': 'mnp', '固定': 'kotei', '端末': 'tan', 'カード': 'card', '新規': 'new' };
+  var CARRIER_KEY = 'siegGainCarrier';   // { 名前: 前回のキャリア }
+  var DRAFT_KEY = 'siegGainDraft';       // 送る前の入力（閉じても消えないように）
+  var SEND_ID_KEY = 'siegGainSendId';    // 同じ内容を送り直すときは同じ送信ID（二重に入らない）
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dayLabel(v) {
+    var p = String(v || '').split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (isNaN(d.getTime())) return '';
+    return (d.getMonth() + 1) + '/' + d.getDate() + '（' + '日月火水木金土'[d.getDay()] + '）';
+  }
+
+  // ─── 入力の状態 ───
+  var urlName = new URLSearchParams(location.search).get('staff') || '';
+  var state = { name: '', carrier: '', date: todayStr(), counts: {}, memo: '' };
+  state.name = NAMES.indexOf(urlName) >= 0 ? urlName : SiegNav.staff(NAMES);
+
+  function rememberedCarrier(name) {
+    var all = load(CARRIER_KEY) || {};
+    if (all[name]) return all[name];
+    var np = load('nippou.prefs.v1');   // 日報で前回選んだキャリア（同じアドレスなので読める）
+    return np && np.name === name ? np.carrier : '';
+  }
+  function validCarrier(c) { return P.items(c).length > 0; }
+
+  var draft = load(DRAFT_KEY);
+  if (draft && draft.name === state.name && draft.date === todayStr() && validCarrier(draft.carrier)) {
+    state.carrier = draft.carrier; state.counts = draft.counts || {}; state.memo = String(draft.memo || '');
+  } else if (state.name) {
+    var rc = rememberedCarrier(state.name);
+    if (validCarrier(rc)) state.carrier = rc;
+  }
+
+  function saveDraft() {
+    if (totals().n > 0 || state.memo.trim()) store(DRAFT_KEY, state); else drop(DRAFT_KEY);
+  }
+
+  function rows() {
+    return P.items(state.carrier).map(function (it) { return { carrier: state.carrier, label: it.label, count: state.counts[it.label] || 0 }; });
+  }
+  function totals() { var s = P.score(rows()); return { n: s.total, pt: s.power }; }
+
+  // ─── 日付 ───
+  function renderDate() {
+    $('date').value = state.date;
+    $('date-text').textContent = state.date === todayStr() ? 'きょう ' + dayLabel(state.date) : dayLabel(state.date);
+    $('date-pill').classList.toggle('past', state.date !== todayStr());
+  }
+  $('date').addEventListener('change', function () {
+    if (!this.value) return;
+    state.date = this.value; renderDate(); loadToday();
+  });
+
+  // ─── 名前 ───
+  NAMES.forEach(function (n) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = n; b.dataset.v = n;
+    b.addEventListener('click', function () {
+      if (n !== state.name) {
+        state.name = n; state.counts = {}; state.memo = ''; $('memo').value = '';
+        var rc = rememberedCarrier(n); state.carrier = validCarrier(rc) ? rc : '';
+        try { localStorage.setItem('siegStaff', n); } catch (e) {}
+      }
+      $('names').hidden = true;
+      renderAll(); loadToday();
+    });
+    $('names').appendChild(b);
+  });
+  $('name-change').addEventListener('click', function () { $('names').hidden = !$('names').hidden; renderName(); });
+  function renderName() {
+    $('avatar').textContent = state.name ? state.name.charAt(0) : '?';
+    $('who-name').innerHTML = state.name ? esc(state.name) + '<small>' + (R.isPartner(state.name) ? 'パートナー様' : 'Sieg社員') + '</small>'
+      : '<small>名前を選んでください</small>';
+    if (!state.name) $('names').hidden = false;
+    $('name-change').hidden = !state.name;
+    Array.prototype.forEach.call($('names').children, function (c) { c.setAttribute('aria-pressed', String(c.dataset.v === state.name)); });
+  }
+
+  // ─── キャリア ───
+  P.carriers.forEach(function (c) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = c.label; b.dataset.v = c.id;
+    b.addEventListener('click', function () {
+      if (state.carrier === c.id) return;
+      // 別のキャリアに同じ名前の商品があれば件数を持っていく（光新規など）
+      var keep = {};
+      P.items(c.id).forEach(function (it) { if (state.counts[it.label]) keep[it.label] = state.counts[it.label]; });
+      state.carrier = c.id; state.counts = keep;
+      $('carriers').classList.remove('invalid');
+      var all = load(CARRIER_KEY) || {}; if (state.name) { all[state.name] = c.id; store(CARRIER_KEY, all); }
+      renderAll(); saveDraft();
+    });
+    $('carriers').appendChild(b);
+  });
+
+  // ─── 商品のタイル ───
+  var tiles = {};
+  function renderProducts() {
+    var box = $('products'); box.innerHTML = ''; tiles = {};
+    Array.prototype.forEach.call($('carriers').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state.carrier)); });
+    if (!state.carrier) { box.innerHTML = '<div class="pick-carrier">キャリアを選んでください</div>'; return; }
+    P.CATS.forEach(function (cat) {
+      var list = P.items(state.carrier).filter(function (it) { return it.cat === cat; });
+      if (!list.length) return;
+      var v = CAT_CSS[cat] || 'new';
+      var sec = document.createElement('section');
+      sec.style.cssText = '--c:var(--c-' + v + ');--c-t:var(--c-' + v + '-t);display:flex;flex-direction:column;gap:10px;margin-bottom:8px';
+      sec.innerHTML = '<div class="cat-head">' + esc(cat) + '<span class="sum num" data-cat="' + esc(cat) + '"></span></div>';
+      var grid = document.createElement('div'); grid.className = 'tiles';
+      list.forEach(function (it) { grid.appendChild(tile(it)); });
+      sec.appendChild(grid); box.appendChild(sec);
+    });
+    renderCounts();
+  }
+
+  function tile(it) {
+    var wrap = document.createElement('div'); wrap.className = 'tile';
+    var hit = document.createElement('button'); hit.type = 'button'; hit.className = 'tile-hit';
+    hit.setAttribute('aria-label', it.label + 'を1増やす');
+    hit.innerHTML = '<span class="t-label">' + esc(it.label) + '</span><span><span class="t-num num"></span> <span class="t-pt">' + it.pt + 'pt</span></span><span class="tile-plus" aria-hidden="true">＋</span>';
+    var minus = document.createElement('button'); minus.type = 'button'; minus.className = 'tile-minus'; minus.textContent = '−';
+    minus.setAttribute('aria-label', it.label + 'を1減らす');
+    hit.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    hit.addEventListener('click', function () { change(it.label, 1); });
+    minus.addEventListener('click', function () { change(it.label, -1); });
+    wrap.appendChild(hit); wrap.appendChild(minus);
+    tiles[it.label] = { wrap: wrap, num: hit.querySelector('.t-num') };
+    return wrap;
+  }
+
+  function change(label, d) {
+    var before = state.counts[label] || 0, after = Math.max(0, Math.min(99, before + d));
+    if (after === before) return;
+    state.counts[label] = after;
+    buzz(10); renderCounts(); saveDraft();
+    $('result').hidden = true;
+    var n = tiles[label] && tiles[label].num;
+    if (n && !reduced()) { n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
+  }
+
+  function renderCounts() {
+    var catSum = {};
+    P.items(state.carrier).forEach(function (it) {
+      var n = state.counts[it.label] || 0, t = tiles[it.label];
+      catSum[it.cat] = (catSum[it.cat] || 0) + n;
+      if (!t) return;
+      t.num.textContent = n;
+      t.wrap.classList.toggle('zero', n === 0);
+    });
+    document.querySelectorAll('.cat-head .sum').forEach(function (el) {
+      var n = catSum[el.dataset.cat] || 0; el.textContent = n ? n + '件' : '';
+    });
+    var t = totals();
+    $('tot-n').textContent = t.n;
+    $('tot-pt').textContent = '戦闘力 +' + fmt(t.pt);
+    $('to-confirm').disabled = !t.n || !serverReady;
+  }
+
+  $('memo').addEventListener('input', function () { state.memo = this.value; saveDraft(); });
+
+  function renderAll() {
+    renderDate(); renderName(); renderProducts();
+    $('memo').value = state.memo;
+    $('memo-box').hidden = !state.carrier;
+  }
+
+  // ─── きょう送った報告（Google から読む）───
+  var serverReady = false, loadSeq = 0;
+  function loadToday() {
+    var list = $('sent-list');
+    $('sent').hidden = !state.name;
+    if (!state.name) return;
+    var seq = ++loadSeq;
+    list.innerHTML = '<div class="empty">読み込み中…</div>';
+    GasClient.get(P.API, { action: 'gains', name: state.name, date: state.date }).then(function (data) {
+      if (seq !== loadSeq) return;
+      if (!data || !data.ok || !data.reports) {
+        // Google 側がまだ獲得報告に対応していない（貼り替え前）
+        serverReady = false;
+        $('setup-msg').hidden = false;
+        $('setup-msg').textContent = '獲得報告はただいま準備中です。もうしばらくお待ちください。';
+        list.innerHTML = '<div class="empty">—</div>';
+        renderCounts();
+        return;
+      }
+      serverReady = true; $('setup-msg').hidden = true;
+      renderSent(data.reports);
+      renderCounts();
+    }).catch(function (err) {
+      if (seq !== loadSeq) return;
+      serverReady = true;   // 読めないだけなら送信は試せる
+      list.innerHTML = '<div class="empty">読み込めませんでした（' + esc(err.message) + '）</div>';
+      renderCounts();
+    });
+  }
+
+  function renderSent(reports) {
+    var list = $('sent-list'), all = [];
+    reports.forEach(function (r) { r.items.forEach(function (x) { all.push({ carrier: r.carrier, label: x.label, count: x.count }); }); });
+    var s = P.score(all);
+    $('sent-sum').textContent = s.total ? s.total + '件 ・ 戦闘力 +' + fmt(s.power) : '';
+    $('sent').querySelector('h2').firstChild.textContent = (state.date === todayStr() ? 'きょう' : dayLabel(state.date)) + '送った報告 ';
+    if (!reports.length) { list.innerHTML = '<div class="empty">まだありません</div>'; return; }
+    list.innerHTML = '';
+    reports.forEach(function (r) {
+      var row = document.createElement('div'); row.className = 'rep';
+      row.innerHTML = '<div class="at num">' + esc(r.at || '') + '</div><div class="body"><b>' + esc(P.carrierLabel(r.carrier)) + '</b>'
+        + r.items.map(function (x) { return esc(x.label) + x.count + '件'; }).join('、')
+        + (r.memo ? '<div class="memo-l">' + esc(r.memo) + '</div>' : '') + '</div>';
+      if (r.id) {
+        var u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = '取り消す';
+        var armed = 0;
+        u.addEventListener('click', function () {
+          if (!u.classList.contains('armed')) {
+            u.classList.add('armed'); u.textContent = '本当に取り消す';
+            clearTimeout(armed); armed = setTimeout(function () { u.classList.remove('armed'); u.textContent = '取り消す'; }, 3500);
+            return;
+          }
+          clearTimeout(armed);
+          u.disabled = true; u.textContent = '取り消し中…';
+          GasClient.post(P.API, { action: 'gainUndo', name: state.name, id: r.id }, { retry: true }).then(function (d) {
+            if (!d || !d.ok) throw new Error((d && d.error) || '取り消せませんでした');
+            showResult('ok', '取り消しました' + (d.discord === false ? '（Discord の投稿は消せなかったので、手で消してください）' : '。Discord の投稿も消しました。'));
+            loadToday();
+          }).catch(function (e) {
+            u.disabled = false; u.classList.remove('armed'); u.textContent = '取り消す';
+            showResult('bad', '取り消せませんでした：' + e.message);
+          });
+        });
+        row.appendChild(u);
+      }
+      list.appendChild(row);
+    });
+  }
+
+  function showResult(kind, html) {
+    var b = $('result'); b.className = 'banner ' + kind; b.innerHTML = html; b.hidden = false;
+  }
+
+  // ─── 確認と送信 ───
+  var sheetOpen = false, sending = false, pending = null;
+  function openSheet() { $('scrim').hidden = false; $('sheet').hidden = false; sheetOpen = true; }
+  function closeSheet() { if (sending) return; $('scrim').hidden = true; $('sheet').hidden = true; sheetOpen = false; }
+  $('scrim').addEventListener('click', closeSheet);
+  $('cancel').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheetOpen) closeSheet(); });
+
+  function sendIdFor(p) {
+    var key = JSON.stringify(p), saved = load(SEND_ID_KEY);
+    if (saved && saved.key === key && saved.id) return saved.id;
+    var id = GasClient.newId(); store(SEND_ID_KEY, { key: key, id: id }); return id;
+  }
+
+  $('to-confirm').addEventListener('click', function () {
+    if (!state.name) { $('names').hidden = false; $('names').scrollIntoView({ block: 'center' }); return; }
+    if (!state.carrier) { $('carriers').classList.add('invalid'); return; }
+    var items = rows().filter(function (r) { return r.count > 0; }).map(function (r) { return { label: r.label, count: r.count }; });
+    if (!items.length) return;
+    pending = { action: 'gain', name: state.name, carrier: state.carrier, date: state.date, items: items, memo: state.memo.trim() };
+    pending.requestId = sendIdFor(pending);
+    // GAS（sendGainToDiscord_）と同じ組み立て
+    var lines = ['**' + P.carrierLabel(state.carrier) + '**　' + dayLabel(state.date)];
+    items.forEach(function (x) { lines.push(x.label + x.count + '件'); });
+    if (pending.memo) lines.push('', pending.memo);
+    $('dc-av').textContent = state.name.charAt(0);
+    $('dc-name').textContent = state.name;
+    var now = new Date();
+    $('dc-time').textContent = '今日 ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    var t = $('dc-text'); t.innerHTML = '';
+    lines.join('\n').split(/(\*\*[^*]+\*\*)/).forEach(function (part) {
+      if (/^\*\*[^*]+\*\*$/.test(part)) { var b = document.createElement('b'); b.textContent = part.slice(2, -2); t.appendChild(b); }
+      else if (part) t.appendChild(document.createTextNode(part));
+    });
+    $('send-msg').hidden = true;
+    openSheet();
+  });
+
+  $('send').addEventListener('click', function () {
+    if (!pending || sending) return;
+    var btn = this, p = pending;
+    sending = true; btn.disabled = true; btn.textContent = '送信中…';
+    var done = function () { sending = false; btn.disabled = false; btn.textContent = '送信する'; };
+    var fail = function (t) { $('send-msg').textContent = t; $('send-msg').hidden = false; done(); };
+    GasClient.post(P.API, p, { retry: true }).then(function (data) {
+      if (!data || !data.ok) return fail('送れませんでした：' + ((data && data.error) || '不明なエラー'));
+      var gained = P.score(p.items.map(function (x) { return { carrier: p.carrier, label: x.label, count: x.count }; })).power;
+      done(); closeSheet();
+      drop(SEND_ID_KEY); drop(DRAFT_KEY);
+      state.counts = {}; state.memo = ''; $('memo').value = '';
+      renderCounts();
+      if (data.reports) renderSent(data.reports);
+      var partnerNote = R.isPartner(p.name) ? '<br>日報を開くと、この件数が獲得欄に入っています。' : '';
+      if (data.discord === true) showResult('ok', 'Discord に送りました。' + partnerNote);
+      else if (data.discord === false) showResult('warn', '記録はできましたが、Discord への投稿に失敗しました。お手数ですが Discord に手で書いてください。' + partnerNote);
+      else showResult('warn', '記録しました（Discord への投稿はまだ設定されていません）。' + partnerNote);
+      window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
+      buzz([20, 40, 20]);
+      if (gained && !reduced()) {
+        var pop = document.createElement('div'); pop.className = 'pop num';
+        pop.innerHTML = '+' + fmt(gained) + '<small>戦闘力</small>';
+        document.body.appendChild(pop); setTimeout(function () { pop.remove(); }, 1400);
+      }
+    }).catch(function (err) {
+      if (err.maybeDone) fail('通信が途中で切れました。もう一度「送信する」を押してください（記録済みでも二重には入りません）');
+      else fail('送れませんでした：' + err.message + '（入力は残っています）');
+    });
+  });
+
+  renderAll();
+  loadToday();
+})();
+</script>
+</body>
+</html>

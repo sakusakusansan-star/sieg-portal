@@ -19,14 +19,16 @@
 
   // group … staff（Sieg社員）／ partner（パートナー様）
   // full  … フルネーム（交通費計算のシート名に使う。使わない人は書かなくてよい）
+  // carrier … 獲得報告を開いたときに最初から選んでおくキャリア（docomo / Softbank / au）。
+  //           書かない人は、前回選んだキャリアで開く
   var PEOPLE = [
-    { name: '福山', group: 'staff',   full: '福山康平' },
-    { name: '古川', group: 'staff',   full: '古川泰成' },
-    { name: '清田', group: 'staff',   full: '清田和男' },
-    { name: '福岡', group: 'staff' },
-    { name: '山口', group: 'partner', full: '山口真人' },
-    { name: '鈴木', group: 'partner' },
-    { name: '毛利', group: 'partner' },
+    { name: '福山', group: 'staff',   full: '福山康平', carrier: 'Softbank' },
+    { name: '古川', group: 'staff',   full: '古川泰成', carrier: 'Softbank' },
+    { name: '清田', group: 'staff',   full: '清田和男', carrier: 'docomo' },
+    { name: '福岡', group: 'staff',                     carrier: 'docomo' },
+    { name: '山口', group: 'partner', full: '山口真人', carrier: 'au' },
+    { name: '鈴木', group: 'partner',                   carrier: 'docomo' },
+    { name: '毛利', group: 'partner',                   carrier: 'Softbank' },
     { name: '山内', group: 'partner' }
   ];
 
@@ -58,6 +60,8 @@
     everyone: names(),
     isPartner: function (name) { var p = find(name); return !!p && p.group === 'partner'; },
     fullName: function (name) { var p = find(name); return (p && p.full) || ''; },
+    /** 獲得報告を開いたときのキャリア（決めていなければ ''） */
+    carrier: function (name) { var p = find(name); return (p && p.carrier) || ''; },
     /** そのツールを使う人の名前（並びは PEOPLE の順） */
     forTool: function (id) {
       var t = TOOLS[id];

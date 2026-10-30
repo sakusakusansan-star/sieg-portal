@@ -54,7 +54,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tab[aria-selected="true"]{background:var(--gold);color:#1A1405}
 
 /* ファイター選択 */
-.roster{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.roster{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:4px 16px 2px;scroll-padding:0 16px}
+.roster::-webkit-scrollbar{display:none}
+.roster .slot{flex:0 0 66px}
 .slot{position:relative;aspect-ratio:3/4;max-width:100%;background:linear-gradient(160deg,var(--c) 0%,color-mix(in srgb,var(--c) 35%,var(--bg)) 100%);
   clip-path:polygon(0 0,100% 0,100% 88%,88% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;opacity:.5;transition:opacity .15s,transform .15s}
 .slot .fig{position:absolute;inset:16% 6% 20%;width:auto;height:auto}
@@ -106,16 +108,38 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .pick[aria-pressed="true"]{opacity:1;background:var(--gold);color:#1A1405}
 
 
-/* 実績（アイコンを並べる） */
-.stocks{display:grid;gap:12px;background:var(--panel);padding:14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
-.stk{display:grid;grid-template-columns:4.4em 1fr auto;gap:10px;align-items:center}
-.stk .k{font-family:var(--disp);font-size:16px}
-.stk .k small{display:block;font-family:var(--body);font-size:10.5px;font-weight:700;color:var(--mute)}
-.stk .icons{display:flex;flex-wrap:wrap;gap:3px;min-width:0}
-.stk .icons canvas{width:18px;height:18px}
-.stk .icons .more{font-family:var(--disp);font-size:13px;color:var(--mute);align-self:center;margin-left:2px}
-.stk .v{font-family:var(--disp);font-size:30px;line-height:1;color:var(--c)}
-.stk .v small{font-family:var(--body);font-size:12px;color:var(--mute);margin-left:2px}
+/* 次の目標 */
+.goal{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gl{background:var(--panel);padding:12px 14px 13px;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);display:flex;flex-direction:column;gap:6px;min-width:0}
+.gl .t{font-size:11px;font-weight:900;color:var(--mute);letter-spacing:.06em}
+.gl .v{font-family:var(--disp);font-size:24px;line-height:1.05}
+.gl .v small{font-size:12px;margin-left:3px;color:var(--mute)}
+.gl .v.top{color:var(--gold)}
+.gl .s{font-size:11.5px;font-weight:700;color:#C9D2EA;line-height:1.5}
+.gl .bar{height:7px;background:rgba(255,255,255,.12);transform:skewX(-14deg)}
+.gl .bar i{display:block;height:100%;background:var(--gold)}
+
+/* 今月の内訳（ポイントの積み上げ） */
+.bd{background:var(--panel);padding:14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);display:flex;flex-direction:column;gap:12px}
+.stack{display:flex;height:16px;gap:2px;transform:skewX(-14deg)}
+.stack i{display:block;height:100%;background:var(--c);min-width:4px;transform-origin:0 50%;animation:fill .7s cubic-bezier(.3,.7,.3,1) backwards}
+.stack.empty{background:rgba(255,255,255,.08)}
+@keyframes fill{from{transform:scaleX(0)}}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;font-weight:700;color:#C9D2EA}
+.legend span::before{content:"";display:inline-block;width:8px;height:8px;margin-right:5px;background:var(--c);transform:skewX(-14deg)}
+.legend b{font-family:var(--disp);font-weight:400;color:#fff;margin-left:4px}
+.items{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:6px 1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .dot{width:6px;height:22px;background:var(--c);transform:skewX(-14deg)}
+.item .lb{font-weight:900;font-size:14.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .lb small{display:block;font-size:10.5px;color:var(--mute);font-weight:700}
+.item .ct{font-family:var(--disp);font-size:13px;color:#C9D2EA;white-space:nowrap}
+.item .pt{font-family:var(--disp);font-size:20px;min-width:4.2em;text-align:right;color:var(--c)}
+.bd .empty-msg{font-size:13px;color:var(--mute);line-height:1.7;text-align:center;padding:10px 0}
+.more-box summary{font-family:var(--disp);font-weight:400;font-size:14px}
+.more-box .growth,.more-box .badges{margin-top:12px}
+.more-box .growth{background:none;padding:0;clip-path:none}
 
 /* 成長の記録 */
 .growth{background:var(--panel);padding:14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
@@ -159,7 +183,7 @@ details p{margin:10px 0 0;line-height:1.7}
 .col{display:flex;flex-direction:column;gap:16px}
 .state{font-family:var(--disp);font-size:15px;color:var(--mute);text-align:center;padding:48px 0;line-height:1.7}
 .state[hidden],#picker-box[hidden]{display:none}
-#picker-box{display:flex;flex-direction:column;gap:12px}
+
 .note.left{text-align:left;margin:0;min-height:1.2em}
 .formula .fh{grid-column:auto;color:var(--gold);font-family:var(--disp);font-weight:400;margin-top:6px}
 
@@ -243,20 +267,26 @@ details p{margin:10px 0 0;line-height:1.7}
         </div>
       </div>
 
-      <div id="picker-box">
-        <span class="band">キャラを選ぶ</span>
-        <div class="picker" id="picker" aria-label="キャラを選ぶ"></div>
+      <div class="goal" id="goal"></div>
+
+      <span class="band">今月の内訳</span>
+      <div class="bd" id="bd"></div>
+
+      <details class="more-box">
+        <summary>成長の記録を見る</summary>
+        <div class="growth"><div id="growth"></div><div class="gsum" id="gsum"></div></div>
+      </details>
+
+      <details class="more-box">
+        <summary>称号を見る <span id="badge-count"></span></summary>
+        <div class="badges" id="badges"></div>
+      </details>
+
+      <details class="more-box" id="picker-box">
+        <summary>キャラを変える</summary>
+        <div class="picker" id="picker" aria-label="キャラを選ぶ" style="margin-top:12px"></div>
         <p class="note left" id="picker-msg"></p>
-      </div>
-
-      <span class="band">今月の実績</span>
-      <div class="stocks" id="stocks"></div>
-
-      <span class="band">成長の記録</span>
-      <div class="growth"><div id="growth"></div><div class="gsum" id="gsum"></div></div>
-
-      <span class="band">称号</span>
-      <div class="badges" id="badges"></div>
+      </details>
 
       <details>
         <summary>戦闘力の計算のしかた</summary>
@@ -335,7 +365,7 @@ details p{margin:10px 0 0;line-height:1.7}
     for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) { var col = d.pal[d.map[y][x]]; if (col) { c.fillStyle = col; c.fillRect(x, y, 1, 1); } }
     return cv;
   }
-  var CAT_UI = { 'MNP':['攻撃','--mnp'], '固定':['守備','--kotei'], '端末':['装備','--tan'], 'カード':['魔法','--card'], '新規':['すばやさ','--new'] };
+  var CAT_COL = { 'MNP':'--mnp', '固定':'--kotei', '端末':'--tan', 'カード':'--card', '新規':'--new' };
 
   /* ── 数字の組み立て ── */
   var COLS = ['--p1','--p2','--p3','--p4','--p5','--p6','--p7','--p8'];
@@ -367,11 +397,19 @@ details p{margin:10px 0 0;line-height:1.7}
       var now = PR.score(months[CUR]);
       var prevKey = MONTHS[MONTHS.length - 2];
       var hist = MONTHS.map(function(m){ return months[m] ? PR.score(months[m]).power : null; });
-      var labels = {};
-      (months[CUR] || []).forEach(function(x){ var k = x.label; labels[k] = (labels[k] || 0) + x.count; });
+      // 今月の商品ごとの件数と点数（点数の多い順）
+      var items = {};
+      (months[CUR] || []).forEach(function(x){
+        var it = PR.find(x.carrier, x.label); if (!it || !x.count) return;
+        var k = x.carrier + '\t' + x.label;
+        items[k] = items[k] || { carrier:x.carrier, label:x.label, cat:it.cat, pt:it.pt, count:0 };
+        items[k].count += x.count;
+      });
+      items = Object.keys(items).map(function(k){ return items[k]; })
+        .sort(function(a, b){ return b.pt * b.count - a.pt * a.count || b.count - a.count; });
       var ch = fighters[name] && fighterOf(fighters[name]).id === fighters[name] ? fighters[name] : FIGHTERS[i % FIGHTERS.length].id;
       return { name:name, i:i, pl:'P' + (i + 1), col:COLS[i % COLS.length], char:ch, pw:now.power, cats:now.cats, total:now.total,
-        last: prevKey && months[prevKey] ? PR.score(months[prevKey]).power : 0, hist:hist, labels:labels };
+        last: prevKey && months[prevKey] ? PR.score(months[prevKey]).power : 0, hist:hist, items:items };
     });
     cur = Math.max(0, PEOPLE.indexOf(ME));
   }
@@ -383,7 +421,7 @@ details p{margin:10px 0 0;line-height:1.7}
     if (p.total < 5) return 'かけだしファイター';
     var top = PR.CATS.slice().sort(function(a, b){ return p.cats[b] - p.cats[a]; })[0];
     if (p.cats[top] * 2 < p.total) return 'オールラウンダー';
-    return { 'MNP':'MNPハンター', '固定':'固定の守り人', '端末':'端末マスター', 'カード':'カード使い', '新規':'新規ハンター' }[top];
+    return { 'MNP':'MNPハンター', '固定':'固定マスター', '端末':'端末マスター', 'カード':'カード使い', '新規':'新規ハンター' }[top];
   }
   function mlabel(k){ return Number(k.slice(5, 7)) + '月'; }
 
@@ -420,6 +458,7 @@ details p{margin:10px 0 0;line-height:1.7}
       b.insertAdjacentHTML('beforeend', '<span class="nm">' + esc(p.name) + '</span>');
       b.onclick = function(){ cur = i; renderRoster(); renderFighter(); };
       box.appendChild(b);
+      if (i === cur) setTimeout(function(){ b.scrollIntoView({ block:'nearest', inline:'nearest' }); }, 0);
     });
   }
 
@@ -437,23 +476,60 @@ details p{margin:10px 0 0;line-height:1.7}
     drawLines();
     renderPicker(p);
 
-    var box = $('stocks'); box.innerHTML = '';
-    PR.CATS.forEach(function(cat){
-      var v = p.cats[cat] || 0, u = CAT_UI[cat], row = document.createElement('div'); row.className = 'stk'; row.style.setProperty('--c', 'var(' + u[1] + ')');
-      row.innerHTML = '<div class="k it">' + u[0] + '<small>' + esc(cat) + '</small></div>';
-      var ic = document.createElement('div'); ic.className = 'icons';
-      for (var i = 0; i < Math.min(v, 10); i++) { var cv = document.createElement('canvas'); cv.className = 'px'; ic.appendChild(drawPx(cv, cat)); }
-      if (v > 10) ic.insertAdjacentHTML('beforeend', '<span class="more">＋' + (v - 10) + '</span>');
-      if (!v) ic.insertAdjacentHTML('beforeend', '<span class="more">—</span>');
-      row.appendChild(ic);
-      row.insertAdjacentHTML('beforeend', '<div class="v it">' + v + '<small>件</small></div>');
-      box.appendChild(row);
-    });
+    renderGoal(p);
+    renderBreakdown(p);
     renderGrowth(p);
     var c = p.cats;
     var B = [['はじめてのMNP', c['MNP'] > 0], ['はじめての固定', c['固定'] > 0], ['MNP 10件', c['MNP'] >= 10], ['固定 10件', c['固定'] >= 10],
       ['5つの区分を制覇', PR.CATS.every(function(k){ return c[k] > 0; })], ['合計 20件', p.total >= 20], ['戦闘力 2,000', p.pw >= 2000]];
+    $('badge-count').textContent = '（' + B.filter(function(b){ return b[1]; }).length + ' / ' + B.length + '）';
     $('badges').innerHTML = B.map(function(b){ return '<span class="badge' + (b[1] ? '' : ' off') + '">' + (b[1] ? '★ ' : '？ ') + b[0] + '</span>'; }).join('');
+  }
+
+  /* 次の目標：次のランクまで／ひとつ上の順位まで。足りない点数を「MNP なら何件・固定なら何件」に直して出す */
+  var RANKS = [['B', 1000], ['A', 1500], ['S', 2000]];
+  function inCounts(gap){ return 'MNP ' + Math.ceil(gap / 200) + '件 か 固定 ' + Math.ceil(gap / 100) + '件'; }
+  function renderGoal(p){
+    var next = null; for (var i = 0; i < RANKS.length; i++) if (p.pw < RANKS[i][1]) { next = RANKS[i]; break; }
+    var prevTh = 0; RANKS.forEach(function(r){ if (p.pw >= r[1]) prevTh = r[1]; });
+    var a = next
+      ? '<div class="t">' + next[0] + 'ランクまで</div><div class="v it">あと' + fmt(next[1] - p.pw) + '<small>pt</small></div>'
+        + '<div class="bar"><i style="width:' + Math.round((p.pw - prevTh) / (next[1] - prevTh) * 100) + '%"></i></div>'
+        + '<div class="s">' + inCounts(next[1] - p.pw) + '</div>'
+      : '<div class="t">ランク</div><div class="v it top">S 達成！</div><div class="bar"><i style="width:100%"></i></div><div class="s">最高ランクです</div>';
+    var list = P.slice().sort(function(x, y){ return y.pw - x.pw; });
+    var pos = 1; list.forEach(function(x){ if (x.pw > p.pw) pos++; });
+    var above = list.filter(function(x){ return x.pw > p.pw; }).pop();
+    var below = list.filter(function(x){ return x.pw < p.pw; })[0];
+    var b;
+    if (!p.pw) b = '<div class="t">順位</div><div class="v it">—</div><div class="s">1件報告すると順位に入ります</div>';
+    else if (above) b = '<div class="t">いま ' + pos + '位</div><div class="v it">あと' + fmt(above.pw - p.pw + 1) + '<small>pt</small></div>'
+      + '<div class="s">' + esc(above.name) + 'さんを抜いて ' + (pos - 1) + '位</div>';
+    else b = '<div class="t">いま 1位</div><div class="v it top">トップ！</div><div class="s">' + (below ? '2位と ' + fmt(p.pw - below.pw) + 'pt 差' : '') + '</div>';
+    $('goal').innerHTML = '<div class="gl">' + a + '</div><div class="gl">' + b + '</div>';
+  }
+
+  /* 今月の内訳：区分ごとの積み上げと、商品ごとの「件数 × 点数」 */
+  function renderBreakdown(p){
+    var box = $('bd');
+    if (!p.items.length) {
+      box.innerHTML = '<div class="stack empty"></div><div class="empty-msg">今月はまだ報告がありません。<br>獲得報告を送ると、ここに積み上がっていきます。</div>';
+      return;
+    }
+    var catPt = {}; p.items.forEach(function(it){ catPt[it.cat] = (catPt[it.cat] || 0) + it.pt * it.count; });
+    var cats = PR.CATS.filter(function(c){ return catPt[c]; });
+    var h = '<div class="stack">' + cats.map(function(c, i){
+      return '<i style="--c:var(' + CAT_COL[c] + ');flex:' + catPt[c] + ';animation-delay:' + (i * 80) + 'ms"></i>';
+    }).join('') + '</div>';
+    h += '<div class="legend">' + cats.map(function(c){ return '<span style="--c:var(' + CAT_COL[c] + ')">' + esc(c) + '<b>' + fmt(catPt[c]) + '</b></span>'; }).join('') + '</div>';
+    var multi = p.items.some(function(it){ return it.carrier !== p.items[0].carrier; });
+    h += '<div class="items">' + p.items.map(function(it){
+      return '<div class="item" style="--c:var(' + CAT_COL[it.cat] + ')"><span class="dot"></span>'
+        + '<span class="lb">' + esc(it.label) + (multi ? '<small>' + esc(PR.carrierLabel(it.carrier)) + '</small>' : '') + '</span>'
+        + '<span class="ct">' + it.count + '件 × ' + it.pt + '</span>'
+        + '<span class="pt it">' + fmt(it.pt * it.count) + '</span></div>';
+    }).join('') + '</div>';
+    box.innerHTML = h;
   }
 
   /* キャラを選ぶ（自分のときだけ。選ぶと Google に保存して、みんなの画面にも出る） */
@@ -537,7 +613,7 @@ details p{margin:10px 0 0;line-height:1.7}
       var t = P.slice().sort(function(a, b){ return b.cats[k[1]] - a.cats[k[1]] || a.i - b.i; })[0];
       var el = document.createElement('div'); el.className = 'king';
       var ic = document.createElement('canvas'); ic.className = 'px'; el.appendChild(drawPx(ic, k[1]));
-      el.insertAdjacentHTML('beforeend', '<div><div class="t">' + k[0] + '</div><div class="n" style="--c:var(' + CAT_UI[k[1]][1] + ')">' +
+      el.insertAdjacentHTML('beforeend', '<div><div class="t">' + k[0] + '</div><div class="n" style="--c:var(' + CAT_COL[k[1]] + ')">' +
         (t && t.cats[k[1]] ? esc(t.name) + '<span>' + t.cats[k[1]] + '件</span>' : '—') + '</div></div>');
       kb.appendChild(el);
     });

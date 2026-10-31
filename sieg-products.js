@@ -28,7 +28,7 @@
   // id は日報のキャリア欄と同じ書き方（docomo / Softbank / au）
   var CARRIERS = [
     { id: 'docomo', label: 'ドコモ', items: [
-      { label: 'MNP',              cat: 'MNP',  pt: 200 },
+      { label: 'MNP',              cat: 'MNP',  pt: 130 },
       { label: 'ドコモ光',         cat: '固定', pt: 100 },
       { label: 'HOME5G',           cat: '固定', pt: 100 },
       { label: 'ハイエンド',       cat: '端末', pt: 50 },
@@ -47,14 +47,16 @@
       { label: 'pixel',            cat: '端末', pt: 50 },
       { label: 'YS',               cat: '端末', pt: 50 },
       { label: 'Pカードゴールド',  cat: 'カード', pt: 80 },
-      { label: 'Pカード',          cat: 'カード', pt: 40 }
+      { label: 'Pカード',          cat: 'カード', pt: 40 },
+      { label: '新規',             cat: '新規', pt: 30 }
     ] },
     { id: 'au', label: 'au', items: [
       { label: 'auMNP',            cat: 'MNP',  pt: 200 },
       { label: 'UQMNP',            cat: 'MNP',  pt: 100 },
       { label: '光新規',           cat: '固定', pt: 100 },
       { label: 'auカードゴールド', cat: 'カード', pt: 80 },
-      { label: 'auカード',         cat: 'カード', pt: 40 }
+      { label: 'auカード',         cat: 'カード', pt: 40 },
+      { label: '新規',             cat: '新規', pt: 30 }
     ] }
   ];
 

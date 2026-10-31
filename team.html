@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>みんなの状況｜Sieg 業務ポータル</title>
+<meta name="description" content="今月の獲得・日報の提出・稼働費の入力を、全員まとめて見るページ。">
+<meta name="theme-color" content="#EFF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="sieg-theme.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; -webkit-tap-highlight-color: transparent; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .app { max-width: 960px; margin: 0 auto; padding: 4px max(16px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    display: flex; flex-direction: column; gap: 14px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 8px; }
+  .eyebrow { font-size: 11px; letter-spacing: .14em; color: var(--sg-mute); font-weight: 700; }
+  h1 { margin: 2px 0 0; font-size: 26px; font-weight: 900; letter-spacing: .04em; }
+  .reload { min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--sg-surface); border: 1px solid var(--sg-hair); font-size: 13px; font-weight: 700; }
+  .reload:disabled { opacity: .5; }
+  .sub { font-size: 12.5px; color: var(--sg-mute); margin-top: -6px; }
+
+  /* 上のまとめ */
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .kpi { background: var(--sg-surface); border: 1px solid var(--sg-hair); border-radius: var(--sg-r); box-shadow: var(--sg-lift); padding: 12px 14px; }
+  .kpi .k { font-size: 12px; color: var(--sg-mute); font-weight: 700; }
+  .kpi .v { font-size: 26px; font-weight: 900; margin-top: 2px; line-height: 1.15; }
+  .kpi .v small { font-size: 13px; color: var(--sg-mute); font-weight: 700; margin-left: 2px; }
+  .kpi .s { font-size: 11.5px; color: var(--sg-mute); margin-top: 2px; }
+  .kpi.alert .v { color: var(--sg-red); }
+
+  .bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .seg { display: inline-flex; padding: 3px; gap: 3px; background: var(--sg-sunk); border: 1px solid var(--sg-hair); border-radius: 12px; }
+  .seg button { border: 0; background: none; min-height: 36px; padding: 0 12px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--sg-mute); }
+  .seg button[aria-pressed="true"] { background: var(--sg-surface); color: var(--sg-ink); box-shadow: 0 1px 3px rgba(14,26,44,.12); }
+
+  /* 表：スマホでは1人1枚のカード、広い画面では表 */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--sg-surface); border: 1px solid var(--sg-hair);
+    border-radius: var(--sg-r); box-shadow: var(--sg-lift); overflow: hidden; }
+  th, td { padding: 11px 12px; text-align: right; border-top: 1px solid var(--sg-hair2); font-size: 14px; white-space: nowrap; }
+  thead th { border-top: 0; font-size: 12px; color: var(--sg-mute); font-weight: 700; background: var(--sg-sunk); }
+  th:first-child, td:first-child { text-align: left; }
+  td.name b { font-size: 15px; }
+  td.name small { display: block; font-size: 11px; color: var(--sg-mute); font-weight: 700; }
+  .pt { font-weight: 900; }
+  .dim { color: var(--sg-faint); }
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 2px 9px; }
+  .tag.ok { background: var(--sg-green-tint); color: var(--sg-green); }
+  .tag.ng { background: var(--sg-red-tint); color: var(--sg-red); }
+  .tag.off { background: var(--sg-sunk); color: var(--sg-mute); }
+  .small { display: block; font-size: 11px; color: var(--sg-mute); margin-top: 2px; }
+  .err { font-size: 11.5px; color: var(--sg-amber); }
+
+  @media (max-width: 720px) {
+    table, thead, tbody, tr, td { display: block; }
+    table { background: none; border: 0; box-shadow: none; }
+    thead { display: none; }
+    tbody { display: flex; flex-direction: column; gap: 10px; }
+    tr { background: var(--sg-surface); border: 1px solid var(--sg-hair); border-radius: var(--sg-r); box-shadow: var(--sg-lift);
+      display: grid; grid-template-columns: 1fr 1fr; padding: 4px 14px 10px; }
+    td { border: 0; padding: 7px 0 0; text-align: left; white-space: normal; }
+    td.name { grid-column: 1 / -1; padding-top: 10px; display: flex; align-items: baseline; gap: 8px; }
+    td.name small { display: inline; }
+    td[data-k]::before { content: attr(data-k); display: block; font-size: 11px; color: var(--sg-mute); font-weight: 700; }
+  }
+
+  .note { font-size: 12px; color: var(--sg-mute); line-height: 1.7; }
+  .state { text-align: center; padding: 40px 0; color: var(--sg-mute); font-weight: 700; }
+  .state[hidden], .kpis[hidden], table[hidden], .bar[hidden] { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div data-sieg-back></div>
+
+  <header class="head">
+    <div>
+      <div class="eyebrow">Sieg 業務ポータル</div>
+      <h1>みんなの状況</h1>
+    </div>
+    <button type="button" class="reload" id="reload">更新</button>
+  </header>
+  <div class="sub" id="sub">読み込み中…</div>
+
+  <div class="kpis" id="kpis" hidden></div>
+
+  <div class="bar" id="bar" hidden>
+    <div class="seg" role="group" aria-label="並べ方">
+      <button type="button" data-sort="power" aria-pressed="true">戦闘力順</button>
+      <button type="button" data-sort="roster" aria-pressed="false">名簿順</button>
+    </div>
+  </div>
+
+  <div class="state" id="state">読み込み中…</div>
+  <table id="table" hidden>
+    <thead>
+      <tr>
+        <th>名前</th><th>獲得</th><th>戦闘力</th><th>MNP</th><th>固定</th>
+        <th>日報（今日）</th><th>日報（今月）</th><th>稼働費 入力</th><th>稼働費 金額</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <p class="note">
+    獲得は獲得報告から、日報は日報フォームから、稼働費は稼働費入力のシートから読んでいます。<br>
+    日報はパートナー様だけ、稼働費は稼働費入力を使っている人だけ出します（ほかは「—」）。
+  </p>
+</div>
+
+<script src="gas-client.js"></script>
+<script src="sieg-nav.js"></script>
+<script src="sieg-roster.js"></script>
+<script src="sieg-products.js"></script>
+<script>
+(function () {
+  'use strict';
+  var R = window.SiegRoster, P = window.SiegProducts;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return Number(n).toLocaleString('ja-JP'); }
+  if (!R || !P) { $('state').textContent = '読み込みに失敗しました。再読み込みしてください。'; return; }
+
+  // 稼働費の GAS（稼働費入力の index.html と同じ。山口さんだけ別のブック）
+  var COMMUTE_GAS_DEFAULT = 'https://script.google.com/macros/s/AKfycbxp1cYnzgOMh4_ud5cEPJ7_b6qNFIm0YKt-sjFtBwXfeEHy_hMiZD0q2bPh-3vVOO15fA/exec';
+  var COMMUTE_GAS = { '山口真人': 'https://script.google.com/macros/s/AKfycbwwALmDLzKteasiO0AMqAyRWsfb3p_AqgjkLZo-IBSctLDseudhes9hxJer7aGsdDkj/exec' };
+
+  var PEOPLE = R.everyone;
+  var NIPPOU = R.forTool('nippou'), COMMUTE = R.forTool('commute');
+  var sortBy = 'power', data = null;
+
+  function todayYmd() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // 稼働費：1人ずつ（入力日数は getMonthInfo、金額は getMyEntries）
+  function commuteOf(name) {
+    var full = R.fullName(name);
+    if (!full) return Promise.resolve({ error: '名簿にフルネームがありません' });
+    var url = COMMUTE_GAS[full] || COMMUTE_GAS_DEFAULT;
+    return Promise.all([
+      GasClient.post(url, { action: 'getMonthInfo', staffName: full }, { retry: true }),
+      GasClient.post(url, { action: 'getMyEntries', staffName: full }, { retry: true })
+    ]).then(function (r) {
+      if (!r[0] || !r[0].ok || !r[1] || !r[1].ok) throw new Error((r[0] && r[0].error) || (r[1] && r[1].error) || '読めませんでした');
+      var info = r[0].data, entries = r[1].data || [], sum = 0;
+      entries.forEach(function (e) { sum += Number(e.amount) || 0; });
+      return { month: info.month, days: (info.filledDays || []).length, irregular: info.irregularCount || 0, amount: Math.round(sum) };
+    }).catch(function (e) { return { error: e.message }; });
+  }
+
+  function load() {
+    $('reload').disabled = true;
+    $('sub').textContent = '読み込み中…';
+    var commute = {};
+    return Promise.all([
+      GasClient.get(P.API, { action: 'gainStats' }),
+      GasClient.get(P.API, { action: 'nippouStatus' }).catch(function () { return null; }),
+      Promise.all(COMMUTE.map(function (n) { return commuteOf(n).then(function (c) { commute[n] = c; }); }))
+    ]).then(function (r) {
+      var stats = r[0], nip = r[1];
+      if (!stats || !stats.ok || !stats.rows) throw new Error('獲得報告の集計が読めませんでした（準備中かもしれません）');
+      data = { stats: stats, nippou: nip && nip.ok && nip.days ? nip : null, commute: commute, at: new Date() };
+      render();
+    }).catch(function (e) {
+      $('state').hidden = false; $('state').textContent = '読み込めませんでした：' + e.message;
+      $('sub').textContent = '';
+    }).then(function () { $('reload').disabled = false; });
+  }
+
+  function render() {
+    var month = data.stats.month, today = (data.nippou && data.nippou.today) || todayYmd();
+    var byName = {};
+    data.stats.rows.forEach(function (row) {
+      if (row[0] !== month) return;
+      (byName[row[1]] = byName[row[1]] || []).push({ carrier: row[2], label: row[3], count: Number(row[4]) || 0 });
+    });
+    var list = PEOPLE.map(function (n, i) {
+      var s = P.score(byName[n]);
+      var nd = data.nippou && data.nippou.days[n] || [];
+      return { name: n, i: i, partner: R.isPartner(n), s: s,
+        nippouToday: nd.indexOf(today) >= 0, nippouDays: nd.length, nippouLast: data.nippou && data.nippou.last[n] || '',
+        commute: data.commute[n] || null };
+    });
+    if (sortBy === 'power') list.sort(function (a, b) { return b.s.power - a.s.power || a.i - b.i; });
+
+    // まとめ
+    // 日報の「まだ」は名簿の順（並べ方を変えても順番が変わらないように）
+    var total = 0, pw = 0, need = NIPPOU.map(function (n) { return list.filter(function (x) { return x.name === n; })[0]; }).filter(Boolean),
+      sent = need.filter(function (x) { return x.nippouToday; });
+    list.forEach(function (x) { total += x.s.total; pw += x.s.power; });
+    var kp = '<div class="kpi"><div class="k">今月の獲得（全員）</div><div class="v num">' + fmt(total) + '<small>件</small></div><div class="s num">戦闘力 合計 ' + fmt(pw) + '</div></div>';
+    kp += data.nippou
+      ? '<div class="kpi' + (sent.length < need.length ? ' alert' : '') + '"><div class="k">きょうの日報</div><div class="v num">' + sent.length + '<small>/ ' + need.length + '人</small></div><div class="s">'
+        + (need.length - sent.length ? 'まだ：' + need.filter(function (x) { return !x.nippouToday; }).map(function (x) { return esc(x.name); }).join('・') : '全員提出済み') + '</div></div>'
+      : '<div class="kpi"><div class="k">きょうの日報</div><div class="v">—</div><div class="s">準備中（Google 側の更新待ち）</div></div>';
+    var cm = COMMUTE.map(function (n) { return data.commute[n]; }).filter(function (c) { return c && !c.error; });
+    kp += '<div class="kpi"><div class="k">稼働費の入力</div><div class="v num">' + cm.reduce(function (a, c) { return a + c.days; }, 0) + '<small>日分</small></div><div class="s num">'
+      + COMMUTE.length + '人・合計 ¥' + fmt(cm.reduce(function (a, c) { return a + c.amount; }, 0)) + '</div></div>';
+    $('kpis').innerHTML = kp;
+
+    // 1人ずつ
+    $('rows').innerHTML = list.map(function (x) {
+      var c = x.commute, usesCommute = COMMUTE.indexOf(x.name) >= 0, usesNippou = NIPPOU.indexOf(x.name) >= 0;
+      var nipToday = !usesNippou ? '<span class="dim">—</span>'
+        : !data.nippou ? '<span class="dim">準備中</span>'
+        : x.nippouToday ? '<span class="tag ok">提出済み</span>' : '<span class="tag ng">未提出</span>';
+      var nipMonth = !usesNippou || !data.nippou ? '<span class="dim">—</span>'
+        : '<span class="num">' + x.nippouDays + '日</span>' + (x.nippouLast ? '<span class="small">最後 ' + esc(x.nippouLast) + '</span>' : '');
+      var cDays = !usesCommute ? '<span class="dim">—</span>' : !c ? '…' : c.error ? '<span class="err">読めません</span>'
+        : '<span class="num">' + c.days + '日</span>' + (c.irregular ? '<span class="small">イレギュラー ' + c.irregular + '件</span>' : '')
+          + (Number(c.month) !== Number(month.slice(5, 7)) ? '<span class="small">シートは' + Number(c.month) + '月</span>' : '');
+      var cAmt = !usesCommute || !c || c.error ? '<span class="dim">—</span>' : '<span class="num">¥' + fmt(c.amount) + '</span>';
+      return '<tr>'
+        + '<td class="name"><b>' + esc(x.name) + '</b><small>' + (x.partner ? 'パートナー様' : 'Sieg社員') + '</small></td>'
+        + '<td data-k="獲得" class="num">' + (x.s.total ? x.s.total + '件' : '<span class="dim">0件</span>') + '</td>'
+        + '<td data-k="戦闘力" class="num pt">' + fmt(x.s.power) + '</td>'
+        + '<td data-k="MNP" class="num">' + x.s.cats['MNP'] + '</td>'
+        + '<td data-k="固定" class="num">' + x.s.cats['固定'] + '</td>'
+        + '<td data-k="日報（今日）">' + nipToday + '</td>'
+        + '<td data-k="日報（今月）">' + nipMonth + '</td>'
+        + '<td data-k="稼働費 入力">' + cDays + '</td>'
+        + '<td data-k="稼働費 金額">' + cAmt + '</td>'
+        + '</tr>';
+    }).join('');
+
+    var at = data.at;
+    $('sub').textContent = Number(month.slice(0, 4)) + '年' + Number(month.slice(5, 7)) + '月 ・ ' + at.getHours() + ':' + String(at.getMinutes()).padStart(2, '0') + ' 時点';
+    $('state').hidden = true; $('kpis').hidden = false; $('bar').hidden = false; $('table').hidden = false;
+  }
+
+  document.querySelectorAll('[data-sort]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      sortBy = b.dataset.sort;
+      document.querySelectorAll('[data-sort]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      if (data) render();
+    });
+  });
+  $('reload').addEventListener('click', load);
+  load();
+})();
+</script>
+</body>
+</html>

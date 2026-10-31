@@ -42,7 +42,8 @@
     keihi:        ['福山', '古川', '清田'],          // 経費精算
     notice:       'staff',                          // 掲示板への投稿
     gain:         'everyone',                       // 獲得報告
-    power:        'everyone'                        // 戦闘力（ランキングに出る人）
+    power:        'everyone',                       // 戦闘力（ランキングに出る人）
+    team:         ['福岡', '福山']                  // みんなの状況（全員の獲得・日報・稼働費）
   };
 
   function names(group) {

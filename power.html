@@ -55,14 +55,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tab:disabled{opacity:.5;cursor:default}
 
 /* ファイター選択 */
-.roster{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:4px 16px 2px;scroll-padding:0 16px;
-  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
-.roster.end{-webkit-mask-image:none;mask-image:none}
-.roster::-webkit-scrollbar{display:none}
-.roster .slot{flex:0 0 66px}
-.slot{position:relative;aspect-ratio:3/4;max-width:100%;background:linear-gradient(160deg,var(--c) 0%,#1B2236 100%);
+.roster{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-top:4px}
+.roster .slot{aspect-ratio:1/1}
+.roster .slot[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--gold);filter:drop-shadow(0 0 8px rgba(255,201,60,.55))}
+.slot .one{position:absolute;right:4px;top:3px;font-family:var(--disp);font-size:11px;padding:0 6px;background:var(--gold);color:#1A1405;
+  clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.slot{position:relative;aspect-ratio:3/4;max-width:100%;opacity:.62;background:linear-gradient(160deg,var(--c) 0%,#1B2236 100%);
   background:linear-gradient(160deg,var(--c) 0%,color-mix(in srgb,var(--c) 35%,var(--bg)) 100%);
-  clip-path:polygon(0 0,100% 0,100% 88%,88% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;opacity:.5;transition:opacity .15s,transform .15s}
+  clip-path:polygon(0 0,100% 0,100% 88%,88% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;transition:opacity .15s,transform .15s}
 .slot .fig{position:absolute;inset:16% 6% 20%;width:auto;height:auto}
 .slot .tag{position:absolute;left:6px;top:4px;font-family:var(--disp);font-size:11px;color:var(--c-ink,#fff)}
 .slot .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);font-family:var(--disp);font-size:12px;padding:3px 0 4px;text-align:center}
@@ -99,8 +99,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .fighter .nx{font-size:11.5px;font-weight:700;color:#E6ECFA}
 .power{margin-top:auto;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .power .lbl{font-size:11px;font-weight:900;letter-spacing:.2em;color:#E6ECFA}
-.power .num{font-family:var(--disp);font-size:50px;line-height:1;color:#fff;font-variant-numeric:tabular-nums;
-  text-shadow:4px 4px 0 var(--c),6px 6px 0 rgba(0,0,0,.45)}
+.power .num{font-family:var(--disp);font-size:clamp(38px,13vw,56px);line-height:1;color:var(--rankc,#fff);font-variant-numeric:tabular-nums;
+  -webkit-text-stroke:3px #fff;paint-order:stroke fill;text-shadow:5px 5px 0 rgba(0,0,0,.62),8px 8px 0 rgba(0,0,0,.22)}
 .power .num.hit{animation:hit .35s steps(3)}
 @keyframes hit{30%{transform:scale(1.15) skewX(-8deg);color:var(--gold)}}
 .power .diff{display:inline-block;font-family:var(--disp);font-size:12.5px;padding:2px 12px;background:#fff;color:#08704A;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
@@ -125,6 +125,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gl .s{font-size:11.5px;font-weight:700;color:#C9D2EA;line-height:1.5}
 .gl .bar{height:7px;background:rgba(255,255,255,.12);transform:skewX(-14deg)}
 .gl .bar i{display:block;height:100%;background:var(--gold)}
+.stock{display:flex;flex-wrap:wrap;gap:4px;min-height:12px}
+.stock i{width:10px;height:13px;display:block;background:#2A3556;transform:skewX(-14deg);
+  clip-path:polygon(50% 0,100% 35%,100% 65%,50% 100%,0 65%,0 35%)}
+.stock i.on{background:var(--gold);box-shadow:0 0 8px rgba(255,201,60,.7)}
+.stock .more{font-family:var(--disp);font-size:11px;color:var(--mute);line-height:13px}
 
 /* 今月の内訳（ポイントの積み上げ） */
 .bd{background:var(--panel);padding:14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);display:flex;flex-direction:column;gap:12px}
@@ -212,6 +217,20 @@ details p{margin:10px 0 0;line-height:1.7}
 .hp .pos{position:absolute;right:10px;top:6px;font-family:var(--disp);font-size:16px;color:var(--mute)}
 .hp .pos.first{color:var(--gold)}
 .hp .sub{font-size:10.5px;color:var(--mute);font-weight:700}
+.hp{animation:pop .45s cubic-bezier(.2,.9,.2,1) backwards}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.94)}}
+.hp .gauge{grid-column:1 / -1;height:5px;background:rgba(255,255,255,.08);transform:skewX(-14deg)}
+.hp .gauge i{display:block;height:100%;width:var(--w,0);background:var(--c);transform-origin:0 50%;animation:fill .7s cubic-bezier(.3,.7,.3,1) .3s backwards}
+.hp.me{box-shadow:inset 0 0 0 2px var(--gold)}
+.hp .you{font-family:var(--disp);font-size:10px;background:var(--gold);color:#1A1405;padding:0 5px;margin-left:6px;vertical-align:2px}
+.rise{background:var(--panel);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.rise[hidden]{display:none}
+.rise .t{font-size:11px;font-weight:900;color:var(--kotei);letter-spacing:.06em}
+.rise .n{font-family:var(--disp);font-size:17px}
+.rise .v{font-family:var(--disp);font-size:15px;color:var(--kotei);margin-left:auto}
+.fxset{display:flex;align-items:center;gap:8px;margin-top:12px;color:var(--ink);font-weight:700;font-size:13px}
+.fxset input{width:20px;height:20px;accent-color:var(--gold)}
 .kings{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .king{background:var(--panel);padding:10px 14px 10px 12px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;
   clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%)}
@@ -252,8 +271,7 @@ details p{margin:10px 0 0;line-height:1.7}
   #view-status .col > *{grid-column:1 / -1}
   #view-status .col > .fighter{grid-column:1;grid-row:2 / span 3}
   #view-status .col > .goal,#view-status .col > .bd-band,#view-status .col > .bd{grid-column:2}
-  .roster{display:grid;grid-template-columns:repeat(8,1fr);overflow:visible;margin:0;padding:4px 0;-webkit-mask-image:none;mask-image:none}
-  .roster .slot{flex:none}
+  .roster{grid-template-columns:repeat(8,1fr)}
   .hud,.kings{grid-template-columns:repeat(4,1fr)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -325,6 +343,11 @@ details p{margin:10px 0 0;line-height:1.7}
         <p class="note left" id="picker-msg"></p>
       </details>
 
+      <details class="more-box">
+        <summary>設定</summary>
+        <label class="fxset"><input type="checkbox" id="fx-off"> 演出（大きな文字・紙吹雪）を出さない</label>
+      </details>
+
       <details>
         <summary>戦闘力の計算のしかた</summary>
         <div class="formula" id="formula"></div>
@@ -338,6 +361,7 @@ details p{margin:10px 0 0;line-height:1.7}
   <section class="view" id="view-rank" role="tabpanel" aria-labelledby="tab-rank" hidden>
     <div class="col">
       <div class="champ" id="champ"></div>
+      <div class="rise" id="rise" hidden></div>
       <span class="band">今月の順位</span>
       <div class="hud" id="hud"></div>
       <span class="band">部門賞</span>
@@ -458,6 +482,7 @@ details p{margin:10px 0 0;line-height:1.7}
   var RANKS = [['B', 1000], ['A', 1500], ['S', 2000]];
   var STEP = 200;   // この戦闘力ごとにレベルが1上がる（毎月1から）
   function rankOf(v){ var r = 'C'; RANKS.forEach(function(x){ if (v >= x[1]) r = x[0]; }); return r; }
+  var RANK_COLOR = { S:'#F0453F', A:'#FF8A3D', B:'#FFC93C', C:'#FFFFFF' };   // 戦闘力の数字の色
   function lvOf(p){ return Math.floor(p.pw / STEP) + 1; }
   function cls(p){
     if (p.total < 5) return 'かけだしファイター';
@@ -495,12 +520,11 @@ details p{margin:10px 0 0;line-height:1.7}
     P.forEach(function(p, i){
       var b = document.createElement('button'); b.type = 'button'; b.className = 'slot';
       paint(b, p); b.setAttribute('aria-pressed', String(i === cur)); b.setAttribute('aria-label', p.name);
-      b.innerHTML = '<span class="tag">' + p.pl + '</span>';
+      b.innerHTML = '<span class="tag">' + p.pl + '</span>' + (i === cur ? '<span class="one">1P</span>' : '');
       b.appendChild(figEl(p.char));
       b.insertAdjacentHTML('beforeend', '<span class="nm">' + esc(p.name) + '</span>');
       b.onclick = function(){ cur = i; renderRoster(); renderFighter(); };
       box.appendChild(b);
-      if (i === cur) setTimeout(function(){ b.scrollIntoView({ block:'nearest', inline:'nearest' }); }, 0);
     });
   }
 
@@ -511,6 +535,7 @@ details p{margin:10px 0 0;line-height:1.7}
     $('pl').textContent = p.pl + (p.name === ME ? '　あなた' : '');
     $('name').textContent = p.name; $('cls').textContent = cls(p); $('lv').textContent = lvOf(p);
     var rk = $('rank'); rk.textContent = rankOf(p.pw); rk.className = 'rank ' + rankOf(p.pw);
+    $('power').style.setProperty('--rankc', RANK_COLOR[rankOf(p.pw)] || '#fff');
     // ちょうどレベルが上がったところ（余りが0）は、空ではなく満タンで見せる
     var rem = p.pw % STEP, e = '', on = rem === 0 && p.pw > 0 ? 12 : Math.round(rem / STEP * 12); for (var i = 0; i < 12; i++) e += '<i' + (i < on ? ' class="on"' : '') + '></i>'; $('exp').innerHTML = e;
     $('nx').textContent = 'あと ' + fmt(STEP - p.pw % STEP) + ' でレベルアップ';
@@ -548,12 +573,22 @@ details p{margin:10px 0 0;line-height:1.7}
     if (!a || !b) return '';
     return esc(a.label) + ' ' + Math.ceil(gap / a.pt) + '件（または ' + esc(b.label) + ' ' + Math.ceil(gap / b.pt) + '件）';
   }
+  // 残り（ストック）：次のランクまでを「その人のキャリアの MNP 何件分」で並べ、取った分を光らせる
+  function stockHtml(p, span, gap){
+    var it = topItem(mainCarrier(p), 'MNP');
+    if (!it) return '';
+    var total = Math.ceil(span / it.pt), left = Math.ceil(gap / it.pt), got = Math.max(0, total - left), show = Math.min(total, 12), h = '';
+    for (var i = 0; i < show; i++) h += '<i' + (i < Math.min(got, show) ? ' class="on"' : '') + '></i>';
+    if (total > show) h += '<span class="more">…' + total + '</span>';
+    return '<div class="stock" title="' + esc(it.label) + ' 1件 ＝ ◆1つ">' + h + '</div>';
+  }
   function renderGoal(p){
     var next = null; for (var i = 0; i < RANKS.length; i++) if (p.pw < RANKS[i][1]) { next = RANKS[i]; break; }
     var prevTh = 0; RANKS.forEach(function(r){ if (p.pw >= r[1]) prevTh = r[1]; });
     var a = next
       ? '<div class="t">' + next[0] + 'ランクまで</div><div class="v it">あと' + fmt(next[1] - p.pw) + '<small>pt</small></div>'
         + '<div class="bar"><i style="width:' + Math.round((p.pw - prevTh) / (next[1] - prevTh) * 100) + '%"></i></div>'
+        + stockHtml(p, next[1] - prevTh, next[1] - p.pw)
         + '<div class="s">' + inCounts(p, next[1] - p.pw) + '</div>'
       : '<div class="t">ランク</div><div class="v it top">S 達成！</div><div class="bar"><i style="width:100%"></i></div><div class="s">最高ランクです</div>';
     var list = P.slice().sort(function(x, y){ return y.pw - x.pw; });
@@ -656,15 +691,24 @@ details p{margin:10px 0 0;line-height:1.7}
       ch.insertAdjacentHTML('beforeend', '<span class="w">今月のチャンピオン（' + P.length + '人中）</span><div><div class="n it">' + esc(c.name) + '</div></div><div><div class="p it">' + fmt(c.pw) + '</div></div>');
       ch.appendChild(figEl(c.char));
     }
+    // 今月の急上昇：先月からいちばん伸びた人（チャンピオンと別の軸。累計で下の人にも見せ場を）
+    var riser = P.slice().sort(function(a, b){ return (b.pw - b.last) - (a.pw - a.last) || a.i - b.i; })[0];
+    var rise = $('rise');
+    rise.hidden = !(riser && riser.pw - riser.last > 0);
+    if (!rise.hidden) rise.innerHTML = '<span class="t">今月の急上昇</span><span class="n">' + esc(riser.name) + '</span><span class="v it">▲ +' + fmt(riser.pw - riser.last) + '</span>';
+
     var hud = $('hud'); hud.innerHTML = '';
-    var pos = 0, lastPw = null;
+    var pos = 0, lastPw = null, topPw = Math.max(1, list[0].pw);
     list.forEach(function(r, i){
       if (r.pw !== lastPw) { pos = i + 1; lastPw = r.pw; }
       var d = r.pw - r.last, el = document.createElement('div');
       el.className = 'hp' + (r.name === ME ? ' me' : ''); paint(el, r);
+      // 下の順位から順に出す（自分の番に目が行くように）
+      el.style.animationDelay = ((list.length - 1 - i) * 0.09) + 's';
       el.appendChild(figEl(r.char));
-      el.insertAdjacentHTML('beforeend', '<div><div class="pl">' + r.pl + '</div><div class="nm">' + esc(r.name) + '</div><div class="pw it">' + fmt(r.pw) + '</div>' +
-        '<div class="sub">MNP ' + r.cats['MNP'] + '・固定 ' + r.cats['固定'] + '　' + (d >= 0 ? '▲+' : '▼') + fmt(d) + '</div></div><div class="pos it' + (pos === 1 && r.pw ? ' first' : '') + '">' + pos + '位</div>');
+      el.insertAdjacentHTML('beforeend', '<div><div class="pl">' + r.pl + (r.name === ME ? '<span class="you">YOU</span>' : '') + '</div><div class="nm">' + esc(r.name) + '</div><div class="pw it">' + fmt(r.pw) + '</div>' +
+        '<div class="sub">MNP ' + r.cats['MNP'] + '・固定 ' + r.cats['固定'] + '　' + (d >= 0 ? '▲+' : '▼') + fmt(d) + '</div></div><div class="pos it' + (pos === 1 && r.pw ? ' first' : '') + '">' + pos + '位</div>' +
+        '<div class="gauge" style="--w:' + Math.round(r.pw / topPw * 100) + '%"><i></i></div>');
       hud.appendChild(el);
     });
     var kb = $('kings'); kb.innerHTML = '';
@@ -707,9 +751,6 @@ details p{margin:10px 0 0;line-height:1.7}
       else if (k) { e.preventDefault(); tab(TABS[(i + k + TABS.length) % TABS.length], true); }
     };
   });
-  $('roster').addEventListener('scroll', function(){
-    var r = $('roster'); r.classList.toggle('end', r.scrollLeft + r.clientWidth >= r.scrollWidth - 4);
-  });
   addEventListener('resize', function(){ if (!$('view-status').hidden) drawLines(); });
 
   /* 計算のしかた（商品表とランクの境目から作る） */
@@ -733,15 +774,32 @@ details p{margin:10px 0 0;line-height:1.7}
       fc.globalAlpha = 1; if (parts.length) requestAnimationFrame(tick);
     })();
   }
+  // 演出を出さない設定（この端末だけ）
+  var FX_KEY = 'siegPowerFxOff';
+  function fxOff(){ return !!load(FX_KEY); }
+  $('fx-off').checked = fxOff();
+  $('fx-off').onchange = function(){ store(FX_KEY, this.checked); };
+
+  // 開いたときの演出：順位が上がっていたら「順位アップ！」、戦闘力が上がっていたら「ナイス！／レベルアップ！」
+  // （前回見た戦闘力 siegPowerSeen・順位 siegPowerRank と比べる）
+  function myPos(p){ var n = 1; P.forEach(function(x){ if (x.pw > p.pw) n++; }); return n; }
   function celebrate(){
     var p = P[PEOPLE.indexOf(ME)];
     if (!p) return;
-    var seen = load('siegPowerSeen') || {}, key = ME + '@' + CUR, before = seen[key];
+    var key = ME + '@' + CUR;
+    var seen = load('siegPowerSeen') || {}, before = seen[key];
     seen = {}; seen[key] = p.pw; store('siegPowerSeen', seen);
-    if (before == null || p.pw <= before) return;
-    var up = lvOf(p) > Math.floor(before / STEP) + 1;
+    var ranks = load('siegPowerRank') || {}, posBefore = ranks[key], pos = p.pw ? myPos(p) : 0;
+    ranks = {}; ranks[key] = pos; store('siegPowerRank', ranks);
+    if (fxOff()) return;
+    var head, sub;
+    if (posBefore && pos && pos < posBefore) { head = '順位アップ！'; sub = posBefore + '位 → ' + pos + '位'; }
+    else if (before != null && p.pw > before) {
+      head = lvOf(p) > Math.floor(before / STEP) + 1 ? 'レベルアップ！' : 'ナイス！';
+      sub = '戦闘力 +' + fmt(p.pw - before);
+    } else return;
     var b = $('burst'), t = $('bursttxt');
-    t.innerHTML = (up ? 'レベルアップ！' : 'ナイス！') + '<small>戦闘力 +' + fmt(p.pw - before) + '</small>';
+    t.innerHTML = head + '<small>' + sub + '</small>';
     b.hidden = false; t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
     var w = $('wrap'); w.classList.remove('shake'); void w.offsetWidth; if (!reduce) w.classList.add('shake');
     sparks(getComputedStyle(document.documentElement).getPropertyValue(p.col).trim() || '#FFC93C');

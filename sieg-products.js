@@ -15,7 +15,7 @@
      MNP   … MNP（日報の「MNP目標」もこの区分の合計で進む）
              ※ MNP の商品を増やしたら、日報の GAS（nippou-form/nippou-gas.gs）の MNP_LABELS も直す
      固定  … 光・Air・HOME5G など
-     端末  … ハイエンド・pixel
+     端末  … ハイエンド・pixel・YS
      カード… クレジットカード
      新規  … 新規
    ═══════════════════════════════════════════════════════════════ */
@@ -45,6 +45,7 @@
       { label: 'Air機変',          cat: '固定', pt: 100 },
       { label: '速度変更',         cat: '固定', pt: 100 },
       { label: 'pixel',            cat: '端末', pt: 50 },
+      { label: 'YS',               cat: '端末', pt: 50 },
       { label: 'Pカードゴールド',  cat: 'カード', pt: 80 },
       { label: 'Pカード',          cat: 'カード', pt: 40 }
     ] },

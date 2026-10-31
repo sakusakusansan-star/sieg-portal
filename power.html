@@ -488,14 +488,27 @@ details p{margin:10px 0 0;line-height:1.7}
 
   /* 次の目標：次のランクまで／ひとつ上の順位まで。足りない点数を「MNP なら何件・固定なら何件」に直して出す */
   var RANKS = [['B', 1000], ['A', 1500], ['S', 2000]];
-  function inCounts(gap){ return 'MNP ' + Math.ceil(gap / 200) + '件 か 固定 ' + Math.ceil(gap / 100) + '件'; }
+  // その人のキャリア（名簿の carrier。無ければ今月いちばん多く報告したキャリア）の、MNP と固定のいちばん高い点数で数える
+  function mainCarrier(p){
+    var c = R.carrier ? R.carrier(p.name) : '';
+    if (c) return c;
+    var n = {}; p.items.forEach(function(it){ n[it.carrier] = (n[it.carrier] || 0) + it.count; });
+    return Object.keys(n).sort(function(a, b){ return n[b] - n[a]; })[0] || 'Softbank';
+  }
+  function topPt(carrier, cat){
+    return PR.items(carrier).filter(function(it){ return it.cat === cat; }).reduce(function(m, it){ return Math.max(m, it.pt); }, 0) || 100;
+  }
+  function inCounts(p, gap){
+    var c = mainCarrier(p);
+    return 'MNP ' + Math.ceil(gap / topPt(c, 'MNP')) + '件 か 固定 ' + Math.ceil(gap / topPt(c, '固定')) + '件';
+  }
   function renderGoal(p){
     var next = null; for (var i = 0; i < RANKS.length; i++) if (p.pw < RANKS[i][1]) { next = RANKS[i]; break; }
     var prevTh = 0; RANKS.forEach(function(r){ if (p.pw >= r[1]) prevTh = r[1]; });
     var a = next
       ? '<div class="t">' + next[0] + 'ランクまで</div><div class="v it">あと' + fmt(next[1] - p.pw) + '<small>pt</small></div>'
         + '<div class="bar"><i style="width:' + Math.round((p.pw - prevTh) / (next[1] - prevTh) * 100) + '%"></i></div>'
-        + '<div class="s">' + inCounts(next[1] - p.pw) + '</div>'
+        + '<div class="s">' + inCounts(p, next[1] - p.pw) + '</div>'
       : '<div class="t">ランク</div><div class="v it top">S 達成！</div><div class="bar"><i style="width:100%"></i></div><div class="s">最高ランクです</div>';
     var list = P.slice().sort(function(x, y){ return y.pw - x.pw; });
     var pos = 1; list.forEach(function(x){ if (x.pw > p.pw) pos++; });

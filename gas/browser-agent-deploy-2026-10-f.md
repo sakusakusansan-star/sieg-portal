@@ -41,8 +41,8 @@
 **記録先スプレッドシート：**
 <https://docs.google.com/spreadsheets/d/1ffkmHDt_sz1ZQ3ZB_fXIaJeFhuW0wSI7bqwMpC9Z33g/edit>
 
-**新しいコード（685行。1行目は `// ═══════════════════════════════════════════`、最後の行は `}`）：**
-<https://raw.githubusercontent.com/sakusakusansan-star/nippou-form/937eb18c13d6472cc67d4011bb6a1ad9bf49c92d/nippou-gas.gs>
+**新しいコード（737行。1行目は `// ═══════════════════════════════════════════`、最後の行は `}`）：**
+<https://raw.githubusercontent.com/sakusakusansan-star/nippou-form/6170e7bec0b1ec35ac8e6032d7ce7c380db029ac/nippou-gas.gs>
 
 1. プロジェクトを開く（記録先スプレッドシートの「拡張機能」→「Apps Script」、
    またはパートBで使ったプロジェクト）。デプロイIDが一致することを確認し、今のバージョン番号を控える
@@ -55,10 +55,10 @@
 4. 手順2で控えた値が新しいコードと違う場合は、控えた値に書き直す
    （新しいコードでは `SHEET_ID = '1ffkmHDt_sz1ZQ3ZB_fXIaJeFhuW0wSI7bqwMpC9Z33g'`、`TEAMS_WEBHOOK_URL = ''`）。
    書き直したかどうかを報告に含める
-5. 保存。Ctrl+F で `CODE_VERSION = '2026-10-31'` が **1件**、`function buildGain_` が **1件** 見つかることを確かめる
+5. 保存。Ctrl+F で `CODE_VERSION = '2026-10-31b'` が **1件**、`function buildGain_` が **1件** 見つかることを確かめる
 6. 「デプロイを管理」→ 鉛筆 → 新バージョン → デプロイ
    - 権限の承認を求められたら、内容を報告したうえで「許可」して構いません
-7. 確認：デプロイURLを開き、`"version":"2026-10-31"` と `"gain":true` が出ること
+7. 確認：デプロイURLを開き、`"version":"2026-10-31b"` と `"gain":true` が出ること
    ```
    https://script.google.com/macros/s/AKfycbwEclDIdJiNgdXOmveRvT-BJOVWc6FwyrpxWNrqHs1DB9xgx9Ijuix0qqQ5KyG-XlkF7w/exec
    ```

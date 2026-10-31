@@ -87,7 +87,7 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
 }
 .doc-card:active { background: var(--sg-amber-tint); transform: scale(0.985); }
 .doc-card.soon { opacity: .5; }
-.doc-icon { font-size: 21px; line-height: 1; }
+.doc-icon { font-size: 21px; line-height: 1; color: var(--sg-blue, #294780); }
 .doc-name { font-size: 16px; font-weight: 700; }
 .doc-desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .doc-arrow { text-align: right; color: var(--muted2); font-size: 18px; }

@@ -57,7 +57,7 @@
     '.sb.run .tail{animation:sb-tail .3s ease-in-out infinite alternate}' +
     '.sb.jump .me{animation:sb-jump .6s cubic-bezier(.3,.6,.4,1)}' +
     '.sb.jump .hold{animation:sb-raise .6s ease-out}' +
-    '.sb-say{position:absolute;right:62px;bottom:26px;max-width:170px;padding:7px 11px;border-radius:14px 14px 4px 14px;' +
+    '.sb-say{position:absolute;right:8px;bottom:88px;max-width:170px;padding:7px 11px;border-radius:14px 14px 4px 14px;' +
       'background:var(--surface,#fff);color:var(--ink,#0E1A2C);box-shadow:0 2px 10px rgba(14,26,44,.12);' +
       'border:1px solid var(--hair,#E3E6EA);font-weight:700;font-size:12.5px;line-height:1.45;white-space:nowrap;' +
       'opacity:0;transform:translateY(4px) scale(.96);transform-origin:100% 100%;transition:opacity .2s,transform .2s;pointer-events:none;z-index:3}' +

@@ -7,7 +7,7 @@
  *  - お知らせAPI（GAS）は一切キャッシュせず、常にネットワークへ通す。
  */
 
-var VERSION = 'v32'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
+var VERSION = 'v33'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
 var SHELL_CACHE = 'sieg-shell-' + VERSION;
 var ASSET_CACHE = 'sieg-asset-' + VERSION;
 var FONT_CACHE = 'sieg-font-' + VERSION;
@@ -21,6 +21,7 @@ var PRECACHE = [
   './shift.html',
   './gain.html',
   './power.html',
+  './team.html',
   './gas-client.js',
   './sieg-nav.js',
   './sieg-theme.css',

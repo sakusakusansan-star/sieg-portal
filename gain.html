@@ -129,6 +129,9 @@
     font-size: 12px; font-weight: 700; color: var(--sg-mute);
   }
   .rep .undo.armed { background: var(--sg-red); border-color: var(--sg-red); color: #fff; }
+  .rep .acts { flex: none; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+  .rep .undo.resend { background: var(--sg-amber-tint); border-color: transparent; color: var(--sg-amber); }
+  .rep .unposted { color: var(--sg-amber); font-size: 12px; font-weight: 700; margin-top: 2px; }
   .empty { padding: 16px 14px; font-size: 13px; color: var(--sg-mute); }
 
   .banner { border-radius: 14px; padding: 12px 14px; font-size: 14px; font-weight: 700; line-height: 1.55; }
@@ -479,7 +482,7 @@
         return;
       }
       serverReady = true; $('setup-msg').hidden = true;
-      renderSent(data.reports);
+      renderSent(data.reports, data.discordOn);
       renderCounts();
     }).catch(function (err) {
       if (seq !== loadSeq) return;
@@ -489,7 +492,7 @@
     });
   }
 
-  function renderSent(reports) {
+  function renderSent(reports, discordOn) {
     var list = $('sent-list'), all = [];
     reports.forEach(function (r) { r.items.forEach(function (x) { all.push({ carrier: r.carrier, label: x.label, count: x.count }); }); });
     var s = P.score(all);
@@ -501,7 +504,26 @@
       var row = document.createElement('div'); row.className = 'rep';
       row.innerHTML = '<div class="at num">' + esc(r.at || '') + '</div><div class="body"><b>' + esc(P.carrierLabel(r.carrier)) + '</b>'
         + r.items.map(function (x) { return esc(x.label) + x.count + '件'; }).join('、')
-        + (r.memo ? '<div class="memo-l">' + esc(r.memo) + '</div>' : '') + '</div>';
+        + (r.memo ? '<div class="memo-l">' + esc(r.memo) + '</div>' : '')
+        + (discordOn && r.id && r.posted === false ? '<div class="unposted">Discord にまだ出ていません</div>' : '') + '</div>';
+      var acts = document.createElement('div'); acts.className = 'acts';
+      // Discord に出せなかった報告は、あとから送り直せる
+      if (discordOn && r.id && r.posted === false) {
+        var rs = document.createElement('button'); rs.type = 'button'; rs.className = 'undo resend'; rs.textContent = 'Discordに再送';
+        rs.addEventListener('click', function () {
+          rs.disabled = true; rs.textContent = '送信中…';
+          GasClient.post(P.API, { action: 'gainResend', name: state.name, id: r.id }, { retry: true }).then(function (d) {
+            if (!d || !d.ok) throw new Error((d && d.error) || '送れませんでした');
+            if (d.discord === false) throw new Error('まだ混み合っています' + (d.code ? '（' + Number(d.code) + '）' : '') + '。少し待ってからもう一度押してください');
+            showResult('ok', 'Discord に送りました。');
+            loadToday();
+          }).catch(function (e) {
+            rs.disabled = false; rs.textContent = 'Discordに再送';
+            showResult('warn', esc(e.message));
+          });
+        });
+        acts.appendChild(rs);
+      }
       if (r.id) {
         var u = document.createElement('button'); u.type = 'button'; u.className = 'undo'; u.textContent = '取り消す';
         var armed = 0;
@@ -522,8 +544,9 @@
             showResult('bad', '取り消せませんでした：' + e.message);
           });
         });
-        row.appendChild(u);
+        acts.appendChild(u);
       }
+      if (acts.children.length) row.appendChild(acts);
       list.appendChild(row);
     });
   }
@@ -583,10 +606,11 @@
       drop(SEND_ID_KEY); drop(DRAFT_KEY);
       state.counts = {}; state.memo = ''; $('memo').value = '';
       renderCounts();
-      if (data.reports) renderSent(data.reports);
+      if (data.reports) renderSent(data.reports, data.discordOn);
       var partnerNote = R.isPartner(p.name) ? '<br>日報を開くと、この件数が獲得欄に入っています。' : '';
       if (data.discord === true) showResult('ok', 'Discord に送りました。' + partnerNote);
-      else if (data.discord === false) showResult('warn', '記録はできましたが、Discord への投稿に失敗しました。お手数ですが Discord に手で書いてください。' + partnerNote);
+      else if (data.discord === false) showResult('warn', '記録はできましたが、Discord が混み合っていて投稿できませんでした'
+        + (data.discordCode ? '（' + Number(data.discordCode) + '）' : '') + '。少し待ってから、下の一覧の「Discordに再送」を押してください。' + partnerNote);
       else showResult('warn', '記録しました（Discord への投稿はまだ設定されていません）。' + partnerNote);
       window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
       buzz([20, 40, 20]);

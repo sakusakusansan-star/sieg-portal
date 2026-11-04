@@ -59,7 +59,7 @@
   // パートナー様の交通費（commute-form/partner.html）の GAS。
   // 「パートナー_交通費（12月〜）」スプレッドシートの Apps Script をウェブアプリにした /exec の URL。
   // 空のあいだは、パートナー様の画面は「準備中」になり、山口さんは前の画面のまま。
-  var COMMUTE_PARTNER_API = '';
+  var COMMUTE_PARTNER_API = 'https://script.google.com/macros/s/AKfycbwKGhybd3Y-8VYGh3OwgqNqIIpzOqMUBWZH03sEzEjLM46HbThs198G0A6UGjo8jg_cRg/exec';
 
   global.SiegRoster = {
     commutePartnerApi: COMMUTE_PARTNER_API,

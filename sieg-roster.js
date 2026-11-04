@@ -11,7 +11,8 @@
      別に持っているので、そちらも直すこと。
        ・シフト入力（Sieg社員）  … sieg-portal/gas/shift-api.gs の ALLOW_STAFF と、シフト表の行
        ・シフト入力（パートナー様）… シフト表の行
-       ・交通費計算              … 稼働費の GAS の STAFF_HOME（フルネーム）と、人ごとのシート
+       ・交通費計算（社員）      … 稼働費の GAS の STAFF_HOME（フルネーム）と、人ごとのシート
+       ・交通費計算（パートナー様）… パートナー交通費の GAS の PARTNERS（自宅・場所は本人が画面で登録）
        ・経費精算                … 経費精算のスプレッドシート
    ═══════════════════════════════════════════════════════════════ */
 (function (global) {
@@ -38,7 +39,7 @@
     nippou:       'partner',                        // 日報
     shiftStaff:   'staff',                          // シフト入力（Sieg社員）
     shiftPartner: 'partner',                        // シフト入力（パートナー様）
-    commute:      ['福山', '古川', '清田', '山口'],  // 交通費計算
+    commute:      ['福山', '古川', '清田', '山口', '鈴木', '毛利', '山内'],  // 交通費計算（パートナー様は partner.html へ）
     keihi:        ['福山', '古川', '清田'],          // 経費精算
     notice:       'staff',                          // 掲示板への投稿
     gain:         'everyone',                       // 獲得報告
@@ -55,7 +56,13 @@
     return null;
   }
 
+  // パートナー様の交通費（commute-form/partner.html）の GAS。
+  // 「パートナー_交通費（12月〜）」スプレッドシートの Apps Script をウェブアプリにした /exec の URL。
+  // 空のあいだは、パートナー様の画面は「準備中」になり、山口さんは前の画面のまま。
+  var COMMUTE_PARTNER_API = '';
+
   global.SiegRoster = {
+    commutePartnerApi: COMMUTE_PARTNER_API,
     staff: names('staff'),
     partners: names('partner'),
     everyone: names(),

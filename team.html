@@ -254,10 +254,27 @@
     .spin { animation: none; }
     .reload, .mcard .mt::after { transition: none; }
   }
+  /* ───────── 入口の合言葉 ───────── */
+  .app.locked > :not(.head):not(.gate):not([data-sieg-back]) { display: none !important; }
+  .app.locked .headr { visibility: hidden; }
+  .gate { max-width: 400px; margin: 28px auto 0; background: var(--t-card); border: 1px solid var(--t-hair); border-radius: var(--t-r);
+    box-shadow: var(--t-lift); padding: 22px 20px 20px; }
+  .gate[hidden] { display: none; }
+  .gate h2 { margin: 0 0 6px; font-size: 17px; font-weight: 900; color: var(--t-ink); }
+  .gate p { margin: 0 0 14px; font-size: 13px; line-height: 1.7; color: var(--t-ink2); }
+  .gate label { display: block; font-size: 12px; font-weight: 700; color: var(--t-mute); margin-bottom: 6px; }
+  .gate .row { display: flex; gap: 8px; }
+  .gate input { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 11px 12px; border-radius: var(--t-r-sm);
+    border: 1px solid var(--t-hair); background: var(--t-sunk); color: var(--t-ink); }
+  .gate input:focus { outline: 2px solid var(--t-accent); outline-offset: 1px; }
+  .gate button { font: inherit; font-weight: 900; font-size: 15px; padding: 0 18px; border: 0; border-radius: var(--t-r-sm);
+    background: var(--t-navy1); color: var(--t-on-dark); cursor: pointer; }
+  .gate button:disabled { opacity: .55; cursor: default; }
+  .gate .msg { min-height: 1.6em; margin: 10px 0 0; font-size: 13px; font-weight: 700; color: var(--t-red); }
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app locked">
   <div data-sieg-back></div>
 
   <header class="head">
@@ -273,6 +290,16 @@
       <button type="button" class="reload" id="reload">更新</button>
     </div>
   </header>
+  <form class="gate" id="gate" hidden>
+    <h2>合言葉を入れてください</h2>
+    <p>このページは全員の数字と経費が見られるので、合言葉が必要です。<br>一度入れたら、この端末では次から聞かれません。</p>
+    <label for="gate-pass">合言葉</label>
+    <div class="row">
+      <input type="password" id="gate-pass" autocomplete="current-password" required>
+      <button type="submit" id="gate-go">入る</button>
+    </div>
+    <p class="msg" id="gate-msg" role="alert"></p>
+  </form>
   <div class="sub" id="sub">読み込み中…</div>
 
   <section class="kpis" id="kpis" hidden></section>
@@ -754,7 +781,49 @@
     });
   });
   $('reload').addEventListener('click', function () { if (!busy) load(); });
-  load();
+
+  // ── 入口の合言葉 ──
+  // 合言葉そのものは GAS（日報）のスクリプト プロパティ TEAM_PASS にだけあり、このページには書かない。
+  // 正しいと GAS が「通行証」を返すので、この端末に覚えておき、次からは聞かない。
+  // 合言葉が変わったら通行証が合わなくなるので、開いたときに入り直しにする（電波が無いときはそのまま見せる）。
+  var TOKEN_KEY = 'siegTeamToken';
+  function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function setToken(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+  function unlock() { document.querySelector('.app').classList.remove('locked'); $('gate').hidden = true; load(); }
+  function showGate(msg) {
+    document.querySelector('.app').classList.add('locked');
+    $('gate').hidden = false; $('gate-msg').textContent = msg || '';
+    setTimeout(function () { $('gate-pass').focus(); }, 0);
+  }
+  function gasNotReady(r) { return r && !r.ok && !r.notSet && !r.locked && !r.expired && r.error === '名前がありません'; }
+  $('gate').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var pass = $('gate-pass').value.trim();
+    if (!pass) return;
+    $('gate-go').disabled = true; $('gate-msg').textContent = '確かめています…';
+    GasClient.post(P.API, { action: 'teamPass', pass: pass }, { retry: false }).then(function (r) {
+      if (r && r.ok && r.token) { setToken(r.token); $('gate-pass').value = ''; unlock(); return; }
+      $('gate-msg').textContent = gasNotReady(r) ? 'まだ準備中です（日報の GAS の更新がまだのようです）'
+        : (r && r.error) || '合言葉を確かめられませんでした';
+      $('gate-pass').select();
+    }).catch(function () {
+      $('gate-msg').textContent = 'つながりませんでした。電波のよいところでもう一度押してください。';
+    }).then(function () { $('gate-go').disabled = false; });
+  });
+
+  var saved = getToken();
+  if (saved) {
+    unlock();
+    GasClient.post(P.API, { action: 'teamPass', token: saved }, { retry: false }).then(function (r) {
+      if (r && r.expired) {   // 合言葉が変わった。表示中の数字も消して入り直し
+        setToken(''); try { sessionStorage.setItem('siegTeamExpired', '1'); } catch (e) {}
+        location.reload();
+      }
+    }).catch(function () {});
+  } else {
+    var expired = false; try { expired = !!sessionStorage.getItem('siegTeamExpired'); sessionStorage.removeItem('siegTeamExpired'); } catch (e) {}
+    showGate(expired ? '合言葉が変わりました。新しい合言葉を入れてください。' : '');
+  }
 })();
 </script>
 </body>

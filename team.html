@@ -62,8 +62,8 @@
   .eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--t-mute); }
 
   /* ───────── ヘッダー ───────── */
-  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 10px; }
-  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 10px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 230px; }   /* 狭い画面では月の切り替えが次の行へ */
   .mark {
     width: 44px; height: 44px; flex: none; border-radius: 14px; display: grid; place-items: center;
     background: linear-gradient(145deg, var(--t-navy2), var(--t-navy1));
@@ -85,6 +85,12 @@
   }
   .reload:active { filter: brightness(.9); transform: scale(.98); }
   .reload:disabled { opacity: .5; transform: none; filter: none; cursor: default; }
+  /* 月の切り替え（‹ 2026年10月 ›） */
+  .mnav { display: inline-flex; align-items: center; gap: 4px; }
+  .mstep { width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-ink);
+    font: inherit; font-size: 18px; font-weight: 900; line-height: 1; box-shadow: var(--t-lift); cursor: pointer; }
+  .mstep:disabled { opacity: .35; cursor: default; }
+  .pill.past { background: var(--t-gold-tint); border-color: var(--t-gold); color: var(--t-ink); }
   .sub { font-size: 12px; font-weight: 700; color: var(--t-mute); margin-top: -8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
   /* ───────── サマリー3枚 ───────── */
@@ -286,7 +292,11 @@
       </div>
     </div>
     <div class="headr">
-      <span class="pill num" id="month-pill">—</span>
+      <div class="mnav" role="group" aria-label="見る月">
+        <button type="button" class="mstep" id="m-prev" aria-label="前の月">‹</button>
+        <span class="pill num" id="month-pill" aria-live="polite">—</span>
+        <button type="button" class="mstep" id="m-next" aria-label="次の月">›</button>
+      </div>
       <button type="button" class="reload" id="reload">更新</button>
     </div>
   </header>
@@ -305,7 +315,7 @@
   <section class="kpis" id="kpis" hidden></section>
 
   <section class="mix" id="mix" hidden>
-    <div class="mix-h"><span class="eyebrow">今月の内訳</span><span class="t num" id="mix-total"></span></div>
+    <div class="mix-h"><span class="eyebrow" id="mix-title">今月の内訳</span><span class="t num" id="mix-total"></span></div>
     <div class="stack" id="stack"></div>
     <div class="legend" id="legend"></div>
   </section>
@@ -324,7 +334,7 @@
       <thead>
         <tr>
           <th class="c-rank">#</th><th class="c-name">名前</th><th>獲得</th><th>戦闘力</th><th>MNP</th><th>固定</th>
-          <th>日報（今日）</th><th>日報（今月）</th><th>稼働費 入力</th><th>稼働費 金額</th><th>経費 件数</th><th>経費 金額</th>
+          <th id="th-nip-today">日報（今日）</th><th id="th-nip-month">日報（今月）</th><th>稼働費 入力</th><th>稼働費 金額</th><th>経費 件数</th><th>経費 金額</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -339,7 +349,8 @@
 
   <p class="note">
     獲得は獲得報告から、日報は日報フォームから、稼働費は稼働費入力（社員はシート、パートナー様は新しい画面）から、経費精算は経費精算のシートから読んでいます。<br>
-    日報はパートナー様だけ、稼働費・経費精算は使っている人だけ出します（ほかは「—」）。社員の稼働費と経費精算は、シートで選んでいる月の分です。
+    日報はパートナー様だけ、稼働費・経費精算は使っている人だけ出します（ほかは「—」）。どれも上で選んだ月の分だけを出します。<br>
+    社員の稼働費と経費精算は、シートがその月ならシートから、前の月なら履歴から読みます（稼働費の履歴は、月を切り替えたときかPDFを保存したときに残ります）。
   </p>
 </div>
 
@@ -364,6 +375,21 @@
   var NIPPOU = R.forTool('nippou'), COMMUTE = R.forTool('commute');
   var sortBy = 'power';
 
+  // 見る月（‹ › で切り替える）。今月より先へは進めない。獲得報告は2026年1月から
+  var FIRST_YM = '2026-01';
+  var viewYm = (function () {
+    var q = new URLSearchParams(location.search).get('ym');
+    return q && /^\d{4}-\d{2}$/.test(q) && q >= FIRST_YM && q <= todayYmd().slice(0, 7) ? q : todayYmd().slice(0, 7);
+  })();
+  function isNow() { return viewYm === todayYmd().slice(0, 7); }
+  function shiftYm(ym, d) {
+    var y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + d;
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    return y + '-' + String(m + 1).padStart(2, '0');
+  }
+  function kanjiYm(ym) { return Number(ym.slice(0, 4)) + '年' + Number(ym.slice(5, 7)) + '月'; }   // 経費精算のシートの書き方
+  function mWord() { return isNow() ? '今月' : Number(viewYm.slice(5, 7)) + '月'; }
+
   function todayYmd() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -374,14 +400,14 @@
   function usesPartnerCommute(name) {
     if (!R.isPartner(name)) return false;
     var from = PARTNER_NEW_FROM[name];
-    return !from || todayYmd().slice(0, 7) >= from;
+    return !from || viewYm >= from;
   }
 
   // 稼働費：1人ずつ（入力日数は getMonthInfo、金額は getMyEntries）
   function commuteOf(name) {
     if (usesPartnerCommute(name)) {
       if (!R.commutePartnerApi) return Promise.resolve({ pending: true });
-      var ym = todayYmd().slice(0, 7);
+      var ym = viewYm;
       return GasClient.post(R.commutePartnerApi, { action: 'listMonth', name: name, ym: ym }, { retry: true }).then(function (r) {
         if (!r || !r.ok) throw new Error((r && r.error) || '読めませんでした');
         var t = r.data.totals, files = r.data.files || [];
@@ -399,12 +425,23 @@
     var full = R.fullName(name);
     if (!full) return Promise.resolve({ error: '名簿にフルネームがありません' });
     var url = COMMUTE_GAS[full] || COMMUTE_GAS_DEFAULT;
-    return Promise.all([
-      GasClient.post(url, { action: 'getMonthInfo', staffName: full }, { retry: true }),
-      GasClient.post(url, { action: 'getMyEntries', staffName: full }, { retry: true })
-    ]).then(function (r) {
-      if (!r[0] || !r[0].ok || !r[1] || !r[1].ok) throw new Error((r[0] && r[0].error) || (r[1] && r[1].error) || '読めませんでした');
-      var info = r[0].data, entries = r[1].data || [], sum = 0, toll = 0, irr = 0;
+    // シートがこの月ならシートから。違う月なら「稼働費履歴」から（無ければ「—」。前の月の数字を混ぜない）
+    return GasClient.post(url, { action: 'getMonthInfo', staffName: full }, { retry: true }).then(function (r0) {
+      if (!r0 || !r0.ok) throw new Error((r0 && r0.error) || '読めませんでした');
+      var info = r0.data, sheetYm = Number(info.year) + '-' + String(info.month).padStart(2, '0');
+      if (sheetYm === viewYm) {
+        return GasClient.post(url, { action: 'getMyEntries', staffName: full }, { retry: true }).then(function (r1) {
+          if (!r1 || !r1.ok) throw new Error((r1 && r1.error) || '読めませんでした');
+          return [info, r1.data || [], false];
+        });
+      }
+      return GasClient.post(url, { action: 'getHistory', staffName: full, ym: viewYm }, { retry: true }).then(function (h) {
+        if (h && h.ok && h.data && h.data.found) return [h.data, h.data.entries, true];
+        return { none: true, sheetMonth: Number(info.month), oldGas: !(h && h.ok) };
+      }, function () { return { none: true, sheetMonth: Number(info.month), oldGas: true }; });
+    }).then(function (r) {
+      if (r.none) return r;
+      var info = r[0], entries = r[1], sum = 0, toll = 0, irr = 0;
       entries.forEach(function (e) {
         var a = Number(e.amount) || 0;
         sum += a;
@@ -417,7 +454,7 @@
           ? { d: e.day ? info.month + '/' + e.day : '—', t: String(e.content || ''), sub: 'イレギュラー' + (e.note ? '・' + e.note : ''), a: Number(e.amount) || 0 }
           : { d: info.month + '/' + e.day, t: String(e.place || ''), sub: tl ? '高速 ¥' + fmt(tl) : (e.highway === '有' ? '高速あり' : ''), a: Number(e.amount) || 0 };
       });
-      return { month: info.month, days: (info.filledDays || []).length, irregular: info.irregularCount || 0, amount: Math.round(sum),
+      return { month: info.month, fromHistory: r[2], days: (info.filledDays || []).length, irregular: info.irregularCount || 0, amount: Math.round(sum),
         parts: [['距離の分', Math.round(sum - toll - irr)], ['高速代', Math.round(toll)], ['イレギュラー', Math.round(irr)]], lines: lines };
     }).catch(function (e) { return { error: e.message }; });
   }
@@ -425,12 +462,16 @@
   // 経費精算（経費精算の index.html と同じ GAS）
   var KEIHI_GAS = 'https://script.google.com/macros/s/AKfycbzyXEYU_0VhvEpnmZx3JWaxXRdOEP-Lam9R9Fxwv4nVRr6ExzQrBmdO-rgUlwGkcgzU/exec';
   var KEIHI = R.forTool('keihi');
+  // シートがこの月ならシートから、違う月なら経費履歴（getArchivedExpenses）から
   function keihiOf(name) {
-    return Promise.all([
-      GasClient.post(KEIHI_GAS, { action: 'getSheetInfo', staffName: name }, { retry: true }),
-      GasClient.post(KEIHI_GAS, { action: 'getExpenses', staffName: name }, { retry: true })
-    ]).then(function (r) {
-      if (!r[0] || !r[0].ok || !r[1] || !r[1].ok) throw new Error((r[0] && r[0].error) || (r[1] && r[1].error) || '読めませんでした');
+    var want = kanjiYm(viewYm);
+    return GasClient.post(KEIHI_GAS, { action: 'getSheetInfo', staffName: name }, { retry: true }).then(function (r0) {
+      if (!r0 || !r0.ok) throw new Error((r0 && r0.error) || '読めませんでした');
+      var onSheet = String(r0.data && r0.data.yearMonth || '') === want;
+      return GasClient.post(KEIHI_GAS, onSheet ? { action: 'getExpenses', staffName: name } : { action: 'getArchivedExpenses', staffName: name, yearMonth: want }, { retry: true })
+        .then(function (r1) { return [{ ok: true, data: { yearMonth: want } }, r1, onSheet]; });
+    }).then(function (r) {
+      if (!r[1] || !r[1].ok) throw new Error((r[1] && r[1].error) || '読めませんでした');
       var list = r[1].data || [], total = 0, by = {};
       list.forEach(function (e) {
         var a = Number(e.amount) || 0, k = String(e.item || 'その他');
@@ -441,7 +482,7 @@
         var d = e.date ? new Date(e.date) : null, ok = d && !isNaN(d);
         return { d: ok ? (d.getMonth() + 1) + '/' + d.getDate() : '—', t: String(e.item || ''), sub: String(e.description || ''), a: Number(e.amount) || 0 };
       });
-      return { ym: String(r[0].data && r[0].data.yearMonth || ''), count: list.length, amount: Math.round(total), items: items, lines: lines };
+      return { ym: String(r[0].data.yearMonth), fromHistory: !r[2], count: list.length, amount: Math.round(total), items: items, lines: lines };
     }).catch(function (e) { return { error: e.message }; });
   }
 
@@ -451,14 +492,20 @@
   var data = null, gen = 0, busy = false, waiting = 0, list = [], maxTotal = 1, maxPower = 1;
 
   function emptyData() {
-    return { stats: null, nippou: null, commute: {}, keihi: {}, at: null, month: todayYmd().slice(0, 7) };
+    return { stats: null, nippou: null, commute: {}, keihi: {}, at: null, month: viewYm };
   }
   function monthLabel(ym) { return Number(String(ym).slice(0, 4)) + '年' + Number(String(ym).slice(5, 7)) + '月'; }
   function hhmm(d) { return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   function pct(v, max) { return Math.max(v > 0 ? 4 : 0, Math.round((v / (max || 1)) * 100)); }
 
   function stamp() {
-    $('month-pill').textContent = monthLabel(data.month);
+    $('month-pill').textContent = monthLabel(viewYm);
+    $('month-pill').classList.toggle('past', !isNow());
+    $('m-prev').disabled = viewYm <= FIRST_YM;
+    $('m-next').disabled = isNow();
+    $('mix-title').textContent = mWord() + 'の内訳';
+    $('th-nip-today').textContent = isNow() ? '日報（今日）' : '日報（最後）';
+    $('th-nip-month').textContent = '日報（' + mWord() + '）';
     var txt = data.at ? '最終更新 ' + hhmm(data.at) : '読み込み中…';
     if (waiting > 0 && data.at) txt += ' ・ 稼働費・経費を読み込み中（残り ' + waiting + '人）';
     else if (waiting > 0) txt += '（稼働費・経費 残り ' + waiting + '人）';
@@ -507,15 +554,15 @@
 
     // 獲得と日報が揃った時点で、まず KPI と表を出す
     return Promise.all([
-      GasClient.get(P.API, { action: 'gainStats' }),
-      GasClient.get(P.API, { action: 'nippouStatus' }).catch(function () { return null; })
+      GasClient.get(P.API, { action: 'gainStats', from: viewYm }),
+      GasClient.get(P.API, { action: 'nippouStatus', month: viewYm }).catch(function () { return null; })
     ]).then(function (r) {
       if (my !== gen) return;
       var stats = r[0], nip = r[1];
       if (!stats || !stats.ok || !stats.rows) throw new Error('獲得報告の集計が読めませんでした（準備中かもしれません）');
       data.stats = stats;
       data.nippou = nip && nip.ok && nip.days ? nip : null;
-      data.month = stats.month;
+      data.month = viewYm;
       data.at = new Date();
       render();
     }).catch(function (e) {
@@ -531,7 +578,7 @@
   }
 
   function buildList() {
-    var month = data.stats.month, byName = {};
+    var month = data.month, byName = {};
     data.stats.rows.forEach(function (row) {
       if (row[0] !== month) return;
       (byName[row[1]] = byName[row[1]] || []).push({ carrier: row[2], label: row[3], count: Number(row[4]) || 0 });
@@ -541,7 +588,7 @@
       var s = P.score(byName[n]);
       var nd = (data.nippou && data.nippou.days[n]) || [];
       return { name: n, i: i, partner: R.isPartner(n), s: s,
-        nippouToday: nd.indexOf(today) >= 0, nippouDays: nd.length,
+        nippouToday: isNow() && nd.indexOf(today) >= 0, nippouDays: nd.length,
         nippouLast: (data.nippou && data.nippou.last[n]) || '' };
     });
     // 順位は戦闘力の降順で1回だけ決める（同点は名簿順）。並べ替えでは変わらない
@@ -560,9 +607,10 @@
     if (!c) return '<span class="wait">…</span>';
     if (c.pending) return '<span class="dim">準備中</span>';
     if (c.error) return '<span class="err">読めません</span>';
+    if (c.none) return '<span class="dim">—</span><span class="small">' + (c.oldGas ? '前の月は準備中' : '記録なし') + '</span><span class="small">シートは' + c.sheetMonth + '月</span>';
     var h = '<span class="num big">' + c.days + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">日</small></span>';
     if (c.irregular) h += '<span class="small">' + (c.routes ? '経由地あり ' : 'イレギュラー ') + c.irregular + '件</span>';
-    if (Number(c.month) !== Number(String(data.month).slice(5, 7))) h += '<span class="small">シートは' + Number(c.month) + '月</span>';
+    if (c.fromHistory) h += '<span class="small">履歴から</span>';
     return h;
   }
   function commuteAmtHtml(name) {
@@ -571,6 +619,7 @@
     if (!c) return '<span class="wait">…</span>';
     if (c.pending) return '<span class="dim">準備中</span>';
     if (c.error) return '<span class="err">読めません</span>';
+    if (c.none) return '<span class="dim">—</span>';
     return '<span class="num big">¥' + fmt(c.amount) + '</span>';
   }
   function findRow(name) {
@@ -594,8 +643,7 @@
     if (!k) return '<span class="wait">…</span>';
     if (k.error) return '<span class="err">読めません</span>';
     var h = '<span class="num big">' + k.count + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">件</small></span>';
-    var m = Number(String(data.month).slice(5, 7));
-    if (k.ym && k.ym.indexOf(m + '月') < 0) h += '<span class="small">シートは' + esc(k.ym.replace(/^\d+年/, '')) + '</span>';
+    if (k.fromHistory && k.count) h += '<span class="small">履歴から</span>';
     return h;
   }
   function keihiAmtHtml(name) {
@@ -617,21 +665,26 @@
   function kpiGain() {
     var total = 0, pw = 0;
     list.forEach(function (x) { total += x.s.total; pw += x.s.power; });
-    return '<div class="kpi hero"><div class="k">今月の獲得（全員）</div><div class="v num">' + fmt(total)
+    return '<div class="kpi hero"><div class="k">' + mWord() + 'の獲得（全員）</div><div class="v num">' + fmt(total)
       + '<small>件</small></div><div class="s num">戦闘力 合計 ' + fmt(pw) + '</div></div>';
   }
   function kpiNippou() {
     if (!data.nippou) return '<div class="kpi"><div class="k">きょうの日報</div><div class="v">—</div><div class="s">準備中（Google 側の更新待ち）</div></div>';
     var need = NIPPOU.map(function (n) { return list.filter(function (x) { return x.name === n; })[0]; }).filter(Boolean);
+    if (!isNow()) {   // 前の月：その月に出した日数の合計
+      var days = need.reduce(function (a, x) { return a + x.nippouDays; }, 0), none = need.filter(function (x) { return !x.nippouDays; });
+      return '<div class="kpi"><div class="k">' + mWord() + 'の日報</div><div class="v num">' + days + '<small>日分</small></div><div class="s">'
+        + (none.length ? '0日：' + none.map(function (x) { return esc(x.name); }).join('・') : need.length + '人とも提出あり') + '</div></div>';
+    }
     var yet = need.filter(function (x) { return !x.nippouToday; });
     return '<div class="kpi' + (yet.length ? ' alert' : '') + '"><div class="k">きょうの日報</div><div class="v num">'
       + (need.length - yet.length) + '<small>/ ' + need.length + '人</small></div><div class="s">'
       + (yet.length ? 'まだ：' + yet.map(function (x) { return esc(x.name); }).join('・') : '全員提出済み') + '</div></div>';
   }
   function kpiCommute() {
-    var cm = COMMUTE.map(function (n) { return data.commute[n]; }).filter(function (c) { return c && !c.error && !c.pending; });
+    var cm = COMMUTE.map(function (n) { return data.commute[n]; }).filter(function (c) { return c && !c.error && !c.pending && !c.none; });
     var left = COMMUTE.filter(function (n) { return !data.commute[n]; }).length;
-    return '<div class="kpi"><div class="k">稼働費の入力</div><div class="v num">'
+    return '<div class="kpi"><div class="k">稼働費の入力' + (isNow() ? '' : '（' + mWord() + '）') + '</div><div class="v num">'
       + cm.reduce(function (a, c) { return a + c.days; }, 0) + '<small>日分</small></div><div class="s num">'
       + cm.length + '人・合計 ¥' + fmt(cm.reduce(function (a, c) { return a + c.amount; }, 0))
       + (left ? '<span class="wait">（残り ' + left + '人）</span>' : '') + '</div></div>';
@@ -663,6 +716,7 @@
     var useN = NIPPOU.indexOf(x.name) >= 0;
     var nipToday = !useN ? '<span class="dim">—</span>'
       : !data.nippou ? '<span class="dim">準備中</span>'
+      : !isNow() ? (x.nippouLast ? '<span class="small">' + esc(x.nippouLast) + '</span>' : '<span class="dim">—</span>')
       : x.nippouToday ? '<span class="tag ok">提出済み</span>' : '<span class="tag ng">未提出</span>';
     var nipMonth = !useN || !data.nippou ? '<span class="dim">—</span>'
       : '<span class="num big">' + x.nippouDays + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">日</small></span>'
@@ -712,30 +766,33 @@
     }).join('') + '</div>';
   }
   function renderMoney() {
-    var curM = Number(String(data.month).slice(5, 7));
     var people = PEOPLE.filter(function (n) { return COMMUTE.indexOf(n) >= 0 || KEIHI.indexOf(n) >= 0; }).map(function (n, i) {
       var c = data.commute[n], k = data.keihi[n];
-      var ca = c && !c.error && !c.pending ? c.amount : 0, ka = k && !k.error ? k.amount : 0;
+      var ca = c && !c.error && !c.pending && !c.none ? c.amount : 0, ka = k && !k.error ? k.amount : 0;
       return { name: n, i: i, c: COMMUTE.indexOf(n) >= 0 ? c : undefined, k: KEIHI.indexOf(n) >= 0 ? k : undefined, ca: ca, ka: ka, total: ca + ka };
     }).sort(function (a, b) { return b.total - a.total || a.i - b.i; });
     var sc = 0, sk = 0, nc = 0, nk = 0;
     people.forEach(function (x) { sc += x.ca; sk += x.ka; if (x.ca) nc++; if (x.ka) nk++; });
     $('money-kpis').innerHTML =
-      '<div class="kpi"><div class="k">稼働費（全員）</div><div class="v num">¥' + fmt(sc) + '</div><div class="s">' + nc + '人分</div></div>'
-      + '<div class="kpi"><div class="k">経費精算（全員）</div><div class="v num">¥' + fmt(sk) + '</div><div class="s">' + nk + '人分</div></div>'
+      '<div class="kpi"><div class="k">' + mWord() + 'の稼働費（全員）</div><div class="v num">¥' + fmt(sc) + '</div><div class="s">' + nc + '人分</div></div>'
+      + '<div class="kpi"><div class="k">' + mWord() + 'の経費精算（全員）</div><div class="v num">¥' + fmt(sk) + '</div><div class="s">' + nk + '人分</div></div>'
       + '<div class="kpi"><div class="k">合計</div><div class="v num">¥' + fmt(sc + sk) + '</div><div class="s">稼働費＋経費精算</div></div>';
     $('money').innerHTML = people.map(function (x) {
       var c = x.c, k = x.k, chips = '';
       if (c !== undefined) chips += !c ? '<span class="chip">稼働費 <b>…</b></span>' : c.pending ? '<span class="chip">稼働費 準備中</span>' : c.error ? '<span class="chip warn">稼働費 読めません</span>'
-        : '<span class="chip c">稼働費 <b>¥' + fmt(c.amount) + '</b>' + c.days + '日</span>' + (Number(c.month) !== curM ? '<span class="chip warn">稼働費のシートは' + Number(c.month) + '月</span>' : '');
+        : c.none ? '<span class="chip">稼働費 ' + (c.oldGas ? '前の月は準備中' : '記録なし') + '</span>'
+        : '<span class="chip c">稼働費 <b>¥' + fmt(c.amount) + '</b>' + c.days + '日</span>' + (c.fromHistory ? '<span class="chip">稼働費は履歴から</span>' : '');
       if (k !== undefined) chips += !k ? '<span class="chip">経費 <b>…</b></span>' : k.error ? '<span class="chip warn">経費 読めません</span>'
-        : '<span class="chip k">経費 <b>¥' + fmt(k.amount) + '</b>' + k.count + '件</span>' + (k.ym && k.ym.indexOf(curM + '月') < 0 ? '<span class="chip warn">経費のシートは' + esc(k.ym) + '</span>' : '');
+        : '<span class="chip k">経費 <b>¥' + fmt(k.amount) + '</b>' + k.count + '件</span>' + (k.fromHistory && k.count ? '<span class="chip">経費は履歴から</span>' : '');
       var cb = '', kb = '';
       if (c !== undefined) {
-        cb = '<div class="mblock"><h3>稼働費<span>' + (c && !c.error && !c.pending ? '¥' + fmt(c.amount) + '・' + c.days + '日' + (c.km ? '・' + c.km + 'km' : '') : '') + '</span></h3>';
+        cb = '<div class="mblock"><h3>稼働費<span>' + (c && !c.error && !c.pending && !c.none ? '¥' + fmt(c.amount) + '・' + c.days + '日' + (c.km ? '・' + c.km + 'km' : '') : '') + '</span></h3>';
         if (!c) cb += '<div class="mempty">読み込み中…</div>';
         else if (c.pending) cb += '<div class="mempty">準備中です。</div>';
         else if (c.error) cb += '<div class="mempty">読めませんでした：' + esc(c.error) + '</div>';
+        else if (c.none) cb += '<div class="mempty">' + (c.oldGas
+          ? mWord() + 'の分は、稼働費の GAS を更新すると見られるようになります（今のシートは' + c.sheetMonth + '月）。'
+          : mWord() + 'の記録がありません（今のシートは' + c.sheetMonth + '月。履歴は月を切り替えたときかPDFを保存したときに残ります）。') + '</div>';
         else {
           cb += '<div class="parts">' + c.parts.filter(function (pp) { return pp[1]; }).map(function (pp) { return '<span class="chip">' + esc(pp[0]) + ' <b>¥' + fmt(pp[1]) + '</b></span>'; }).join('') + '</div>';
           cb += linesHtml(c.lines);
@@ -781,6 +838,20 @@
     });
   });
   $('reload').addEventListener('click', function () { if (!busy) load(); });
+  function goMonth(d) {
+    var next = shiftYm(viewYm, d), now = todayYmd().slice(0, 7);
+    if (next < FIRST_YM || next > now) return;
+    viewYm = next;
+    try {   // 再読み込みしても同じ月のまま（今月なら付けない）
+      var u = new URL(location.href);
+      if (next === now) u.searchParams.delete('ym'); else u.searchParams.set('ym', next);
+      history.replaceState(null, '', u.toString());
+    } catch (e) {}
+    $('tcard').hidden = true; $('money-wrap').hidden = true; $('kpis').hidden = true; $('mix').hidden = true; $('bar').hidden = true;
+    load();   // 前の月の数字が混ざらないよう、表は消してから読み直す（読み込み中の古い応答は gen で捨てる）
+  }
+  $('m-prev').addEventListener('click', function () { goMonth(-1); });
+  $('m-next').addEventListener('click', function () { goMonth(1); });
 
   // ── 入口の合言葉 ──
   // 合言葉そのものは GAS（日報）のスクリプト プロパティ TEAM_PASS にだけあり、このページには書かない。

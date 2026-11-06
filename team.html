@@ -124,6 +124,12 @@
 
   /* ───────── 並べ替え ───────── */
   .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  /* 見る内容のタブ（スマホだけ。上にくっついて残る） */
+  .vtabs { display: none; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px; position: sticky; top: 6px; z-index: 6;
+    background: color-mix(in srgb, var(--t-sunk) 92%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border: 1px solid var(--t-hair); border-radius: var(--t-r-sm); box-shadow: var(--t-lift); }
+  .vtabs button { border: 0; background: none; min-height: 38px; border-radius: 9px; font-size: 13px; font-weight: 800; color: var(--t-mute); }
+  .vtabs button[aria-selected="true"] { background: var(--t-card); color: var(--t-ink); box-shadow: 0 1px 3px rgba(13,25,42,.14); }
   .seg { display: inline-flex; padding: 3px; gap: 3px; background: var(--t-sunk); border: 1px solid var(--t-hair); border-radius: var(--t-r-sm); }
   .seg button { border: 0; background: none; min-height: 36px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 800; color: var(--t-mute); }
   .seg button[aria-pressed="true"] { background: var(--t-card); color: var(--t-ink); box-shadow: 0 1px 3px rgba(13,25,42,.14); }
@@ -180,7 +186,13 @@
 
   /* ───────── 840px以下：1人1枚のカード ───────── */
   @media (max-width: 840px) {
-    .kpis { grid-template-columns: 1fr; }
+    /* スマホ：まとめは3枚を横に並べて小さく（縦に積むと長くなるため） */
+    .kpis { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .kpi { padding: 10px 10px 11px; border-radius: 14px; }
+    .kpi .k { font-size: 10px; letter-spacing: .02em; }
+    .kpi .v { font-size: 21px; }
+    .kpi .v small { font-size: 10.5px; margin-left: 2px; }
+    .kpi .s { font-size: 10px; line-height: 1.45; margin-top: 3px; }
     /* スマホでは一覧の表（#table）だけカードの形に。商流別の表（.stab）はそのまま表で出す */
     #table, #table thead, #table tbody, #table tr, #table td { display: block; }
     .tcard { background: none; border: 0; box-shadow: none; border-radius: 0; }
@@ -189,17 +201,27 @@
     #table tr {
       position: relative; background: var(--t-card); border: 1px solid var(--t-hair);
       border-radius: var(--t-r); box-shadow: var(--t-lift);
-      display: grid; grid-template-columns: 1fr 1fr; padding: 4px 14px 12px;
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 6px; padding: 0 12px 10px;
     }
-    #table td { border: 0; border-top: 0; padding: 9px 0 0; text-align: left; white-space: normal; }
+    /* 使っていない項目（「—」だけ）は出さない */
+    #table td:has(> .na:only-child) { display: none; }
+    #table td { border: 0; border-top: 0; padding: 7px 0 0; text-align: left; white-space: normal; font-size: 13px; }
     #table tbody tr:last-child td:first-child, #table tbody tr:last-child td:last-child { border-radius: 0; }
     td.c-rank { position: absolute; top: 11px; right: 12px; width: auto; padding: 0; }
-    td.c-name { grid-column: 1 / -1; padding: 12px 44px 2px 0; }
+    td.c-name { grid-column: 1 / -1; padding: 10px 44px 0 0; }
     td[data-k]::before {
-      content: attr(data-k); display: block; font-size: 10px; font-weight: 800; letter-spacing: .08em;
+      content: attr(data-k); display: block; font-size: 9.5px; font-weight: 800; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       color: var(--t-mute); margin-bottom: 3px;
     }
-    .mini { width: 110px; margin-left: 0; }
+    .mini { width: 100%; max-width: 90px; margin-left: 0; }
+    /* スマホは上のタブで1つずつ見せる（パソコンは全部並べる） */
+    .vtabs { display: grid; }
+    .app[data-view="list"] #shift-wrap, .app[data-view="list"] #shouryu-wrap, .app[data-view="list"] #money-wrap,
+    .app:not([data-view="list"]) #kpis, .app:not([data-view="list"]) #mix, .app:not([data-view="list"]) #bar,
+    .app:not([data-view="list"]) #tcard, .app:not([data-view="list"]) #state,
+    .app[data-view="shift"] #shouryu-wrap, .app[data-view="shift"] #money-wrap,
+    .app[data-view="flow"] #shift-wrap, .app[data-view="flow"] #money-wrap,
+    .app[data-view="money"] #shift-wrap, .app[data-view="money"] #shouryu-wrap { display: none !important; }
     .small { white-space: normal; }
   }
 
@@ -339,6 +361,13 @@
     <p class="msg" id="gate-msg" role="alert"></p>
   </form>
   <div class="sub" id="sub">読み込み中…</div>
+
+  <nav class="vtabs" id="vtabs" role="tablist" aria-label="見る内容">
+    <button type="button" role="tab" data-view="list" aria-selected="true">一覧</button>
+    <button type="button" role="tab" data-view="shift" aria-selected="false">シフト</button>
+    <button type="button" role="tab" data-view="flow" aria-selected="false">商流</button>
+    <button type="button" role="tab" data-view="money" aria-selected="false">経費</button>
+  </nav>
 
   <section class="kpis" id="kpis" hidden></section>
 
@@ -703,24 +732,24 @@
   /* ── 稼働費のセル（届いた人から入れ替えるので関数にしておく） ── */
   function usesCommute(name) { return COMMUTE.indexOf(name) >= 0; }
   function commuteDaysHtml(name) {
-    if (!usesCommute(name)) return '<span class="dim">—</span>';
+    if (!usesCommute(name)) return '<span class="dim na">—</span>';
     var c = data.commute[name];
     if (!c) return '<span class="wait">…</span>';
     if (c.pending) return '<span class="dim">準備中</span>';
     if (c.error) return '<span class="err">読めません</span>';
-    if (c.none) return '<span class="dim">—</span><span class="small">' + (c.oldGas ? '前の月は準備中' : '記録なし') + '</span><span class="small">シートは' + c.sheetMonth + '月</span>';
+    if (c.none) return '<span class="dim na">—</span><span class="small">' + (c.oldGas ? '前の月は準備中' : '記録なし') + '</span><span class="small">シートは' + c.sheetMonth + '月</span>';
     var h = '<span class="num big">' + c.days + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">日</small></span>';
     if (c.irregular) h += '<span class="small">' + (c.routes ? '経由地あり ' : 'イレギュラー ') + c.irregular + '件</span>';
     if (c.fromHistory) h += '<span class="small">履歴から</span>';
     return h;
   }
   function commuteAmtHtml(name) {
-    if (!usesCommute(name)) return '<span class="dim">—</span>';
+    if (!usesCommute(name)) return '<span class="dim na">—</span>';
     var c = data.commute[name];
     if (!c) return '<span class="wait">…</span>';
     if (c.pending) return '<span class="dim">準備中</span>';
     if (c.error) return '<span class="err">読めません</span>';
-    if (c.none) return '<span class="dim">—</span>';
+    if (c.none) return '<span class="dim na">—</span>';
     return '<span class="num big">¥' + fmt(c.amount) + '</span>';
   }
   function findRow(name) {
@@ -739,21 +768,21 @@
   /* ── 経費精算のセル（稼働費と同じく、届いた人から入れ替える） ── */
   function usesKeihi(name) { return KEIHI.indexOf(name) >= 0; }
   function keihiCountHtml(name) {
-    if (!usesKeihi(name)) return '<span class="dim">—</span>';
+    if (!usesKeihi(name)) return '<span class="dim na">—</span>';
     var k = data.keihi[name];
     if (!k) return '<span class="wait">…</span>';
     if (k.error) return '<span class="err">読めません</span>';
-    if (k.none) return '<span class="dim">—</span><span class="small">記録なし</span><span class="small">シートは' + esc(k.sheet) + '</span>';
+    if (k.none) return '<span class="dim na">—</span><span class="small">記録なし</span><span class="small">シートは' + esc(k.sheet) + '</span>';
     var h = '<span class="num big">' + k.count + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">件</small></span>';
     if (k.fromHistory && k.count) h += '<span class="small">履歴から</span>';
     return h;
   }
   function keihiAmtHtml(name) {
-    if (!usesKeihi(name)) return '<span class="dim">—</span>';
+    if (!usesKeihi(name)) return '<span class="dim na">—</span>';
     var k = data.keihi[name];
     if (!k) return '<span class="wait">…</span>';
     if (k.error) return '<span class="err">読めません</span>';
-    if (k.none) return '<span class="dim">—</span>';
+    if (k.none) return '<span class="dim na">—</span>';
     return '<span class="num big">¥' + fmt(k.amount) + '</span>';
   }
   function paintKeihiCells(name) {
@@ -820,13 +849,13 @@
   /* ── 一覧 ── */
   function rowHtml(x) {
     var useN = NIPPOU.indexOf(x.name) >= 0;
-    var nipToday = !useN ? '<span class="dim">—</span>'
+    var nipToday = !useN ? '<span class="dim na">—</span>'
       : !data.nippou ? '<span class="dim">準備中</span>'
-      : !isNow() ? (x.nippouLast ? '<span class="small">' + esc(x.nippouLast) + '</span>' : '<span class="dim">—</span>')
+      : !isNow() ? (x.nippouLast ? '<span class="small">' + esc(x.nippouLast) + '</span>' : '<span class="dim na">—</span>')
       : x.nippouToday ? '<span class="tag ok">提出済み</span>'
       : x.shift.known && !x.shift.today ? '<span class="dim">休み</span>'
       : '<span class="tag ng">未提出</span>' + (x.shift.known ? '' : '<span class="small">シフト不明</span>');
-    var nipMonth = !useN || !data.nippou ? '<span class="dim">—</span>'
+    var nipMonth = !useN || !data.nippou ? '<span class="dim na">—</span>'
       : '<span class="num big">' + x.nippouDays + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">日</small></span>'
         + (isNow() && x.shift.known ? '<span class="small">シフト ' + x.shift.upto + '日（今日まで）</span>' : '')
         + (x.nippouLast ? '<span class="small">最後 ' + esc(x.nippouLast) + '</span>' : '');
@@ -959,7 +988,7 @@
       keys.sort(function (a, b) { return isOther(a) - isOther(b) || (flows[b].c + flows[b].k) - (flows[a].c + flows[a].k); });
       var tc = 0, tk = 0;
       keys.forEach(function (f) { tc += flows[f].c; tk += flows[f].k; });
-      var cell = function (v, uses) { return uses ? '¥' + fmt(v) : '<span class="dim">—</span>'; };
+      var cell = function (v, uses) { return uses ? '¥' + fmt(v) : '<span class="dim na">—</span>'; };
       var body = keys.length ? '<table class="stab"><tr><th>商流</th><th>稼働費</th><th>経費</th><th>計</th></tr>'
         + keys.map(function (f) {
             return '<tr' + (isOther(f) ? ' class="none"' : '') + '><td>' + esc(f) + '</td><td>' + cell(flows[f].c, usesC) + '</td><td>' + cell(flows[f].k, usesK) + '</td><td>¥' + fmt(flows[f].c + flows[f].k) + '</td></tr>';
@@ -1069,6 +1098,19 @@
     $('tcard').hidden = true; $('money-wrap').hidden = true; $('kpis').hidden = true; $('mix').hidden = true; $('bar').hidden = true;
     load();   // 前の月の数字が混ざらないよう、表は消してから読み直す（読み込み中の古い応答は gen で捨てる）
   }
+  // スマホのタブ（一覧・シフト・商流・経費）。最後に見たタブを覚える
+  var VIEW_KEY = 'siegTeamView';
+  function setView(v) {
+    if (['list', 'shift', 'flow', 'money'].indexOf(v) < 0) v = 'list';
+    document.querySelector('.app').setAttribute('data-view', v);
+    document.querySelectorAll('#vtabs [data-view]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.view === v)); });
+    try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
+  }
+  document.querySelectorAll('#vtabs [data-view]').forEach(function (b) {
+    b.addEventListener('click', function () { setView(b.dataset.view); window.scrollTo(0, 0); });
+  });
+  setView((function () { try { return localStorage.getItem(VIEW_KEY); } catch (e) { return ''; } })());
+
   $('m-prev').addEventListener('click', function () { goMonth(-1); });
   $('m-next').addEventListener('click', function () { goMonth(1); });
 

@@ -335,8 +335,8 @@
 
   <div class="bar" id="bar" hidden>
     <div class="seg" role="group" aria-label="並べ方">
-      <button type="button" data-sort="power" aria-pressed="true">戦闘力順</button>
-      <button type="button" data-sort="roster" aria-pressed="false">名簿順</button>
+      <button type="button" data-sort="roster" aria-pressed="true">名簿順</button>
+      <button type="button" data-sort="power" aria-pressed="false">戦闘力順</button>
     </div>
   </div>
 
@@ -393,9 +393,12 @@
   var COMMUTE_GAS_DEFAULT = 'https://script.google.com/macros/s/AKfycbxp1cYnzgOMh4_ud5cEPJ7_b6qNFIm0YKt-sjFtBwXfeEHy_hMiZD0q2bPh-3vVOO15fA/exec';
   var COMMUTE_GAS = { '山口真人': 'https://script.google.com/macros/s/AKfycbwwALmDLzKteasiO0AMqAyRWsfb3p_AqgjkLZo-IBSctLDseudhes9hxJer7aGsdDkj/exec' };
 
-  var PEOPLE = R.everyone;
+  // このページの名簿順：社員は 福岡→福山→清田→古川、そのあとパートナー様（名簿の順）
+  var TEAM_ORDER = ['福岡', '福山', '清田', '古川'];
+  var PEOPLE = TEAM_ORDER.filter(function (n) { return R.everyone.indexOf(n) >= 0; })
+    .concat(R.everyone.filter(function (n) { return TEAM_ORDER.indexOf(n) < 0; }));
   var NIPPOU = R.forTool('nippou'), COMMUTE = R.forTool('commute');
-  var sortBy = 'power';
+  var sortBy = 'roster';   // 名簿順がふだんの表示。戦闘力順は切り替えたときだけ
 
   // 見る月（‹ › で切り替える）。今月より先へは進めない。獲得報告は2026年1月から
   var FIRST_YM = '2026-01';
@@ -800,9 +803,11 @@
       : '<span class="num big">' + x.nippouDays + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">日</small></span>'
         + (isNow() && x.shift.known ? '<span class="small">シフト ' + x.shift.upto + '日（今日まで）</span>' : '')
         + (x.nippouLast ? '<span class="small">最後 ' + esc(x.nippouLast) + '</span>' : '');
-    var rk = 'rk' + (x.rank <= 3 ? ' r' + x.rank : '');
+    // 名簿順では # は名簿の番号（数字が動かない）。戦闘力順のときだけ順位（1〜3位は色付き）
+    var byPower = sortBy === 'power', no = byPower ? x.rank : x.i + 1;
+    var rk = 'rk' + (byPower && x.rank <= 3 ? ' r' + x.rank : '');
     return '<tr data-row="' + esc(x.name) + '">'
-      + '<td class="c-rank"><span class="' + rk + '">' + x.rank + '</span></td>'
+      + '<td class="c-rank"><span class="' + rk + '"' + (byPower ? ' title="戦闘力の順位"' : '') + '>' + no + '</span></td>'
       + '<td class="c-name"><span class="who"><span class="av ' + (x.partner ? 'partner' : 'staff') + '" aria-hidden="true">'
         + esc(x.name.slice(0, 1)) + '</span><span><b>' + esc(x.name) + '</b><small>'
         + (x.partner ? 'PARTNER' : 'STAFF') + '</small></span></span></td>'

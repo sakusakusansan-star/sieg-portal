@@ -21,7 +21,7 @@
   --ink:#FFFFFF;
   --mute:#9AA6C4;
   --gold:#FFC93C;
-  --p1:#F0453F; --p2:#3D7DF2; --p3:#F4C431; --p4:#35B866; --p5:#A66BFF; --p6:#FF8A3D; --p7:#29C4D8; --p8:#FF5FA2;
+  --p1:#F0453F; --p2:#3D7DF2; --p3:#DCE3F2; --p4:#35B866; --p5:#A66BFF; --p6:#FF8A3D; --p7:#29C4D8; --p8:#FF5FA2;
   --mnp:#FF7A45; --kotei:#3ED39A; --tan:#5BA4FF; --card:#FFC93C; --new:#B6F06A;
   /* 「‹ ポータル」ボタン（sieg-nav.js）をこの画面の色に合わせる */
   --sg-surface:#171F36; --sg-ink:#FFFFFF; --sg-hair:#2A3556; --sg-lift:none;
@@ -47,26 +47,29 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .band{font-family:var(--disp);font-size:15px;letter-spacing:.06em;padding:6px 18px 6px 14px;align-self:flex-start;
   background:var(--ink);color:var(--bg);clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
 
-/* タブ */
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+/* タブ（選んでいるタブは白。金は報酬・達成だけに使う） */
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 .tab{font-family:var(--disp);font-size:16px;padding:14px 0;color:var(--mute);background:var(--panel);
   clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
-.tab[aria-selected="true"]{background:var(--gold);color:#1A1405}
+.tab[aria-selected="true"]{background:#fff;color:var(--bg)}
 .tab:disabled{opacity:.5;cursor:default}
 
 /* ファイター選択 */
 .roster{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-top:4px}
 .roster .slot{aspect-ratio:1/1}
-.roster .slot[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--gold);filter:drop-shadow(0 0 8px rgba(255,201,60,.55))}
+.roster .slot[aria-pressed="true"]{box-shadow:inset 0 0 0 3px #fff;filter:drop-shadow(0 0 8px rgba(255,255,255,.4))}
+.roster-head{display:flex;justify-content:flex-end;margin-bottom:-8px}
+.sortbtn{font-size:11.5px;font-weight:900;color:var(--mute);padding:4px 2px}
+.sortbtn b{color:#fff}
 .slot .one{position:absolute;right:4px;top:3px;font-family:var(--disp);font-size:11px;padding:0 6px;background:var(--gold);color:#1A1405;
   clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-.slot{position:relative;aspect-ratio:3/4;max-width:100%;opacity:.62;background:linear-gradient(160deg,var(--c) 0%,#1B2236 100%);
+.slot{position:relative;aspect-ratio:3/4;max-width:100%;filter:brightness(.8) saturate(.85);background:linear-gradient(160deg,var(--c) 0%,#1B2236 100%);
   background:linear-gradient(160deg,var(--c) 0%,color-mix(in srgb,var(--c) 35%,var(--bg)) 100%);
   clip-path:polygon(0 0,100% 0,100% 88%,88% 100%,0 100%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;transition:opacity .15s,transform .15s}
 .slot .fig{position:absolute;inset:16% 6% 20%;width:auto;height:auto}
 .slot .tag{position:absolute;left:6px;top:4px;font-family:var(--disp);font-size:11px;color:var(--c-ink,#fff)}
 .slot .nm{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);font-family:var(--disp);font-size:12px;padding:3px 0 4px;text-align:center}
-.slot[aria-pressed="true"]{opacity:1;transform:translateY(-3px)}
+.slot[aria-pressed="true"]{filter:none;transform:translateY(-3px)}
 .slot[aria-pressed="true"] .nm{background:#fff;color:var(--bg)}
 
 /* ファイターパネル */
@@ -91,7 +94,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .fighter .lv b{font-size:30px;margin-left:2px;font-weight:400}
 .rank{font-family:var(--disp);font-size:20px;width:40px;height:40px;display:grid;place-items:center;color:#1A1405;background:var(--gold);
   clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-.rank.S{background:linear-gradient(135deg,#FFF0A8,#FFC93C 45%,#FF7A45 75%,#C69CFF)}
+.rank.S{background:linear-gradient(135deg,#FFF0A8,#FFC93C 45%,#FF7A45 75%,#C69CFF);width:46px;height:46px;font-size:23px;
+  filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 10px rgba(255,201,60,.65))}
+.rank.A{background:linear-gradient(135deg,#FFE0A0,#FF8A3D)}
 .rank.B{background:#D3DBEA} .rank.C{background:#C98A55}
 .exp{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;transform:skewX(-14deg);width:100%}
 .exp i{height:9px;background:rgba(255,255,255,.18)}
@@ -101,7 +106,16 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .power .lbl{font-size:11px;font-weight:900;letter-spacing:.2em;color:#E6ECFA}
 .power .num{font-family:var(--disp);font-size:clamp(38px,13vw,56px);line-height:1;color:var(--rankc,#fff);font-variant-numeric:tabular-nums;
   -webkit-text-stroke:3px #fff;paint-order:stroke fill;text-shadow:5px 5px 0 rgba(0,0,0,.62),8px 8px 0 rgba(0,0,0,.22)}
+.power .num.d5{font-size:clamp(30px,10.5vw,46px);-webkit-text-stroke:2px #fff}
 .power .num.hit{animation:hit .35s steps(3)}
+/* ファイターの右上：順位と月末の見込み */
+.fighter .hud-top{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;z-index:2}
+.fighter .posb{font-family:var(--disp);font-size:12px;background:#fff;color:var(--bg);padding:2px 10px;clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
+.fighter .posb b{font-size:19px;margin-right:2px;font-weight:400}
+.fighter .pace{font-size:10.5px;font-weight:900;color:#E6ECFA;background:rgba(0,0,0,.42);padding:3px 8px}
+.fighter .pace b{font-family:var(--disp);font-weight:400;font-size:12.5px;margin:0 2px}
+.fighter .pace[hidden],.fighter .posb[hidden]{display:none}
+.fighter .info{padding-top:46px}
 @keyframes hit{30%{transform:scale(1.15) skewX(-8deg);color:var(--gold)}}
 .power .diff{display:inline-block;font-family:var(--disp);font-size:12.5px;padding:2px 12px;background:#fff;color:#08704A;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
 .power .diff.down{color:#C33}
@@ -171,10 +185,55 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gsum b{font-family:var(--disp);font-weight:400;font-size:17px}
 .gsum b.up{color:var(--kotei)} .gsum b.dn{color:var(--mnp)}
 
-/* 称号（斜めのチップ） */
+/* 称号（斜めのチップ）。レア度で色を変える：並＝銀、希＝青紫、激レア＝金の光、伝説＝虹の光 */
 .badges{display:flex;flex-wrap:wrap;gap:8px}
-.badge{font-family:var(--disp);font-size:13px;padding:7px 16px;background:var(--gold);color:#1A1405;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
-.badge.off{background:var(--panel);color:#8A97B8}
+.badge{font-family:var(--disp);font-size:13px;padding:7px 16px;background:#D3DBEA;color:#141A2E;white-space:nowrap;
+  clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.badge[data-rar="rare"]{background:linear-gradient(100deg,#3D7DF2,#A66BFF);color:#fff}
+.badge[data-rar="epic"]{background:linear-gradient(100deg,#FFC93C,#FF7A45 55%,#A66BFF);color:#1A1405;filter:drop-shadow(0 0 7px rgba(255,201,60,.55))}
+.badge[data-rar="legend"]{background:linear-gradient(100deg,#FFF0A8,#FFC93C 25%,#FF7A45 50%,#FF5FA2 75%,#7FD6FF);color:#1A1405;
+  filter:drop-shadow(0 0 9px rgba(255,201,60,.75));background-size:200% 100%;animation:shine 3.2s linear infinite}
+@keyframes shine{to{background-position:200% 0}}
+.badge.off{background:transparent;color:#8A97B8;box-shadow:inset 0 0 0 1.5px #3A4770;filter:none;animation:none;clip-path:none;border-radius:2px}
+.badge.off small{font-family:var(--body);font-weight:900;font-size:10.5px;margin-left:6px;opacity:.9}
+/* ファイター画面の称号の帯（横に流す） */
+.tstrip-wrap{display:flex;flex-direction:column;gap:8px}
+.tstrip-head{display:flex;align-items:center;justify-content:space-between}
+.tstrip-head .t{font-size:11px;font-weight:900;color:var(--mute);letter-spacing:.08em}
+.tstrip-head .t b{font-family:var(--disp);font-weight:400;color:#fff;font-size:14px;margin-left:4px}
+.tstrip-head button{font-size:12px;font-weight:900;color:#fff}
+.tstrip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-right:-16px;padding-right:16px}
+.tstrip::-webkit-scrollbar{display:none}
+.tstrip .badge{flex:none}
+/* 記録タブ */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stats div{background:var(--panel);padding:10px 12px;clip-path:polygon(0 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.stats small{display:block;font-size:11px;color:var(--mute);font-weight:900}
+.stats b{font-family:var(--disp);font-weight:400;font-size:22px}
+.stats b small{display:inline;font-size:11px;margin-left:3px}
+.tgroup{background:var(--panel);padding:12px 14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
+.tgroup h3{margin:0 0 6px;font-family:var(--disp);font-weight:400;font-size:13px;color:var(--mute)}
+.trow{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.trow:first-of-type{border-top:0}
+.trow .badge{font-size:12px;padding:5px 13px}
+.trow .cond{font-size:11.5px;color:#C9D2EA;font-weight:700;line-height:1.4}
+.trow .who{font-size:10.5px;color:var(--mute);font-weight:700;white-space:nowrap;text-align:right}
+.trow .tbar{grid-column:1 / -1;height:5px;background:rgba(255,255,255,.08);transform:skewX(-14deg)}
+.trow .tbar i{display:block;height:100%;background:#7FD6FF}
+.trophies{display:flex;flex-wrap:wrap;gap:8px}
+.trophies .empty{font-size:12px;color:var(--mute)}
+/* ランキング：自分が下のほうのときは、画面の下に自分の行を固定する */
+.mebar{position:sticky;bottom:10px;z-index:5;background:#fff;color:var(--bg);display:flex;align-items:center;gap:10px;padding:9px 14px;
+  font-weight:900;font-size:13px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.mebar[hidden]{display:none}
+.mebar b{font-family:var(--disp);font-weight:400;font-size:18px}
+.mebar .r{margin-left:auto;font-size:11.5px}
+.share{font-family:var(--disp);font-size:14px;padding:12px 0;color:#fff;background:#26304D;
+  clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.share[hidden]{display:none}
+.share-msg{min-height:0;margin-top:-8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skel-msg{font-family:var(--disp);font-size:13px;color:var(--mute);text-align:center;margin-top:-6px}
 
 details{font-size:12.5px;color:var(--mute);background:var(--panel);padding:12px 14px}
 details summary{cursor:pointer;font-weight:900;color:var(--ink);list-style:none}
@@ -232,6 +291,7 @@ details p{margin:10px 0 0;line-height:1.7}
 .fxset{display:flex;align-items:center;gap:8px;margin-top:12px;color:var(--ink);font-weight:700;font-size:13px}
 .fxset input{width:20px;height:20px;accent-color:var(--gold)}
 .kings{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kings .king:last-child:nth-child(odd){grid-column:1 / -1}
 .king{background:var(--panel);padding:10px 14px 10px 12px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;
   clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%)}
 .king canvas{width:26px;height:26px}
@@ -269,10 +329,15 @@ details p{margin:10px 0 0;line-height:1.7}
   .wrap{max-width:960px}
   #view-status .col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
   #view-status .col > *{grid-column:1 / -1}
-  #view-status .col > .fighter{grid-column:1;grid-row:2 / span 3}
-  #view-status .col > .goal,#view-status .col > .bd-band,#view-status .col > .bd{grid-column:2}
+  #view-status .col > .fighter{grid-column:1;grid-row:3 / span 4}
+  #view-status .col > .tstrip-wrap,#view-status .col > .goal,#view-status .col > .bd-band,#view-status .col > .bd{grid-column:2}
+  .tstrip{margin-right:0;padding-right:0;flex-wrap:wrap}
   .roster{grid-template-columns:repeat(8,1fr)}
-  .hud,.kings{grid-template-columns:repeat(4,1fr)}
+  .hud{grid-template-columns:repeat(4,1fr)}
+  .kings{grid-template-columns:repeat(5,1fr)}
+  .kings .king:last-child:nth-child(odd){grid-column:auto}
+  #view-log .col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  #view-log .col > .wide{grid-column:1 / -1}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -289,6 +354,7 @@ details p{margin:10px 0 0;line-height:1.7}
   <div class="tabs" role="tablist" aria-label="表示の切り替え">
     <button class="tab" id="tab-status" role="tab" aria-selected="true" aria-controls="view-status" disabled>ファイター</button>
     <button class="tab" id="tab-rank" role="tab" aria-selected="false" aria-controls="view-rank" tabindex="-1" disabled>ランキング</button>
+    <button class="tab" id="tab-log" role="tab" aria-selected="false" aria-controls="view-log" tabindex="-1" disabled>記録</button>
   </div>
   <div class="stale" id="stale" hidden>前回の表示です・更新中…</div>
 
@@ -296,16 +362,20 @@ details p{margin:10px 0 0;line-height:1.7}
     <div class="skel-row"><i class="skel"></i><i class="skel"></i><i class="skel"></i><i class="skel"></i><i class="skel"></i></div>
     <div class="skel" style="height:300px"></div>
     <div class="skel" style="height:110px"></div>
+    <div class="skel-msg">読み込み中…</div>
   </div>
+  <div class="sr" id="live" role="status" aria-live="polite"></div>
   <div class="state" id="state" hidden></div>
 
   <section class="view" id="view-status" role="tabpanel" aria-labelledby="tab-status" hidden>
     <div class="col">
+      <div class="roster-head"><button type="button" class="sortbtn" id="sort"></button></div>
       <div class="roster" id="roster" aria-label="見る人を選ぶ"></div>
 
       <div class="fighter" id="fighter">
         <div class="bgc"></div>
         <canvas class="lines" id="lines" aria-hidden="true"></canvas>
+        <div class="hud-top"><span class="posb" id="posb"></span><span class="pace" id="pace" hidden></span></div>
         <div class="chara" id="chara"></div>
         <div class="info">
           <span class="pl" id="pl"></span>
@@ -322,20 +392,15 @@ details p{margin:10px 0 0;line-height:1.7}
         </div>
       </div>
 
+      <div class="tstrip-wrap">
+        <div class="tstrip-head"><span class="t">称号<b id="tcount"></b></span><button type="button" id="to-log">すべて見る ›</button></div>
+        <div class="tstrip" id="tstrip"></div>
+      </div>
+
       <div class="goal" id="goal"></div>
 
       <span class="band bd-band">今月の内訳</span>
       <div class="bd" id="bd"></div>
-
-      <details class="more-box">
-        <summary>成長の記録を見る</summary>
-        <div class="growth"><div id="growth"></div><div class="gsum" id="gsum"></div></div>
-      </details>
-
-      <details class="more-box">
-        <summary>称号を見る <span id="badge-count"></span></summary>
-        <div class="badges" id="badges"></div>
-      </details>
 
       <details class="more-box" id="picker-box">
         <summary>キャラを変える</summary>
@@ -343,17 +408,8 @@ details p{margin:10px 0 0;line-height:1.7}
         <p class="note left" id="picker-msg"></p>
       </details>
 
-      <details class="more-box">
-        <summary>設定</summary>
-        <label class="fxset"><input type="checkbox" id="fx-off"> 演出（大きな文字・紙吹雪）を出さない</label>
-      </details>
-
-      <details>
-        <summary>戦闘力の計算のしかた</summary>
-        <div class="formula" id="formula"></div>
-        <p id="formula-note"></p>
-      </details>
-
+      <button type="button" class="share" id="share" hidden>今月の戦闘力をシェア</button>
+      <p class="note share-msg" id="share-msg"></p>
       <a class="go" id="go-gain" href="gain.html">獲得報告を送る</a>
     </div>
   </section>
@@ -366,7 +422,27 @@ details p{margin:10px 0 0;line-height:1.7}
       <div class="hud" id="hud"></div>
       <span class="band">部門賞</span>
       <div class="kings" id="kings"></div>
-      <div class="note">順位は毎月1日にリセットされます。</div>
+      <div class="note">順位は毎月1日にリセットされます（同点は同じ順位）。称号とレベルは消えません。</div>
+      <div class="mebar" id="mebar" hidden></div>
+    </div>
+  </section>
+
+  <section class="view" id="view-log" role="tabpanel" aria-labelledby="tab-log" hidden>
+    <div class="col">
+      <span class="band wide" id="log-band">記録</span>
+      <div class="stats wide" id="stats"></div>
+      <div class="tgroup wide"><h3>月間チャンピオン</h3><div class="trophies" id="trophies"></div></div>
+      <div id="titles" class="col wide"></div>
+      <div class="growth wide"><div id="growth"></div><div class="gsum" id="gsum"></div></div>
+      <details class="more-box wide">
+        <summary>設定</summary>
+        <label class="fxset"><input type="checkbox" id="fx-off"> 演出（大きな文字・紙吹雪）を出さない</label>
+      </details>
+      <details class="wide">
+        <summary>戦闘力・レベル・称号のしくみ</summary>
+        <p id="formula-note"></p>
+        <div class="formula" id="formula"></div>
+      </details>
     </div>
   </section>
 </div>
@@ -381,7 +457,9 @@ details p{margin:10px 0 0;line-height:1.7}
 <script>
 (function(){
   'use strict';
-  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 動きを減らす設定は、開いたあとに変えても追いかける
+  var MQ = matchMedia('(prefers-reduced-motion: reduce)');
+  function reduced(){ return MQ.matches; }
   var R = window.SiegRoster, PR = window.SiegProducts;
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
@@ -438,52 +516,123 @@ details p{margin:10px 0 0;line-height:1.7}
   var ME = PEOPLE.indexOf(urlName) >= 0 ? urlName : SiegNav.staff(PEOPLE);
   var P = [], MONTHS = [], CUR = '', cur = 0;
 
-  function monthList(from, to){
-    var out = [], y = +from.slice(0, 4), m = +from.slice(5, 7);
-    for (var i = 0; i < 24; i++) {
-      var k = y + '-' + (m < 10 ? '0' : '') + m; out.push(k);
-      if (k >= to) break;
-      m++; if (m > 12) { m = 1; y++; }
-    }
+  // to から数えて n か月（古い順）
+  function lastMonths(to, n){
+    var out = [], y = +to.slice(0, 4), m = +to.slice(5, 7);
+    for (var i = 0; i < n; i++) { out.unshift(y + '-' + (m < 10 ? '0' : '') + m); m--; if (m < 1) { m = 12; y--; } }
     return out;
   }
+  function prevMonth(k){ return lastMonths(k, 2)[0]; }
+  var ALL_FROM = '2026-01';   // 獲得報告を始める前の月。ここから全部読んで、称号とレベル（消えないもの）を数える
   function build(data){
-    CUR = data.month; MONTHS = monthList(data.from, data.month).slice(-6);
-    var byPM = {};   // 名前 → 月 → [{carrier,label,count}]
+    CUR = data.month; MONTHS = lastMonths(CUR, 6);
+    var byPM = {}, monthsSeen = {};   // 名前 → 月 → [{carrier,label,count}]
     (data.rows || []).forEach(function(r){
       if (PEOPLE.indexOf(r[1]) < 0) return;
       var pm = byPM[r[1]] = byPM[r[1]] || {};
       (pm[r[0]] = pm[r[0]] || []).push({ carrier: r[2], label: r[3], count: Number(r[4]) || 0 });
+      monthsSeen[r[0]] = true;
     });
     var fighters = data.fighters || {};
     P = PEOPLE.map(function(name, i){
       var months = byPM[name] || {};
       var now = PR.score(months[CUR]);
-      var prevKey = MONTHS[MONTHS.length - 2];
+      var prevKey = prevMonth(CUR);
       var hist = MONTHS.map(function(m){ return months[m] ? PR.score(months[m]).power : null; });
+      // これまで全部（消えない記録）：区分ごとの件数・合計・戦闘力の合計・いちばん高かった月
+      var all = {}, allTotal = 0, allPw = 0, best = 0, mp = {};
+      PR.CATS.forEach(function(c){ all[c] = 0; });
+      Object.keys(months).forEach(function(m){
+        var sc = PR.score(months[m]);
+        PR.CATS.forEach(function(c){ all[c] += sc.cats[c] || 0; });
+        allTotal += sc.total; allPw += sc.power; mp[m] = sc.power;
+        if (sc.power > best) best = sc.power;
+      });
+      // 続けて報告した月の数（今月か先月から、さかのぼって途切れるまで）
+      var streak = 0, k = mp[CUR] ? CUR : prevKey;
+      while (mp[k] > 0) { streak++; k = prevMonth(k); }
       // 今月の商品ごとの件数と点数（点数の多い順）
       var items = {};
       (months[CUR] || []).forEach(function(x){
         var it = PR.find(x.carrier, x.label); if (!it || !x.count) return;
-        var k = x.carrier + '\t' + x.label;
-        items[k] = items[k] || { carrier:x.carrier, label:x.label, cat:it.cat, pt:it.pt, count:0 };
-        items[k].count += x.count;
+        var key = x.carrier + '\t' + x.label;
+        items[key] = items[key] || { carrier:x.carrier, label:x.label, cat:it.cat, pt:it.pt, count:0 };
+        items[key].count += x.count;
       });
-      items = Object.keys(items).map(function(k){ return items[k]; })
+      items = Object.keys(items).map(function(key){ return items[key]; })
         .sort(function(a, b){ return b.pt * b.count - a.pt * a.count || b.count - a.count; });
       var ch = fighters[name] && fighterOf(fighters[name]).id === fighters[name] ? fighters[name] : FIGHTERS[i % FIGHTERS.length].id;
       return { name:name, i:i, pl:'P' + (i + 1), col:COLS[i % COLS.length][0], ink:COLS[i % COLS.length][1], char:ch, pw:now.power, cats:now.cats, total:now.total,
-        last: prevKey && months[prevKey] ? PR.score(months[prevKey]).power : 0, hist:hist, items:items };
+        last: months[prevKey] ? PR.score(months[prevKey]).power : 0, hist:hist, items:items,
+        all:all, allTotal:allTotal, allPw:allPw + 0, best:best, streak:streak, mp:mp, champs:[] };
     });
+    // 月間チャンピオン（終わった月の1位。同点はみんな）
+    Object.keys(monthsSeen).filter(function(m){ return m < CUR; }).sort().forEach(function(m){
+      var top = Math.max.apply(null, P.map(function(p){ return p.mp[m] || 0; }));
+      if (top > 0) P.forEach(function(p){ if ((p.mp[m] || 0) === top) p.champs.push(m); });
+    });
+    P.forEach(function(p){ p.titles = titlesOf(p); });
+    // その称号を持っている人の数（レア度の実感）
+    HAVE = {};
+    P.forEach(function(p){ p.titles.forEach(function(t){ if (t.have) HAVE[t.id] = (HAVE[t.id] || 0) + 1; }); });
     cur = Math.max(0, PEOPLE.indexOf(ME));
+  }
+
+  /* ── 称号（消えない記録）──
+     区分ごとの累計件数・続けて報告した月・いちばん高かった月の戦闘力で決まる。
+     rar：common 並・rare 希・epic 激レア・legend 伝説。増やすときはここに足す */
+  var HAVE = {};
+  var TITLES = [
+    { g:'MNP', id:'mnp1',  name:'MNP初陣',      rar:'common', cat:'MNP', n:1 },
+    { g:'MNP', id:'mnp10', name:'MNPの狩人',    rar:'rare',   cat:'MNP', n:10 },
+    { g:'MNP', id:'mnp30', name:'MNPの鬼',      rar:'epic',   cat:'MNP', n:30 },
+    { g:'MNP', id:'mnp60', name:'MNP無双',      rar:'legend', cat:'MNP', n:60 },
+    { g:'固定', id:'kt1',  name:'光の入口',     rar:'common', cat:'固定', n:1 },
+    { g:'固定', id:'kt10', name:'回線職人',     rar:'rare',   cat:'固定', n:10 },
+    { g:'固定', id:'kt30', name:'回線の支配者', rar:'epic',   cat:'固定', n:30 },
+    { g:'端末・カード・新規', id:'tan1',  name:'端末デビュー',   rar:'common', cat:'端末', n:1 },
+    { g:'端末・カード・新規', id:'tan15', name:'端末コレクター', rar:'rare',   cat:'端末', n:15 },
+    { g:'端末・カード・新規', id:'cd1',   name:'カードデビュー', rar:'common', cat:'カード', n:1 },
+    { g:'端末・カード・新規', id:'cd10',  name:'プラチナの民',   rar:'rare',   cat:'カード', n:10 },
+    { g:'端末・カード・新規', id:'nw1',   name:'新規デビュー',   rar:'common', cat:'新規', n:1 },
+    { g:'端末・カード・新規', id:'nw10',  name:'開拓者',         rar:'rare',   cat:'新規', n:10 },
+    { g:'つみあげ', id:'all5',   name:'五刀流',         rar:'epic',   five:true },
+    { g:'つみあげ', id:'tot100', name:'百戦錬磨',       rar:'epic',   total:100 },
+    { g:'つみあげ', id:'st3',    name:'3か月連続出場',  rar:'rare',   streak:3 },
+    { g:'つみあげ', id:'st6',    name:'半年皆勤',       rar:'epic',   streak:6 },
+    { g:'つみあげ', id:'pw2000', name:'戦闘力 2,000',   rar:'rare',   best:2000 },
+    { g:'つみあげ', id:'pw5000', name:'戦闘力 5,000',   rar:'legend', best:5000 }
+  ];
+  var RAR = { common:'並', rare:'希', epic:'激レア', legend:'伝説' }, RAR_ORDER = { legend:4, epic:3, rare:2, common:1 };
+  function titlesOf(p){
+    var list = TITLES.map(function(t){
+      var cur = 0, need = 1, unit = '件', cond = '';
+      if (t.cat) { cur = p.all[t.cat] || 0; need = t.n; cond = t.cat + ' 累計' + t.n + '件'; }
+      else if (t.five) { cur = PR.CATS.filter(function(c){ return p.all[c] > 0; }).length; need = PR.CATS.length; unit = '区分'; cond = PR.CATS.join('・') + 'をどれも1件以上'; }
+      else if (t.total) { cur = p.allTotal; need = t.total; cond = '全部で累計' + t.total + '件'; }
+      else if (t.streak) { cur = p.streak; need = t.streak; unit = 'か月'; cond = t.streak + 'か月続けて報告（途切れると数え直し）'; }
+      else if (t.best) { cur = p.best; need = t.best; unit = 'pt'; cond = '1か月の戦闘力が' + fmt(t.best) + 'をこえる'; }
+      var have = cur >= need;
+      return { id:t.id, g:t.g, name:t.name, rar:t.rar, have:have, cur:cur, need:need, cond:cond,
+        left: have ? '' : 'あと' + fmt(need - cur) + unit, pct: have ? 100 : Math.min(99, Math.round(cur / need * 100)) };
+    });
+    p.champs.forEach(function(m){
+      list.push({ id:'champ' + m, g:'月間チャンピオン', name:'月間チャンピオン ' + Number(m.slice(0, 4)) + '年' + Number(m.slice(5)) + '月', rar:'legend', have:true, champ:true });
+    });
+    return list;
+  }
+  function badgeHtml(t, small){
+    return '<span class="badge' + (t.have ? '' : ' off') + '" data-rar="' + t.rar + '" title="' + esc(RAR[t.rar] + '・' + (t.cond || t.name)) + '">'
+      + (t.have ? '★ ' : '') + esc(t.name) + (!t.have && !small ? '<small>' + esc(t.left) + '</small>' : '') + '</span>';
   }
 
   // ランクの境目とレベルの刻み（ここだけ直せば、ランク表示・次の目標・計算のしかたがそろって変わる）
   var RANKS = [['B', 1000], ['A', 1500], ['S', 2000]];
-  var STEP = 200;   // この戦闘力ごとにレベルが1上がる（毎月1から）
+  var LV_STEP = 1000;   // これまでの戦闘力の合計がこれだけ増えるごとにレベルが1上がる（月が変わっても下がらない）
   function rankOf(v){ var r = 'C'; RANKS.forEach(function(x){ if (v >= x[1]) r = x[0]; }); return r; }
   var RANK_COLOR = { S:'#F0453F', A:'#FF8A3D', B:'#FFC93C', C:'#FFFFFF' };   // 戦闘力の数字の色
-  function lvOf(p){ return Math.floor(p.pw / STEP) + 1; }
+  function lvAt(allPw){ return Math.floor(allPw / LV_STEP) + 1; }
+  function lvOf(p){ return lvAt(p.allPw); }
   function cls(p){
     if (p.total < 5) return 'かけだしファイター';
     var top = PR.CATS.slice().sort(function(a, b){ return p.cats[b] - p.cats[a]; })[0];
@@ -493,7 +642,7 @@ details p{margin:10px 0 0;line-height:1.7}
   function mlabel(k){ return Number(k.slice(5, 7)) + '月'; }
 
   function countUp(el, to){
-    if (reduce) { el.textContent = fmt(to); return; }
+    if (reduced()) { el.textContent = fmt(to); return; }
     var t0 = performance.now(), d = 900;
     (function step(t){ var k = Math.min(1, (t - t0) / d); el.textContent = fmt(Math.round(to * (1 - Math.pow(1 - k, 3))));
       if (k < 1) requestAnimationFrame(step); else { el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); } })(t0);
@@ -515,19 +664,37 @@ details p{margin:10px 0 0;line-height:1.7}
     }
   }
 
+  // 並び：名簿順か、今月の順位順か（この端末に覚えておく）
+  var SORT_KEY = 'siegPowerSort', byRank = load(SORT_KEY) === 'rank';
+  function rosterOrder(){
+    var idx = P.map(function(p, i){ return i; });
+    return byRank ? idx.sort(function(a, b){ return P[b].pw - P[a].pw || a - b; }) : idx;
+  }
   function renderRoster(){
     var box = $('roster'); box.innerHTML = '';
-    P.forEach(function(p, i){
+    $('sort').innerHTML = '並び：' + (byRank ? '名簿順 ⇄ <b>順位順</b>' : '<b>名簿順</b> ⇄ 順位順');
+    rosterOrder().forEach(function(i){
+      var p = P[i];
       var b = document.createElement('button'); b.type = 'button'; b.className = 'slot';
-      paint(b, p); b.setAttribute('aria-pressed', String(i === cur)); b.setAttribute('aria-label', p.name);
-      b.innerHTML = '<span class="tag">' + p.pl + '</span>' + (i === cur ? '<span class="one">1P</span>' : '');
+      paint(b, p); b.setAttribute('aria-pressed', String(i === cur)); b.setAttribute('aria-label', p.name + (p.name === ME ? '（あなた）' : ''));
+      b.innerHTML = '<span class="tag">' + p.pl + '</span>' + (p.name === ME ? '<span class="one">YOU</span>' : '');
       b.appendChild(figEl(p.char));
       b.insertAdjacentHTML('beforeend', '<span class="nm">' + esc(p.name) + '</span>');
       b.onclick = function(){ cur = i; renderRoster(); renderFighter(); };
       box.appendChild(b);
     });
   }
+  $('sort').onclick = function(){ byRank = !byRank; store(SORT_KEY, byRank ? 'rank' : 'list'); renderRoster(); };
 
+  // 順位（同点は同じ順位）
+  function posOf(p){ var n = 1; P.forEach(function(x){ if (x.pw > p.pw) n++; }); return n; }
+  // 月末の見込み（今のペースが続いたら）
+  function paceOf(p){
+    var d = new Date(), ym = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    if (ym !== CUR || !p.pw) return 0;
+    var day = d.getDate(), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    return day >= last || day < 3 ? 0 : Math.round(p.pw / day * last);
+  }
   function renderFighter(){
     var p = P[cur], f = $('fighter');
     paint(f, p);
@@ -535,24 +702,41 @@ details p{margin:10px 0 0;line-height:1.7}
     $('pl').textContent = p.pl + (p.name === ME ? '　あなた' : '');
     $('name').textContent = p.name; $('cls').textContent = cls(p); $('lv').textContent = lvOf(p);
     var rk = $('rank'); rk.textContent = rankOf(p.pw); rk.className = 'rank ' + rankOf(p.pw);
-    $('power').style.setProperty('--rankc', RANK_COLOR[rankOf(p.pw)] || '#fff');
-    // ちょうどレベルが上がったところ（余りが0）は、空ではなく満タンで見せる
-    var rem = p.pw % STEP, e = '', on = rem === 0 && p.pw > 0 ? 12 : Math.round(rem / STEP * 12); for (var i = 0; i < 12; i++) e += '<i' + (i < on ? ' class="on"' : '') + '></i>'; $('exp').innerHTML = e;
-    $('nx').textContent = 'あと ' + fmt(STEP - p.pw % STEP) + ' でレベルアップ';
-    countUp($('power'), p.pw);
+    var num = $('power');
+    num.style.setProperty('--rankc', RANK_COLOR[rankOf(p.pw)] || '#fff');
+    num.classList.toggle('d5', p.pw >= 10000);
+    // 右上：順位と月末の見込み
+    var pos = posOf(p), pb = $('posb');
+    pb.hidden = !p.pw; pb.innerHTML = '<b>' + pos + '</b>位 / ' + P.length;
+    var pace = paceOf(p), pc = $('pace');
+    pc.hidden = !pace; pc.innerHTML = '月末 <b>' + fmt(pace) + '</b>pt ペース（' + rankOf(pace) + '）';
+    // レベル（これまでの戦闘力の合計で上がる。ちょうど上がったところは満タンで見せる）
+    var rem = p.allPw % LV_STEP, e = '', on = rem === 0 && p.allPw > 0 ? 12 : Math.round(rem / LV_STEP * 12);
+    for (var i = 0; i < 12; i++) e += '<i' + (i < on ? ' class="on"' : '') + '></i>';
+    $('exp').innerHTML = e;
+    $('nx').textContent = rem === 0 && p.allPw > 0 ? 'LV' + lvOf(p) + ' 達成！次はあと ' + fmt(LV_STEP)
+      : 'あと ' + fmt(LV_STEP - rem) + ' で LV' + (lvOf(p) + 1);
+    countUp(num, p.pw);
     var d = p.pw - p.last, de = $('diff'); de.textContent = (d >= 0 ? '▲ +' : '▼ ') + fmt(d) + '（先月比）'; de.className = 'diff' + (d < 0 ? ' down' : '');
     drawLines();
     renderPicker(p);
-
     renderGoal(p);
     renderBreakdown(p);
-    renderGrowth(p);
-    var c = p.cats;
-    var B = [['はじめてのMNP', c['MNP'] > 0], ['はじめての固定', c['固定'] > 0], ['MNP 10件', c['MNP'] >= 10], ['固定 10件', c['固定'] >= 10],
-      ['5つの区分を制覇', PR.CATS.every(function(k){ return c[k] > 0; })], ['合計 20件', p.total >= 20], ['戦闘力 2,000', p.pw >= 2000]];
-    $('badge-count').textContent = '（' + B.filter(function(b){ return b[1]; }).length + ' / ' + B.length + '）';
-    $('badges').innerHTML = B.map(function(b){ return '<span class="badge' + (b[1] ? '' : ' off') + '">' + (b[1] ? '★ ' : '？ ') + b[0] + '</span>'; }).join('');
+    renderStrip(p);
+    $('share').hidden = p.name !== ME || !p.pw;
+    $('live').textContent = p.name + 'さん。今月の戦闘力 ' + fmt(p.pw) + (p.pw ? '、' + pos + '位' : '') + '。レベル ' + lvOf(p) + '。';
   }
+
+  // 称号の帯：持っている称号をレア度の高い順に。まだ1つもなければ、いちばん近い称号を
+  function renderStrip(p){
+    var got = p.titles.filter(function(t){ return t.have; })
+      .sort(function(a, b){ return RAR_ORDER[b.rar] - RAR_ORDER[a.rar]; });
+    var all = p.titles.filter(function(t){ return !t.champ; }).length + p.champs.length;
+    $('tcount').textContent = got.length + ' / ' + all;
+    var next = p.titles.filter(function(t){ return !t.have; }).sort(function(a, b){ return b.pct - a.pct; }).slice(0, got.length ? 1 : 2);
+    $('tstrip').innerHTML = got.map(function(t){ return badgeHtml(t, true); }).join('') + next.map(function(t){ return badgeHtml(t); }).join('');
+  }
+  $('to-log').onclick = function(){ tab('log'); scrollTo(0, 0); };
 
   /* 次の目標：次のランクまで／ひとつ上の順位まで。足りない点数を「MNP なら何件・固定なら何件」に直して出す */
   // その人のキャリア（名簿の carrier。無ければ今月いちばん多く報告したキャリア）の、MNP と固定のいちばん高い点数で数える
@@ -596,9 +780,10 @@ details p{margin:10px 0 0;line-height:1.7}
     var above = list.filter(function(x){ return x.pw > p.pw; }).pop();
     var below = list.filter(function(x){ return x.pw < p.pw; })[0];
     var b;
-    if (!p.pw) b = '<div class="t">順位</div><div class="v it">—</div><div class="s">1件報告すると順位に入ります</div>';
+    var first = topItem(mainCarrier(p), 'MNP');
+    if (!p.pw) b = '<div class="t">順位</div><div class="v it">—</div><div class="s">' + (first ? '最初の1件：' + esc(first.label) + ' で ' + first.pt + 'pt。報告すると順位に入ります' : '1件報告すると順位に入ります') + '</div>';
     else if (above) b = '<div class="t">いま ' + pos + '位 / ' + P.length + '人中</div><div class="v it">あと' + fmt(above.pw - p.pw + 1) + '<small>pt</small></div>'
-      + '<div class="s">' + esc(above.name) + 'さんを抜いて ' + (pos - 1) + '位</div>';
+      + '<div class="s">' + esc(above.name) + 'さんを抜いて ' + (pos - 1) + '位（同点は同じ順位）</div>';
     else b = '<div class="t">いま 1位 / ' + P.length + '人中</div><div class="v it top">トップ！</div><div class="s">' + (below ? '2位と ' + fmt(p.pw - below.pw) + 'pt 差' : '') + '</div>';
     $('goal').innerHTML = '<div class="gl">' + a + '</div><div class="gl">' + b + '</div>';
   }
@@ -712,7 +897,7 @@ details p{margin:10px 0 0;line-height:1.7}
       hud.appendChild(el);
     });
     var kb = $('kings'); kb.innerHTML = '';
-    [['MNP王','MNP'],['固定王','固定'],['端末王','端末'],['カード王','カード']].forEach(function(k){
+    [['MNP王','MNP'],['固定王','固定'],['端末王','端末'],['カード王','カード'],['新規王','新規']].forEach(function(k){
       var t = P.slice().sort(function(a, b){ return b.cats[k[1]] - a.cats[k[1]] || a.i - b.i; })[0];
       var el = document.createElement('div'); el.className = 'king';
       var ic = document.createElement('canvas'); ic.className = 'px'; el.appendChild(drawPx(ic, k[1]));
@@ -720,11 +905,43 @@ details p{margin:10px 0 0;line-height:1.7}
         (t && t.cats[k[1]] ? esc(t.name) + '<span>' + t.cats[k[1]] + '件</span>' : '—') + '</div></div>');
       kb.appendChild(el);
     });
+    // 自分が5位より下のときは、画面の下に自分の行を固定して出す
+    var me = P[PEOPLE.indexOf(ME)], mb = $('mebar');
+    var mpos = me && me.pw ? posOf(me) : 0;
+    mb.hidden = !(me && (mpos > 4 || !me.pw));
+    if (!mb.hidden) {
+      var up = list.filter(function(x){ return x.pw > me.pw; }).pop();
+      mb.innerHTML = '<span>あなた</span><b class="it">' + (mpos ? mpos + '位' : '—') + '</b><span>' + fmt(me.pw) + 'pt</span>'
+        + '<span class="r">' + (up ? esc(up.name) + 'さんまで あと' + fmt(up.pw - me.pw + 1) + 'pt' : '') + '</span>';
+    }
+  }
+
+  /* 記録：消えない数字と称号のコレクション */
+  function renderLog(){
+    var p = P[cur];
+    $('log-band').textContent = p.name + 'さんの記録';
+    $('stats').innerHTML = '<div><small>レベル</small><b class="it">LV ' + lvOf(p) + '</b></div>'
+      + '<div><small>これまでの戦闘力</small><b class="it">' + fmt(p.allPw) + '<small>pt</small></b></div>'
+      + '<div><small>これまでの獲得</small><b class="it">' + fmt(p.allTotal) + '<small>件</small></b></div>'
+      + '<div><small>続けて報告</small><b class="it">' + p.streak + '<small>か月</small></b></div>';
+    $('trophies').innerHTML = p.champs.length
+      ? p.titles.filter(function(t){ return t.champ; }).map(function(t){ return badgeHtml(t, true); }).join('')
+      : '<span class="empty">その月の1位になると、ここにトロフィーが増えていきます。</span>';
+    var groups = [];
+    p.titles.forEach(function(t){ if (!t.champ && groups.indexOf(t.g) < 0) groups.push(t.g); });
+    $('titles').innerHTML = groups.map(function(g){
+      return '<div class="tgroup"><h3>' + esc(g) + '</h3>' + p.titles.filter(function(t){ return t.g === g; }).map(function(t){
+        return '<div class="trow">' + badgeHtml(t, true) + '<span class="cond">' + esc(RAR[t.rar] + '・' + t.cond) + (t.have ? '' : '<br>' + esc(t.left)) + '</span>'
+          + '<span class="who">' + P.length + '人中 ' + (HAVE[t.id] || 0) + '人</span>'
+          + (t.have ? '' : '<div class="tbar"><i style="width:' + t.pct + '%"></i></div>') + '</div>';
+      }).join('') + '</div>';
+    }).join('');
+    renderGrowth(p);
   }
 
   // タブ。データが来るまでは押せない（空のデータで「まだいません」と出さないため）。
   // 開いているタブはアドレスの &tab=rank に残すので、ランキングをそのまま人に見せられる
-  var TABS = ['status', 'rank'], curTab = new URLSearchParams(location.search).get('tab') === 'rank' ? 'rank' : 'status';
+  var TABS = ['status', 'rank', 'log'], qTab = new URLSearchParams(location.search).get('tab'), curTab = TABS.indexOf(qTab) > 0 ? qTab : 'status';
   function tab(w, focus){
     if (!P.length) return;
     curTab = w;
@@ -736,10 +953,10 @@ details p{margin:10px 0 0;line-height:1.7}
     if (focus) $('tab-' + w).focus();
     try {
       var u = new URL(location.href);
-      if (w === 'rank') u.searchParams.set('tab', 'rank'); else u.searchParams.delete('tab');
+      if (w !== 'status') u.searchParams.set('tab', w); else u.searchParams.delete('tab');
       history.replaceState(null, '', u);
     } catch (e) {}
-    if (w === 'rank') renderRank(); else renderFighter();
+    if (w === 'rank') renderRank(); else if (w === 'log') renderLog(); else renderFighter();
   }
   TABS.forEach(function(n, i){
     var t = $('tab-' + n);
@@ -756,7 +973,8 @@ details p{margin:10px 0 0;line-height:1.7}
   /* 計算のしかた（商品表とランクの境目から作る） */
   $('formula-note').textContent = 'ポータルの「獲得報告」で送った件数から計算します（日報の数字は使いません）。ランクは '
     + RANKS.slice().reverse().map(function(r){ return r[0] + '（' + fmt(r[1]) + '以上）'; }).join('・') + '・C です。'
-    + fmt(STEP) + 'ごとにレベルが1上がります。毎月1日に0から始まります。';
+    + '今月の戦闘力と順位は毎月1日に0から始まります。レベルは、これまでの戦闘力の合計 ' + fmt(LV_STEP) + 'ごとに1上がり、月が変わっても下がりません。'
+    + '称号もこれまでの合計で決まるので、消えません（「続けて報告」だけは、報告のない月があると数え直しです）。';
   $('formula').innerHTML = PR.carriers.map(function(c){
     return '<b class="fh">' + esc(c.label) + '</b><b class="fh"></b>' + PR.items(c.id).map(function(it){ return '<span>' + esc(it.label) + '</span><span>' + it.pt + '</span>'; }).join('');
   }).join('');
@@ -764,7 +982,7 @@ details p{margin:10px 0 0;line-height:1.7}
   /* 前に見たときより戦闘力が上がっていたら、大きな文字で知らせる */
   var fx = $('fx'), fc = fx.getContext('2d'), parts = [];
   function sparks(color){
-    if (reduce) return;
+    if (reduced()) return;
     var dpr = Math.min(2, devicePixelRatio || 1);
     fx.width = innerWidth * dpr; fx.height = innerHeight * dpr; fc.setTransform(dpr, 0, 0, dpr, 0, 0);
     for (var i = 0; i < 70; i++) { var a = Math.random() * 6.28, v = 3 + Math.random() * 7; parts.push({ x:innerWidth / 2, y:innerHeight * .42, vx:Math.cos(a) * v, vy:Math.sin(a) * v, life:40 + Math.random() * 25, c:i % 3 ? color : '#FFFFFF', w:3 + Math.random() * 3 }); }
@@ -782,29 +1000,51 @@ details p{margin:10px 0 0;line-height:1.7}
 
   // 開いたときの演出：順位が上がっていたら「順位アップ！」、戦闘力が上がっていたら「ナイス！／レベルアップ！」
   // （前回見た戦闘力 siegPowerSeen・順位 siegPowerRank と比べる）
-  function myPos(p){ var n = 1; P.forEach(function(x){ if (x.pw > p.pw) n++; }); return n; }
+  function burst(head, sub, p){
+    var b = $('burst'), t = $('bursttxt');
+    t.innerHTML = head + '<small>' + sub + '</small>';
+    $('live').textContent = head + ' ' + t.querySelector('small').textContent;
+    b.hidden = false; t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
+    var w = $('wrap'); w.classList.remove('shake'); void w.offsetWidth; if (!reduced()) w.classList.add('shake');
+    sparks(getComputedStyle(document.documentElement).getPropertyValue(p.col).trim() || '#FFC93C');
+    setTimeout(function(){ b.hidden = true; }, reduced() ? 1200 : 1600);
+  }
   function celebrate(){
     var p = P[PEOPLE.indexOf(ME)];
     if (!p) return;
     var key = ME + '@' + CUR;
     var seen = load('siegPowerSeen') || {}, before = seen[key];
-    seen = {}; seen[key] = p.pw; store('siegPowerSeen', seen);
-    var ranks = load('siegPowerRank') || {}, posBefore = ranks[key], pos = p.pw ? myPos(p) : 0;
+    var allBefore = seen[ME + '@all'];
+    seen = {}; seen[key] = p.pw; seen[ME + '@all'] = p.allPw; store('siegPowerSeen', seen);
+    var ranks = load('siegPowerRank') || {}, posBefore = ranks[key], pos = p.pw ? posOf(p) : 0;
     ranks = {}; ranks[key] = pos; store('siegPowerRank', ranks);
+    // 前に見たときに無かった称号（はじめて開いたときは、今ある分を覚えるだけ）
+    var tk = load('siegPowerTitles') || {}, had = tk[ME];
+    var got = p.titles.filter(function(t){ return t.have; }).map(function(t){ return t.id; });
+    var fresh = had ? p.titles.filter(function(t){ return t.have && had.indexOf(t.id) < 0; }) : [];
+    tk = {}; tk[ME] = got; store('siegPowerTitles', tk);
     if (fxOff()) return;
-    var head, sub;
-    if (posBefore && pos && pos < posBefore) { head = '順位アップ！'; sub = posBefore + '位 → ' + pos + '位'; }
+    if (fresh.length) {
+      fresh.sort(function(a, b){ return RAR_ORDER[b.rar] - RAR_ORDER[a.rar]; });
+      burst('★NEW 称号', esc(fresh[0].name) + (fresh.length > 1 ? ' ほか' + (fresh.length - 1) + 'つ' : ''), p);
+    } else if (posBefore && pos && pos < posBefore) burst('順位アップ！', posBefore + '位 → ' + pos + '位', p);
     else if (before != null && p.pw > before) {
-      head = lvOf(p) > Math.floor(before / STEP) + 1 ? 'レベルアップ！' : 'ナイス！';
-      sub = '戦闘力 +' + fmt(p.pw - before);
-    } else return;
-    var b = $('burst'), t = $('bursttxt');
-    t.innerHTML = head + '<small>' + sub + '</small>';
-    b.hidden = false; t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
-    var w = $('wrap'); w.classList.remove('shake'); void w.offsetWidth; if (!reduce) w.classList.add('shake');
-    sparks(getComputedStyle(document.documentElement).getPropertyValue(p.col).trim() || '#FFC93C');
-    setTimeout(function(){ b.hidden = true; }, reduce ? 1200 : 1600);
+      var up = allBefore != null && lvOf(p) > lvAt(allBefore);
+      burst(up ? 'レベルアップ！' : 'ナイス！', up ? 'LV ' + lvOf(p) : '戦闘力 +' + fmt(p.pw - before), p);
+    }
   }
+
+  // シェア（LINE などへ。使えない端末では文をコピー）
+  $('share').onclick = function(){
+    var p = P[cur], pos = posOf(p);
+    var text = p.name + 'さん 今月の戦闘力 ' + fmt(p.pw) + 'pt（' + pos + '位 / ' + P.length + '人）LV' + lvOf(p);
+    var url = location.origin + location.pathname;
+    if (navigator.share) { navigator.share({ title: '今月の戦闘力', text: text, url: url }).catch(function(){}); return; }
+    var msg = $('share-msg');
+    (navigator.clipboard ? navigator.clipboard.writeText(text + ' ' + url) : Promise.reject())
+      .then(function(){ msg.textContent = 'コピーしました。LINE などに貼り付けてください。'; })
+      .catch(function(){ msg.textContent = text; });
+  };
 
   if (ME) $('go-gain').href = 'gain.html?staff=' + encodeURIComponent(ME);
 
@@ -822,7 +1062,7 @@ details p{margin:10px 0 0;line-height:1.7}
   }
   var cached = load(CACHE_KEY);
   if (cached && cached.data && cached.data.rows) { show(cached.data); $('stale').hidden = false; }
-  GasClient.get(PR.API, { action: 'gainStats' }).then(function(data){
+  GasClient.get(PR.API, { action: 'gainStats', from: ALL_FROM }).then(function(data){
     if (!data || !data.ok || !data.rows) throw new Error('準備中です。もうしばらくお待ちください');
     store(CACHE_KEY, { at: Date.now(), data: data });
     $('stale').hidden = true;

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>みんなの状況｜Sieg 業務ポータル</title>
-<meta name="description" content="今月の獲得・日報の提出・稼働費の入力を、全員まとめて見るページ。">
+<meta name="description" content="今月の獲得・日報の提出・稼働費・経費精算を、全員まとめて見るページ。">
 <meta name="theme-color" content="#EFF1F4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -69,6 +69,49 @@
     td[data-k]::before { content: attr(data-k); display: block; font-size: 11px; color: var(--sg-mute); font-weight: 700; }
   }
 
+  /* 経費・稼働費 */
+  .sec { margin: 14px 0 -2px; font-size: 17px; font-weight: 900; letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .sec button { font-size: 12.5px; font-weight: 700; color: var(--sg-blue); background: none; border: 0; padding: 6px 2px; }
+  .money { display: flex; flex-direction: column; gap: 10px; }
+  .mcard { background: var(--sg-surface); border: 1px solid var(--sg-hair); border-radius: var(--sg-r); box-shadow: var(--sg-lift); overflow: hidden; }
+  .mcard > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 12px 14px; }
+  .mcard > summary::-webkit-details-marker { display: none; }
+  .mcard .mn b { font-size: 15px; }
+  .mcard .mn small { font-size: 11px; color: var(--sg-mute); font-weight: 700; margin-left: 6px; }
+  .mcard .mt { font-size: 20px; font-weight: 900; text-align: right; }
+  .mcard .mt::after { content: '›'; display: inline-block; margin-left: 8px; color: var(--sg-faint); transition: transform .15s; }
+  .mcard[open] .mt::after { transform: rotate(90deg); }
+  .mcard .mv { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: baseline; gap: 5px; font-size: 12px; font-weight: 700; color: var(--sg-ink2); background: var(--sg-sunk); border-radius: 999px; padding: 3px 10px; }
+  .chip b { font-weight: 900; color: var(--sg-ink); }
+  .chip.c { background: var(--sg-teal-tint); } .chip.k { background: var(--sg-blue-tint); }
+  .chip.warn { background: var(--sg-amber-tint); color: var(--sg-amber); }
+  .mbody { border-top: 1px solid var(--sg-hair2); display: grid; grid-template-columns: 1fr 1fr; }
+  .mblock { padding: 12px 14px 14px; min-width: 0; }
+  .mblock + .mblock { border-left: 1px solid var(--sg-hair2); }
+  .mblock h3 { margin: 0 0 8px; font-size: 13px; font-weight: 900; display: flex; justify-content: space-between; gap: 8px; }
+  .mblock h3 span { color: var(--sg-mute); font-weight: 700; font-size: 12px; }
+  .parts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .bars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .brow { display: grid; grid-template-columns: 5.5em 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
+  .brow .bl { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .brow .bb { height: 8px; background: var(--sg-sunk); border-radius: 4px; overflow: hidden; }
+  .brow .bb i { display: block; height: 100%; background: var(--sg-blue); border-radius: 4px; }
+  .brow .bv { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .lines { display: flex; flex-direction: column; }
+  .lrow { display: grid; grid-template-columns: 3.6em 1fr auto; gap: 8px; padding: 6px 0; border-top: 1px solid var(--sg-hair2); font-size: 12.5px; align-items: baseline; }
+  .lrow:first-child { border-top: 0; }
+  .lrow .d { color: var(--sg-mute); font-weight: 700; }
+  .lrow .t { min-width: 0; overflow-wrap: anywhere; }
+  .lrow .t small { display: block; color: var(--sg-mute); font-size: 11px; }
+  .lrow .a { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+  .mempty { font-size: 12.5px; color: var(--sg-mute); padding: 6px 0; }
+  .mblock .src { font-size: 11px; color: var(--sg-mute); margin-top: 8px; }
+  @media (max-width: 720px) {
+    .mbody { grid-template-columns: 1fr; }
+    .mblock + .mblock { border-left: 0; border-top: 1px solid var(--sg-hair2); }
+  }
+
   .note { font-size: 12px; color: var(--sg-mute); line-height: 1.7; }
   .state { text-align: center; padding: 40px 0; color: var(--sg-mute); font-weight: 700; }
   .state[hidden], .kpis[hidden], table[hidden], .bar[hidden] { display: none; }
@@ -107,9 +150,15 @@
     <tbody id="rows"></tbody>
   </table>
 
+  <div id="money-wrap" hidden>
+    <div class="sec"><span>経費・稼働費</span><button type="button" id="open-all">すべて開く</button></div>
+    <div class="kpis" id="money-kpis" style="margin-top:12px"></div>
+    <div class="money" id="money" style="margin-top:10px"></div>
+  </div>
+
   <p class="note">
-    獲得は獲得報告から、日報は日報フォームから、稼働費は稼働費入力のシートから読んでいます。<br>
-    日報はパートナー様だけ、稼働費は稼働費入力を使っている人だけ出します（ほかは「—」）。
+    獲得は獲得報告から、日報は日報フォームから、稼働費は稼働費入力（社員はシート、パートナー様は新しい画面）から、経費精算は経費精算のシートから読んでいます。<br>
+    日報はパートナー様だけ、稼働費・経費精算は使っている人だけ出します（ほかは「—」）。社員の稼働費と経費精算は、シートで選んでいる月の分です。
   </p>
 </div>
 
@@ -152,9 +201,18 @@
     if (usesPartnerCommute(name)) {
       if (!R.commutePartnerApi) return Promise.resolve({ pending: true });
       var ym = todayYmd().slice(0, 7);
-      return GasClient.post(R.commutePartnerApi, { action: 'summary', name: name, ym: ym }, { retry: true }).then(function (r) {
+      return GasClient.post(R.commutePartnerApi, { action: 'listMonth', name: name, ym: ym }, { retry: true }).then(function (r) {
         if (!r || !r.ok) throw new Error((r && r.error) || '読めませんでした');
-        return { month: Number(ym.slice(5)), days: r.data.days, irregular: r.data.routes, amount: r.data.amount, routes: true };
+        var t = r.data.totals, files = r.data.files || [];
+        return { month: Number(ym.slice(5)), days: t.days, irregular: t.routes, amount: t.total, routes: true,
+          parts: [['ガソリン代', t.gas], ['高速代', t.toll], ['駐車場代', t.parking]], km: t.km,
+          files: { receipts: files.filter(function (f) { return f.kind !== 'ETC'; }).length, etc: files.filter(function (f) { return f.kind === 'ETC'; }).length },
+          lines: r.data.entries.map(function (e) {
+            var extra = [];
+            if (e.toll) extra.push('高速 ¥' + fmt(e.toll));
+            if (e.parking) extra.push('駐車 ¥' + fmt(e.parking));
+            return { d: Number(e.date.slice(5, 7)) + '/' + Number(e.date.slice(8)), t: e.text, sub: e.km + 'km' + (extra.length ? '・' + extra.join('・') : '') + (e.note ? '・' + e.note : ''), a: e.total };
+          }) };
       }).catch(function (e) { return { error: e.message }; });
     }
     var full = R.fullName(name);
@@ -165,24 +223,60 @@
       GasClient.post(url, { action: 'getMyEntries', staffName: full }, { retry: true })
     ]).then(function (r) {
       if (!r[0] || !r[0].ok || !r[1] || !r[1].ok) throw new Error((r[0] && r[0].error) || (r[1] && r[1].error) || '読めませんでした');
-      var info = r[0].data, entries = r[1].data || [], sum = 0;
-      entries.forEach(function (e) { sum += Number(e.amount) || 0; });
-      return { month: info.month, days: (info.filledDays || []).length, irregular: info.irregularCount || 0, amount: Math.round(sum) };
+      var info = r[0].data, entries = r[1].data || [], sum = 0, toll = 0, irr = 0;
+      entries.forEach(function (e) {
+        var a = Number(e.amount) || 0;
+        sum += a;
+        if (e.type === 'irregular') irr += a;
+        else toll += (Number(e.tollGo) || 0) + (Number(e.tollBack) || 0);
+      });
+      var lines = entries.slice().sort(function (a, b) { return (a.day || 99) - (b.day || 99); }).map(function (e) {
+        var tl = (Number(e.tollGo) || 0) + (Number(e.tollBack) || 0);
+        return e.type === 'irregular'
+          ? { d: e.day ? info.month + '/' + e.day : '—', t: String(e.content || ''), sub: 'イレギュラー' + (e.note ? '・' + e.note : ''), a: Number(e.amount) || 0 }
+          : { d: info.month + '/' + e.day, t: String(e.place || ''), sub: tl ? '高速 ¥' + fmt(tl) : (e.highway === '有' ? '高速あり' : ''), a: Number(e.amount) || 0 };
+      });
+      return { month: info.month, days: (info.filledDays || []).length, irregular: info.irregularCount || 0, amount: Math.round(sum),
+        parts: [['距離の分', Math.round(sum - toll - irr)], ['高速代', Math.round(toll)], ['イレギュラー', Math.round(irr)]], lines: lines };
+    }).catch(function (e) { return { error: e.message }; });
+  }
+
+  // 経費精算（経費精算の index.html と同じ GAS）
+  var KEIHI_GAS = 'https://script.google.com/macros/s/AKfycbzyXEYU_0VhvEpnmZx3JWaxXRdOEP-Lam9R9Fxwv4nVRr6ExzQrBmdO-rgUlwGkcgzU/exec';
+  var KEIHI = R.forTool('keihi');
+  function keihiOf(name) {
+    return Promise.all([
+      GasClient.post(KEIHI_GAS, { action: 'getSheetInfo', staffName: name }, { retry: true }),
+      GasClient.post(KEIHI_GAS, { action: 'getExpenses', staffName: name }, { retry: true })
+    ]).then(function (r) {
+      if (!r[0] || !r[0].ok || !r[1] || !r[1].ok) throw new Error((r[0] && r[0].error) || (r[1] && r[1].error) || '読めませんでした');
+      var list = r[1].data || [], total = 0, by = {};
+      list.forEach(function (e) {
+        var a = Number(e.amount) || 0, k = String(e.item || 'その他');
+        total += a; by[k] = (by[k] || 0) + a;
+      });
+      var items = Object.keys(by).map(function (k) { return [k, by[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+      var lines = list.map(function (e) {
+        var d = e.date ? new Date(e.date) : null, ok = d && !isNaN(d);
+        return { d: ok ? (d.getMonth() + 1) + '/' + d.getDate() : '—', t: String(e.item || ''), sub: String(e.description || ''), a: Number(e.amount) || 0 };
+      });
+      return { ym: String(r[0].data && r[0].data.yearMonth || ''), count: list.length, amount: Math.round(total), items: items, lines: lines };
     }).catch(function (e) { return { error: e.message }; });
   }
 
   function load() {
     $('reload').disabled = true;
     $('sub').textContent = '読み込み中…';
-    var commute = {};
+    var commute = {}, keihi = {};
     return Promise.all([
       GasClient.get(P.API, { action: 'gainStats' }),
       GasClient.get(P.API, { action: 'nippouStatus' }).catch(function () { return null; }),
-      Promise.all(COMMUTE.map(function (n) { return commuteOf(n).then(function (c) { commute[n] = c; }); }))
+      Promise.all(COMMUTE.map(function (n) { return commuteOf(n).then(function (c) { commute[n] = c; }); })),
+      Promise.all(KEIHI.map(function (n) { return keihiOf(n).then(function (k) { keihi[n] = k; }); }))
     ]).then(function (r) {
       var stats = r[0], nip = r[1];
       if (!stats || !stats.ok || !stats.rows) throw new Error('獲得報告の集計が読めませんでした（準備中かもしれません）');
-      data = { stats: stats, nippou: nip && nip.ok && nip.days ? nip : null, commute: commute, at: new Date() };
+      data = { stats: stats, nippou: nip && nip.ok && nip.days ? nip : null, commute: commute, keihi: keihi, at: new Date() };
       render();
     }).catch(function (e) {
       $('state').hidden = false; $('state').textContent = '読み込めませんでした：' + e.message;
@@ -249,7 +343,76 @@
     var at = data.at;
     $('sub').textContent = Number(month.slice(0, 4)) + '年' + Number(month.slice(5, 7)) + '月 ・ ' + at.getHours() + ':' + String(at.getMinutes()).padStart(2, '0') + ' 時点';
     $('state').hidden = true; $('kpis').hidden = false; $('bar').hidden = false; $('table').hidden = false;
+    renderMoney(month);
   }
+
+  /* 経費・稼働費：1人1枚。開くと稼働費の内訳と日ごと、経費精算の項目ごとと明細 */
+  var openNames = {};
+  function linesHtml(lines) {
+    if (!lines || !lines.length) return '<div class="mempty">まだ入力がありません。</div>';
+    return '<div class="lines">' + lines.map(function (l) {
+      return '<div class="lrow"><span class="d">' + esc(l.d) + '</span><span class="t">' + esc(l.t) + (l.sub ? '<small>' + esc(l.sub) + '</small>' : '') + '</span><span class="a">¥' + fmt(Math.round(l.a)) + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function renderMoney(month) {
+    var curM = Number(month.slice(5, 7));
+    var people = PEOPLE.filter(function (n) { return COMMUTE.indexOf(n) >= 0 || KEIHI.indexOf(n) >= 0; }).map(function (n, i) {
+      var c = data.commute[n], k = data.keihi[n];
+      var ca = c && !c.error && !c.pending ? c.amount : 0, ka = k && !k.error ? k.amount : 0;
+      return { name: n, i: i, c: COMMUTE.indexOf(n) >= 0 ? c : undefined, k: KEIHI.indexOf(n) >= 0 ? k : undefined, ca: ca, ka: ka, total: ca + ka };
+    }).sort(function (a, b) { return b.total - a.total || a.i - b.i; });
+    var sc = 0, sk = 0, nc = 0, nk = 0;
+    people.forEach(function (x) { sc += x.ca; sk += x.ka; if (x.ca) nc++; if (x.ka) nk++; });
+    $('money-kpis').innerHTML =
+      '<div class="kpi"><div class="k">稼働費（全員）</div><div class="v num">¥' + fmt(sc) + '</div><div class="s">' + nc + '人分</div></div>'
+      + '<div class="kpi"><div class="k">経費精算（全員）</div><div class="v num">¥' + fmt(sk) + '</div><div class="s">' + nk + '人分</div></div>'
+      + '<div class="kpi"><div class="k">合計</div><div class="v num">¥' + fmt(sc + sk) + '</div><div class="s">稼働費＋経費精算</div></div>';
+    $('money').innerHTML = people.map(function (x) {
+      var c = x.c, k = x.k, chips = '';
+      if (c !== undefined) chips += !c ? '' : c.pending ? '<span class="chip">稼働費 準備中</span>' : c.error ? '<span class="chip warn">稼働費 読めません</span>'
+        : '<span class="chip c">稼働費 <b>¥' + fmt(c.amount) + '</b>' + c.days + '日</span>' + (Number(c.month) !== curM ? '<span class="chip warn">稼働費のシートは' + Number(c.month) + '月</span>' : '');
+      if (k !== undefined) chips += !k ? '' : k.error ? '<span class="chip warn">経費 読めません</span>'
+        : '<span class="chip k">経費 <b>¥' + fmt(k.amount) + '</b>' + k.count + '件</span>' + (k.ym && k.ym.indexOf(curM + '月') < 0 ? '<span class="chip warn">経費のシートは' + esc(k.ym) + '</span>' : '');
+      var cb = '', kb = '';
+      if (c !== undefined) {
+        cb = '<div class="mblock"><h3>稼働費<span>' + (c && !c.error && !c.pending ? '¥' + fmt(c.amount) + '・' + c.days + '日' + (c.km ? '・' + c.km + 'km' : '') : '') + '</span></h3>';
+        if (!c || c.pending) cb += '<div class="mempty">準備中です。</div>';
+        else if (c.error) cb += '<div class="mempty">読めませんでした：' + esc(c.error) + '</div>';
+        else {
+          cb += '<div class="parts">' + c.parts.filter(function (pp) { return pp[1]; }).map(function (pp) { return '<span class="chip">' + esc(pp[0]) + ' <b>¥' + fmt(pp[1]) + '</b></span>'; }).join('') + '</div>';
+          cb += linesHtml(c.lines);
+          if (c.files) cb += '<div class="src">添付：領収書 ' + c.files.receipts + '枚・ETCの利用明細 ' + c.files.etc + '件（経費精算/パートナー のフォルダ）</div>';
+        }
+        cb += '</div>';
+      }
+      if (k !== undefined) {
+        kb = '<div class="mblock"><h3>経費精算<span>' + (k && !k.error ? '¥' + fmt(k.amount) + '・' + k.count + '件' + (k.ym ? '・' + esc(k.ym) : '') : '') + '</span></h3>';
+        if (!k) kb += '<div class="mempty">読み込み中…</div>';
+        else if (k.error) kb += '<div class="mempty">読めませんでした：' + esc(k.error) + '</div>';
+        else {
+          var top = k.items.length ? k.items[0][1] : 1;
+          kb += k.items.length ? '<div class="bars">' + k.items.map(function (it) {
+            return '<div class="brow"><span class="bl">' + esc(it[0]) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(it[1] / top * 100)) + '%"></i></span><span class="bv">¥' + fmt(it[1]) + '</span></div>';
+          }).join('') + '</div>' : '';
+          kb += linesHtml(k.lines);
+        }
+        kb += '</div>';
+      }
+      return '<details class="mcard" data-name="' + esc(x.name) + '"' + (openNames[x.name] ? ' open' : '') + '><summary>'
+        + '<div class="mn"><b>' + esc(x.name) + '</b><small>' + (R.isPartner(x.name) ? 'パートナー様' : 'Sieg社員') + '</small></div>'
+        + '<div class="mt num">¥' + fmt(x.total) + '</div><div class="mv">' + chips + '</div></summary>'
+        + '<div class="mbody"' + (c === undefined || k === undefined ? ' style="grid-template-columns:1fr"' : '') + '>' + cb + kb + '</div></details>';
+    }).join('');
+    $('money-wrap').hidden = !people.length;
+  }
+  $('money').addEventListener('toggle', function (e) {
+    var d = e.target; if (d.classList && d.classList.contains('mcard')) openNames[d.dataset.name] = d.open;
+  }, true);
+  $('open-all').addEventListener('click', function () {
+    var cards = document.querySelectorAll('.mcard'), anyClosed = Array.prototype.some.call(cards, function (d) { return !d.open; });
+    Array.prototype.forEach.call(cards, function (d) { d.open = anyClosed; openNames[d.dataset.name] = anyClosed; });
+    this.textContent = anyClosed ? 'すべて閉じる' : 'すべて開く';
+  });
 
   document.querySelectorAll('[data-sort]').forEach(function (b) {
     b.addEventListener('click', function () {

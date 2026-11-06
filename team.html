@@ -459,6 +459,24 @@
     }).catch(function (e) { return { error: e.message }; });
   }
 
+  // パートナー様のシフト（shift-form と同じ GAS）。シフトが無い日は休みなので、日報の「未提出」にしない
+  var SHIFT_PARTNER_GAS = 'https://script.google.com/macros/s/AKfycbwx4-wjr4Qmx6zeXDXZhht-65W7veveJvaXXmC9V5MQLipOLxLoWfz-XEUBau8NZ58h/exec';
+  //   → { known: true, today: 今日シフトがあるか, upto: 今日までのシフト日数 } ／ 読めない・シフト表が別の月なら { known: false }
+  function shiftOf(name) {
+    var t = todayYmd(), y = Number(t.slice(0, 4)), m = Number(t.slice(5, 7)), d = Number(t.slice(8, 10));
+    return GasClient.post(SHIFT_PARTNER_GAS, { action: 'getMyShifts', name: name }, { retry: true }).then(function (r) {
+      if (!r || !r.ok || !Array.isArray(r.data)) return { known: false };
+      var list = r.data;
+      if (list.some(function (x) { return Number(x.year) !== y || Number(x.month) !== m; })) return { known: false };
+      var today = false, upto = 0;
+      list.forEach(function (x) {
+        if (x.startDay <= d && d <= x.endDay) today = true;
+        upto += Math.max(0, Math.min(x.endDay, d) - x.startDay + 1);
+      });
+      return { known: true, today: today, upto: upto };
+    }).catch(function () { return { known: false }; });
+  }
+
   // 経費精算（経費精算の index.html と同じ GAS）
   var KEIHI_GAS = 'https://script.google.com/macros/s/AKfycbzyXEYU_0VhvEpnmZx3JWaxXRdOEP-Lam9R9Fxwv4nVRr6ExzQrBmdO-rgUlwGkcgzU/exec';
   var KEIHI = R.forTool('keihi');
@@ -555,10 +573,13 @@
     // 獲得と日報が揃った時点で、まず KPI と表を出す
     return Promise.all([
       GasClient.get(P.API, { action: 'gainStats', from: viewYm }),
-      GasClient.get(P.API, { action: 'nippouStatus', month: viewYm }).catch(function () { return null; })
+      GasClient.get(P.API, { action: 'nippouStatus', month: viewYm }).catch(function () { return null; }),
+      isNow() ? Promise.all(NIPPOU.map(shiftOf)) : null
     ]).then(function (r) {
       if (my !== gen) return;
       var stats = r[0], nip = r[1];
+      data.shift = {};
+      if (r[2]) NIPPOU.forEach(function (n, i) { data.shift[n] = r[2][i]; });
       if (!stats || !stats.ok || !stats.rows) throw new Error('獲得報告の集計が読めませんでした（準備中かもしれません）');
       data.stats = stats;
       data.nippou = nip && nip.ok && nip.days ? nip : null;
@@ -589,6 +610,7 @@
       var nd = (data.nippou && data.nippou.days[n]) || [];
       return { name: n, i: i, partner: R.isPartner(n), s: s,
         nippouToday: isNow() && nd.indexOf(today) >= 0, nippouDays: nd.length,
+        shift: (data.shift && data.shift[n]) || { known: false },
         nippouLast: (data.nippou && data.nippou.last[n]) || '' };
     });
     // 順位は戦闘力の降順で1回だけ決める（同点は名簿順）。並べ替えでは変わらない
@@ -676,6 +698,9 @@
       return '<div class="kpi"><div class="k">' + mWord() + 'の日報</div><div class="v num">' + days + '<small>日分</small></div><div class="s">'
         + (none.length ? '0日：' + none.map(function (x) { return esc(x.name); }).join('・') : need.length + '人とも提出あり') + '</div></div>';
     }
+    // 今日シフトがある人（シフトが読めない人も含める）と、休みでも出した人だけを数える
+    need = need.filter(function (x) { return x.nippouToday || !x.shift.known || x.shift.today; });
+    if (!need.length) return '<div class="kpi"><div class="k">きょうの日報</div><div class="v">—</div><div class="s">きょうはシフトの人がいません</div></div>';
     var yet = need.filter(function (x) { return !x.nippouToday; });
     return '<div class="kpi' + (yet.length ? ' alert' : '') + '"><div class="k">きょうの日報</div><div class="v num">'
       + (need.length - yet.length) + '<small>/ ' + need.length + '人</small></div><div class="s">'
@@ -717,9 +742,12 @@
     var nipToday = !useN ? '<span class="dim">—</span>'
       : !data.nippou ? '<span class="dim">準備中</span>'
       : !isNow() ? (x.nippouLast ? '<span class="small">' + esc(x.nippouLast) + '</span>' : '<span class="dim">—</span>')
-      : x.nippouToday ? '<span class="tag ok">提出済み</span>' : '<span class="tag ng">未提出</span>';
+      : x.nippouToday ? '<span class="tag ok">提出済み</span>'
+      : x.shift.known && !x.shift.today ? '<span class="dim">休み</span>'
+      : '<span class="tag ng">未提出</span>' + (x.shift.known ? '' : '<span class="small">シフト不明</span>');
     var nipMonth = !useN || !data.nippou ? '<span class="dim">—</span>'
       : '<span class="num big">' + x.nippouDays + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">日</small></span>'
+        + (isNow() && x.shift.known ? '<span class="small">シフト ' + x.shift.upto + '日（今日まで）</span>' : '')
         + (x.nippouLast ? '<span class="small">最後 ' + esc(x.nippouLast) + '</span>' : '');
     var rk = 'rk' + (x.rank <= 3 ? ' r' + x.rank : '');
     return '<tr data-row="' + esc(x.name) + '">'

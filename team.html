@@ -568,7 +568,7 @@
         var t0 = e.date ? new Date(e.date) : null, ok = t0 && !isNaN(t0);
         var d = ok ? new Date(t0.getTime() + 9 * 3600000) : null;
         var inMonth = ok && d.getUTCFullYear() === Number(viewYm.slice(0, 4)) && d.getUTCMonth() + 1 === Number(viewYm.slice(5, 7));
-        return { day: inMonth ? d.getUTCDate() : null, d: ok ? (d.getUTCMonth() + 1) + '/' + d.getUTCDate() : '—', t: String(e.item || ''), sub: String(e.description || ''), a: Number(e.amount) || 0 };
+        return { flow: String(e.flow || ''), day: inMonth ? d.getUTCDate() : null, d: ok ? (d.getUTCMonth() + 1) + '/' + d.getUTCDate() : '—', t: String(e.item || ''), sub: String(e.description || ''), a: Number(e.amount) || 0 };
       });
       return { ym: String(r[0].data.yearMonth), fromHistory: !r[2], count: list.length, amount: Math.round(total), items: items, lines: lines };
     }).catch(function (e) { return { error: e.message }; });
@@ -919,17 +919,21 @@
 
   /* ── 商流別：稼働費・経費の1件ずつを、その日のその人のシフトの取引先に振り分ける ──
      シフトが無い日・取引先の無い日・日付の無い分（月まとめなど）は「商流なし」 */
-  var NO_FLOW = '商流なし';
+  var NO_FLOW = '商流なし', UNSET_FLOW = '商流未選択', NO_SHIFT = 'シフト未取得';
+  // 経費は入力のときに選んだ商流（「なし」＝会社の経費など、空＝まだ選んでいない）。稼働費はその日のシフトの取引先
+  function keihiFlow(l) { return l.flow === 'なし' ? NO_FLOW : (l.flow || UNSET_FLOW); }
   function flowOf(name, day) {
-    var by = data.shiftSum && data.shiftSum.byDay && data.shiftSum.byDay[name];
+    if (!data.shiftSum || !data.shiftSum.byDay) return NO_SHIFT;   // シフト集計が読めないとき（GAS 更新前など）
+    var by = data.shiftSum.byDay[name];
     var t = by && day ? by[String(day)] : '';
     return t || NO_FLOW;
   }
+  function isOther(f) { return f === NO_FLOW || f === UNSET_FLOW || f === NO_SHIFT ? 1 : 0; }
   function splitByFlow(name) {
     var c = data.commute[name], k = data.keihi[name], flows = {};
     var add = function (lines, key) {
       (lines || []).forEach(function (l) {
-        var f = flowOf(name, l.day);
+        var f = key === 'k' ? keihiFlow(l) : flowOf(name, l.day);
         flows[f] = flows[f] || { c: 0, k: 0 };
         flows[f][key] += Math.round(Number(l.a) || 0);
       });
@@ -942,11 +946,6 @@
     if (!data || !data.shiftReady) return;
     $('shouryu-wrap').hidden = false;
     $('shouryu-title').textContent = Number(viewYm.slice(5, 7)) + '月の商流別 稼働費・経費';
-    if (!data.shiftSum) {
-      $('shouryu-all').innerHTML = '<div class="snote">シフト集計が読めないので、商流ごとに分けられません（上のシフト集計の案内を見てください）。</div>';
-      $('shouryu').innerHTML = ''; $('shouryu-note').textContent = '';
-      return;
-    }
     var people = PEOPLE.map(function (n, i) { return { name: n, i: i }; })
       .filter(function (x) { return COMMUTE.indexOf(x.name) >= 0 || KEIHI.indexOf(x.name) >= 0; });
     var all = {}, cards = '';
@@ -957,28 +956,30 @@
       var bad = (usesC && c && c.error) || (usesK && k && k.error);
       var flows = splitByFlow(x.name), keys = Object.keys(flows);
       keys.forEach(function (f) { all[f] = all[f] || { c: 0, k: 0 }; all[f].c += flows[f].c; all[f].k += flows[f].k; });
-      keys.sort(function (a, b) { return (a === NO_FLOW) - (b === NO_FLOW) || (flows[b].c + flows[b].k) - (flows[a].c + flows[a].k); });
+      keys.sort(function (a, b) { return isOther(a) - isOther(b) || (flows[b].c + flows[b].k) - (flows[a].c + flows[a].k); });
       var tc = 0, tk = 0;
       keys.forEach(function (f) { tc += flows[f].c; tk += flows[f].k; });
       var cell = function (v, uses) { return uses ? '¥' + fmt(v) : '<span class="dim">—</span>'; };
       var body = keys.length ? '<table class="stab"><tr><th>商流</th><th>稼働費</th><th>経費</th><th>計</th></tr>'
         + keys.map(function (f) {
-            return '<tr' + (f === NO_FLOW ? ' class="none"' : '') + '><td>' + esc(f) + '</td><td>' + cell(flows[f].c, usesC) + '</td><td>' + cell(flows[f].k, usesK) + '</td><td>¥' + fmt(flows[f].c + flows[f].k) + '</td></tr>';
+            return '<tr' + (isOther(f) ? ' class="none"' : '') + '><td>' + esc(f) + '</td><td>' + cell(flows[f].c, usesC) + '</td><td>' + cell(flows[f].k, usesK) + '</td><td>¥' + fmt(flows[f].c + flows[f].k) + '</td></tr>';
           }).join('')
         + (keys.length > 1 ? '<tr class="sum"><td>合計</td><td>' + cell(tc, usesC) + '</td><td>' + cell(tk, usesK) + '</td><td>¥' + fmt(tc + tk) + '</td></tr>' : '')
         + '</table>'
         : '<div class="snote">' + (waiting ? '読み込み中…' : bad ? '読めませんでした' : 'この月の稼働費・経費はありません。') + '</div>';
       cards += '<div class="scard" data-flow="' + esc(x.name) + '"><div class="who-h"><b><i>' + (x.i + 1) + '.</i>' + esc(x.name) + '</b><span>¥' + fmt(tc + tk) + '</span></div>' + body + '</div>';
     });
-    var allKeys = Object.keys(all).sort(function (a, b) { return (a === NO_FLOW) - (b === NO_FLOW) || (all[b].c + all[b].k) - (all[a].c + all[a].k); });
+    var allKeys = Object.keys(all).sort(function (a, b) { return isOther(a) - isOther(b) || (all[b].c + all[b].k) - (all[a].c + all[a].k); });
     var top = Math.max.apply(null, allKeys.map(function (f) { return all[f].c + all[f].k; }).concat([1]));
     $('shouryu-all').innerHTML = '<h3>全員の合計（商流ごと）<span>稼働費＋経費</span></h3>' + (allKeys.length ? '<div class="bars">' + allKeys.map(function (f) {
       var v = all[f].c + all[f].k;
-      return '<div class="brow' + (f === NO_FLOW ? ' zero' : '') + '"><span class="bl">' + esc(f) + '</span><span class="bb"><i style="width:' + Math.round(v / top * 100) + '%"></i></span>'
+      return '<div class="brow' + (isOther(f) ? ' zero' : '') + '"><span class="bl">' + esc(f) + '</span><span class="bb"><i style="width:' + Math.round(v / top * 100) + '%"></i></span>'
         + '<span class="bv num">¥' + fmt(v) + '</span></div><div class="sub-all" style="margin:-4px 0 4px 5.4em">稼働費 ¥' + fmt(all[f].c) + '・経費 ¥' + fmt(all[f].k) + '</div>';
     }).join('') + '</div>' : '<div class="snote">まだありません。</div>');
     $('shouryu').innerHTML = cards;
-    $('shouryu-note').textContent = '稼働費・経費の1件ずつを、その日のその人のシフトの取引先に振り分けています。シフトが無い日・取引先の無い日・日付の無い分は「' + NO_FLOW + '」です。';
+    $('shouryu-note').textContent = '経費は、経費精算で1件ずつ選んだ商流で分けています（選んでいない分は「' + UNSET_FLOW + '」。経費精算の履歴から、前の月の分もあとから選べます）。'
+      + '稼働費は、その日のその人のシフトの取引先で分けています（シフトが無い日・取引先の無い日・日付の無い分は「' + NO_FLOW + '」）。'
+      + (data.shiftSum ? '' : 'いまはシフト集計が読めないので、稼働費は「' + NO_SHIFT + '」にまとめています。');
   }
 
   function renderMoney() {

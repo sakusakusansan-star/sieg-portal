@@ -297,7 +297,7 @@
       <thead>
         <tr>
           <th class="c-rank">#</th><th class="c-name">名前</th><th>獲得</th><th>戦闘力</th><th>MNP</th><th>固定</th>
-          <th>日報（今日）</th><th>日報（今月）</th><th>稼働費 入力</th><th>稼働費 金額</th>
+          <th>日報（今日）</th><th>日報（今月）</th><th>稼働費 入力</th><th>稼働費 金額</th><th>経費 件数</th><th>経費 金額</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -473,7 +473,7 @@
       keihiOf(n).then(function (k) {
         if (my !== gen) return;
         data.keihi[n] = k;
-        if (data.stats) renderMoney();
+        if (data.stats) { paintKeihiCells(n); renderMoney(); }
         settled();
       });
     });
@@ -559,6 +559,33 @@
     if (a) a.innerHTML = commuteAmtHtml(name);
   }
 
+  /* ── 経費精算のセル（稼働費と同じく、届いた人から入れ替える） ── */
+  function usesKeihi(name) { return KEIHI.indexOf(name) >= 0; }
+  function keihiCountHtml(name) {
+    if (!usesKeihi(name)) return '<span class="dim">—</span>';
+    var k = data.keihi[name];
+    if (!k) return '<span class="wait">…</span>';
+    if (k.error) return '<span class="err">読めません</span>';
+    var h = '<span class="num big">' + k.count + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">件</small></span>';
+    var m = Number(String(data.month).slice(5, 7));
+    if (k.ym && k.ym.indexOf(m + '月') < 0) h += '<span class="small">シートは' + esc(k.ym.replace(/^\d+年/, '')) + '</span>';
+    return h;
+  }
+  function keihiAmtHtml(name) {
+    if (!usesKeihi(name)) return '<span class="dim">—</span>';
+    var k = data.keihi[name];
+    if (!k) return '<span class="wait">…</span>';
+    if (k.error) return '<span class="err">読めません</span>';
+    return '<span class="num big">¥' + fmt(k.amount) + '</span>';
+  }
+  function paintKeihiCells(name) {
+    var row = findRow(name);
+    if (!row) return;
+    var c = row.querySelector('[data-c="kcnt"]'), a = row.querySelector('[data-c="kamt"]');
+    if (c) c.innerHTML = keihiCountHtml(name);
+    if (a) a.innerHTML = keihiAmtHtml(name);
+  }
+
   /* ── サマリー3枚 ── */
   function kpiGain() {
     var total = 0, pw = 0;
@@ -630,6 +657,8 @@
       + '<td data-k="日報（今月）">' + nipMonth + '</td>'
       + '<td data-k="稼働費 入力" data-c="cdays">' + commuteDaysHtml(x.name) + '</td>'
       + '<td data-k="稼働費 金額" data-c="camt">' + commuteAmtHtml(x.name) + '</td>'
+      + '<td data-k="経費 件数" data-c="kcnt">' + keihiCountHtml(x.name) + '</td>'
+      + '<td data-k="経費 金額" data-c="kamt">' + keihiAmtHtml(x.name) + '</td>'
       + '</tr>';
   }
 

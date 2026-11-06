@@ -209,30 +209,28 @@
   .empty-note { font-size: 12px; color: var(--muted2); }
 
   /* 送信バー */
+  /* 送信バー：ほかの画面（sieg-theme.css の .sg-actionbar / .sg-primary）と同じ見た目。案内はボタンの上 */
   .send-bar {
     position: sticky;
     bottom: 0;
     margin: 18px -14px 0;
-    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
-    background: linear-gradient(180deg, transparent 0%, var(--sg-bg) 30%);
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--sg-surface) 92%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+    border-top: 1px solid var(--sg-hair);
   }
   .send {
-    width: 100%;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 900;
-    letter-spacing: 1px;
-    color: var(--ink);
-    background: var(--amber);
-    border: none;
-    border-radius: 11px;
-    padding: 15px;
-    cursor: pointer;
-    box-shadow: none;
+    display: block; width: 100%; min-height: 52px; padding: 0;
+    font: 900 16px/1.2 var(--sg-font); letter-spacing: .04em;
+    color: var(--sg-on-primary); background: var(--sg-primary);
+    border: none; border-radius: 14px; cursor: pointer; box-shadow: none;
+    transition: transform .06s, filter .12s;
   }
-  .send:disabled { background: var(--sg-hair); color: var(--muted2); box-shadow: none; cursor: default; }
-  .send.del { background: var(--red); color: #fff; box-shadow: none; }
-  .send-sub { text-align: center; font-size: 11px; color: var(--muted2); margin-top: 8px; line-height: 1.6; }
+  .send:active { filter: brightness(.88); transform: scale(.985); }
+  .send:disabled { opacity: .45; transform: none; filter: none; cursor: default; }
+  .send.del { background: var(--sg-red); color: #fff; }
+  .send-sub { text-align: center; font-size: 12px; font-weight: 700; color: var(--sg-mute); margin-bottom: 8px; line-height: 1.4; }
+  .send-sub:empty { display: none; }
 
   /* モード切替 */
   .modes { display: flex; gap: 7px; margin-bottom: 12px; }
@@ -317,8 +315,6 @@
   .btn, .pick button, .input, .cal-cell { border-radius: var(--sg-r-sm); }
   .day-row .d { color: var(--sg-ink); }
   .ov-item b { color: var(--sg-ink); }
-  .send { border-radius: var(--sg-r-sm); }
-  .send:disabled { background: var(--sg-hair); color: var(--sg-faint); }
 </style>
 </head>
 <body>
@@ -395,8 +391,8 @@
   </div>
 
   <div class="send-bar">
-    <button class="send" type="button" id="send" disabled>送信する</button>
     <div class="send-sub" id="send-sub">名前・内容・日にちを選ぶと送信できます</div>
+    <button class="send" type="button" id="send" disabled>送信する</button>
   </div>
 
   <div class="foot">
@@ -849,7 +845,7 @@
   /* ═══ 登録済みの読み込み ═══ */
   function loadExisting() {
     if (!apiReady() || !state.name || !state.year) return;
-    $('day-list').innerHTML = '<div class="empty-note">読み込み中…</div>';
+    $('day-list').innerHTML = '<div class="sg-skel-wrap" aria-busy="true" aria-label="読み込み中"><div class="sg-skel card"></div><div class="sg-skel card"></div></div>';
     GasClient.get(SHIFT_API, { action: 'list', name: state.name, year: state.year, month: state.month })
       .then(function(data) {
         if (!data || !data.ok) throw new Error((data && data.error) || '読み込みに失敗しました');

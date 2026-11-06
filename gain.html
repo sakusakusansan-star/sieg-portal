@@ -157,7 +157,7 @@
     flex: 1; min-height: 52px; border: 0; border-radius: 14px; background: var(--sg-primary); color: var(--sg-on-primary);
     font-size: 16px; font-weight: 900; letter-spacing: .04em;
   }
-  .primary:disabled { opacity: .35; }
+  .primary:disabled { opacity: .45; }   /* ほかの画面の .sg-primary と同じ */
 
   /* 確認のシート */
   .scrim { position: fixed; inset: 0; background: var(--sg-scrim); z-index: 40; }
@@ -233,7 +233,7 @@
 
   <section class="sent" id="sent">
     <h2>きょう送った報告 <small id="sent-sum"></small></h2>
-    <div class="card sent-list" id="sent-list"><div class="empty">読み込み中…</div></div>
+    <div class="card sent-list" id="sent-list"><div class="sg-skel-wrap" aria-busy="true" aria-label="読み込み中"><div class="sg-skel card"></div><div class="sg-skel card"></div></div></div>
   </section>
 </div>
 
@@ -469,7 +469,7 @@
     $('sent').hidden = !state.name;
     if (!state.name) return;
     var seq = ++loadSeq;
-    list.innerHTML = '<div class="empty">読み込み中…</div>';
+    list.innerHTML = '<div class="sg-skel-wrap" aria-busy="true" aria-label="読み込み中"><div class="sg-skel card"></div><div class="sg-skel card"></div></div>';
     GasClient.get(P.API, { action: 'gains', name: state.name, date: state.date }).then(function (data) {
       if (seq !== loadSeq) return;
       if (!data || !data.ok || !data.reports) {

@@ -123,7 +123,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .power .diff.down{color:#C33}
 
 /* キャラを選ぶ */
-.picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.picker{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (min-width:520px){.picker{grid-template-columns:repeat(6,1fr)}}
 .pick{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px 6px;background:var(--panel);
   clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);opacity:.7}
 .pick .fig{height:52px}
@@ -471,10 +472,10 @@ details p{margin:10px 0 0;line-height:1.7}
 
   if (!R || !PR) { $('state').textContent = '読み込みに失敗しました。電波のよいところで再読み込みしてください。'; return; }
 
-  /* ── キャラの枠（10体）──
-     画像は fighters/ フォルダに 01.png 〜 10.png の名前で置く（背景が透明な PNG がきれい）。
+  /* ── キャラの枠（12体）──
+     画像は fighters/ フォルダに 01.png 〜 12.png の名前で置く（背景が透明な PNG がきれい）。
      名前を付けたいときは、下の NAMES を書き換える。画像が無い枠はシルエットと「？」を出す。 */
-  var NAMES = ['キャラ1','キャラ2','キャラ3','キャラ4','キャラ5','キャラ6','キャラ7','キャラ8','キャラ9','キャラ10'];
+  var NAMES = ['キャラ1','キャラ2','キャラ3','キャラ4','キャラ5','キャラ6','キャラ7','キャラ8','キャラ9','キャラ10','キャラ11','キャラ12'];
   var FIGHTERS = NAMES.map(function(n, i){ var no = (i < 9 ? '0' : '') + (i + 1); return { id: no, name: n, img: 'fighters/' + no + '.png' }; });
   function fighterOf(id){ for (var i = 0; i < FIGHTERS.length; i++) if (FIGHTERS[i].id === id) return FIGHTERS[i]; return FIGHTERS[0]; }
   var SIL = '<svg viewBox="0 0 100 120" aria-hidden="true"><g fill="currentColor">' +

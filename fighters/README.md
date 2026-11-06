@@ -7,7 +7,7 @@
 1. このフォルダを GitHub で開く
    https://github.com/sakusakusansan-star/sieg-portal/tree/main/fighters
 2. 右上の「Add file」→「Upload files」
-3. 画像を **`01.png` 〜 `10.png`** の名前にしてから、ドラッグして入れる
+3. 画像を **`01.png` 〜 `12.png`** の名前にしてから、ドラッグして入れる
 4. 下の「Commit changes」を押す（1〜2分で画面に出ます）
 
 - 背景が透明な PNG がきれいに見えます。縦長（3:4 くらい）がおすすめです。

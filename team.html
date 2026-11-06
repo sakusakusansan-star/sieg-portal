@@ -480,15 +480,35 @@
   // 経費精算（経費精算の index.html と同じ GAS）
   var KEIHI_GAS = 'https://script.google.com/macros/s/AKfycbzyXEYU_0VhvEpnmZx3JWaxXRdOEP-Lam9R9Fxwv4nVRr6ExzQrBmdO-rgUlwGkcgzU/exec';
   var KEIHI = R.forTool('keihi');
-  // シートがこの月ならシートから、違う月なら経費履歴（getArchivedExpenses）から
+  // シートの年月の書き方（「2026年11月」「２０２６年１１月分」「2026/11」など）を 2026-11 にそろえる。読めなければ ''
+  function ymOf(text) {
+    var t = String(text || '').replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); });
+    var m = t.match(/(\d{4})\s*[年\/.\-]\s*(\d{1,2})/);
+    if (m) return m[1] + '-' + String(Number(m[2])).padStart(2, '0');
+    m = t.match(/(\d{1,2})\s*月/);   // 年が無いときは、見ている月の年
+    return m ? viewYm.slice(0, 4) + '-' + String(Number(m[1])).padStart(2, '0') : '';
+  }
+  function monthOnly(text) { var y = ymOf(text); return y ? Number(y.slice(5)) + '月' : String(text || '?'); }
+  // シートがこの月ならシートから、違う月なら経費履歴から。どちらにも無ければ「—（シートは10月）」
   function keihiOf(name) {
-    var want = kanjiYm(viewYm);
-    return GasClient.post(KEIHI_GAS, { action: 'getSheetInfo', staffName: name }, { retry: true }).then(function (r0) {
+    return Promise.all([
+      GasClient.post(KEIHI_GAS, { action: 'getSheetInfo', staffName: name }, { retry: true }),
+      GasClient.post(KEIHI_GAS, { action: 'getExpenseMonths', staffName: name }, { retry: true }).catch(function () { return null; })
+    ]).then(function (r) {
+      var r0 = r[0], months = r[1] && r[1].ok && Array.isArray(r[1].data) ? r[1].data : null;
       if (!r0 || !r0.ok) throw new Error((r0 && r0.error) || '読めませんでした');
-      var onSheet = String(r0.data && r0.data.yearMonth || '') === want;
-      return GasClient.post(KEIHI_GAS, onSheet ? { action: 'getExpenses', staffName: name } : { action: 'getArchivedExpenses', staffName: name, yearMonth: want }, { retry: true })
-        .then(function (r1) { return [{ ok: true, data: { yearMonth: want } }, r1, onSheet]; });
+      var sheetText = String(r0.data && r0.data.yearMonth || ''), sheetYm = ymOf(sheetText);
+      // シートの年月が読めないときは、これまで通りシートを見せる（数字を隠さない）
+      if (sheetYm === viewYm || (!sheetYm && isNow())) {
+        return GasClient.post(KEIHI_GAS, { action: 'getExpenses', staffName: name }, { retry: true })
+          .then(function (r1) { return [{ data: { yearMonth: sheetText } }, r1, true]; });
+      }
+      var hit = months ? months.filter(function (x) { return !x.current && ymOf(x.yearMonth) === viewYm; })[0] : { yearMonth: kanjiYm(viewYm) };
+      if (!hit) return { none: true, sheet: monthOnly(sheetText) };
+      return GasClient.post(KEIHI_GAS, { action: 'getArchivedExpenses', staffName: name, yearMonth: hit.yearMonth }, { retry: true })
+        .then(function (r1) { return [{ data: { yearMonth: hit.yearMonth } }, r1, false]; });
     }).then(function (r) {
+      if (r.none) return r;
       if (!r[1] || !r[1].ok) throw new Error((r[1] && r[1].error) || '読めませんでした');
       var list = r[1].data || [], total = 0, by = {};
       list.forEach(function (e) {
@@ -664,6 +684,7 @@
     var k = data.keihi[name];
     if (!k) return '<span class="wait">…</span>';
     if (k.error) return '<span class="err">読めません</span>';
+    if (k.none) return '<span class="dim">—</span><span class="small">記録なし</span><span class="small">シートは' + esc(k.sheet) + '</span>';
     var h = '<span class="num big">' + k.count + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">件</small></span>';
     if (k.fromHistory && k.count) h += '<span class="small">履歴から</span>';
     return h;
@@ -673,6 +694,7 @@
     var k = data.keihi[name];
     if (!k) return '<span class="wait">…</span>';
     if (k.error) return '<span class="err">読めません</span>';
+    if (k.none) return '<span class="dim">—</span>';
     return '<span class="num big">¥' + fmt(k.amount) + '</span>';
   }
   function paintKeihiCells(name) {
@@ -796,7 +818,7 @@
   function renderMoney() {
     var people = PEOPLE.filter(function (n) { return COMMUTE.indexOf(n) >= 0 || KEIHI.indexOf(n) >= 0; }).map(function (n, i) {
       var c = data.commute[n], k = data.keihi[n];
-      var ca = c && !c.error && !c.pending && !c.none ? c.amount : 0, ka = k && !k.error ? k.amount : 0;
+      var ca = c && !c.error && !c.pending && !c.none ? c.amount : 0, ka = k && !k.error && !k.none ? k.amount : 0;
       return { name: n, i: i, c: COMMUTE.indexOf(n) >= 0 ? c : undefined, k: KEIHI.indexOf(n) >= 0 ? k : undefined, ca: ca, ka: ka, total: ca + ka };
     }).sort(function (a, b) { return b.total - a.total || a.i - b.i; });
     var sc = 0, sk = 0, nc = 0, nk = 0;
@@ -811,6 +833,7 @@
         : c.none ? '<span class="chip">稼働費 ' + (c.oldGas ? '前の月は準備中' : '記録なし') + '</span>'
         : '<span class="chip c">稼働費 <b>¥' + fmt(c.amount) + '</b>' + c.days + '日</span>' + (c.fromHistory ? '<span class="chip">稼働費は履歴から</span>' : '');
       if (k !== undefined) chips += !k ? '<span class="chip">経費 <b>…</b></span>' : k.error ? '<span class="chip warn">経費 読めません</span>'
+        : k.none ? '<span class="chip">経費 記録なし（シートは' + esc(k.sheet) + '）</span>'
         : '<span class="chip k">経費 <b>¥' + fmt(k.amount) + '</b>' + k.count + '件</span>' + (k.fromHistory && k.count ? '<span class="chip">経費は履歴から</span>' : '');
       var cb = '', kb = '';
       if (c !== undefined) {
@@ -829,9 +852,10 @@
         cb += '</div>';
       }
       if (k !== undefined) {
-        kb = '<div class="mblock"><h3>経費精算<span>' + (k && !k.error ? '¥' + fmt(k.amount) + '・' + k.count + '件' + (k.ym ? '・' + esc(k.ym) : '') : '') + '</span></h3>';
+        kb = '<div class="mblock"><h3>経費精算<span>' + (k && !k.error && !k.none ? '¥' + fmt(k.amount) + '・' + k.count + '件' + (k.ym ? '・' + esc(k.ym) : '') : '') + '</span></h3>';
         if (!k) kb += '<div class="mempty">読み込み中…</div>';
         else if (k.error) kb += '<div class="mempty">読めませんでした：' + esc(k.error) + '</div>';
+        else if (k.none) kb += '<div class="mempty">' + mWord() + 'の記録がありません（今のシートは' + esc(k.sheet) + '）。シートの月を切り替えていない時は、‹ › でシートの月を見てください。</div>';
         else {
           var top = k.items.length ? k.items[0][1] : 1;
           kb += k.items.length ? '<div class="bars">' + k.items.map(function (it) {

@@ -228,6 +228,17 @@
   .mblock h3 span { color: var(--t-mute); font-weight: 700; font-size: 11.5px; font-variant-numeric: tabular-nums; }
   .parts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
   .bars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  /* ───────── シフト集計（パートナー用シフトの「集計」シートと同じ数え方） ───────── */
+  .srep { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .scard { background: var(--t-card); border: 1px solid var(--t-hair); border-radius: var(--t-r); box-shadow: var(--t-lift); padding: 14px 16px 6px; }
+  .scard h3 { margin: 0 0 10px; font-size: 13px; font-weight: 900; color: var(--t-ink2); display: flex; justify-content: space-between; gap: 8px; }
+  .scard h3 span { font-weight: 700; color: var(--t-mute); font-size: 12px; }
+  .scard .brow { grid-template-columns: 4.5em 1fr 6.2em; font-size: 13px; }
+  .scard .brow .bv { text-align: right; }
+  .scard .brow .bv small { color: var(--t-mute); font-weight: 700; margin-left: 4px; }
+  .scard .brow.zero .bl, .scard .brow.zero .bv { color: var(--t-faint); }
+  .snote { font-size: 12.5px; font-weight: 700; color: var(--t-mute); padding: 6px 2px; }
+  @media (max-width: 840px) { .srep { grid-template-columns: 1fr; } }
   .brow { display: grid; grid-template-columns: 5.5em 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
   .brow .bl { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .brow .bb { height: 8px; background: var(--t-sunk); border-radius: 4px; overflow: hidden; }
@@ -345,6 +356,13 @@
     </table>
   </div>
 
+  <div id="shift-wrap" hidden>
+    <div class="sec"><span id="shift-title">シフト集計</span></div>
+    <div class="kpis" id="shift-kpis" style="margin-top:12px"></div>
+    <div class="srep" id="shift-rep" style="margin-top:10px"></div>
+    <div class="snote" id="shift-note" hidden></div>
+  </div>
+
   <div id="money-wrap" hidden>
     <div class="sec"><span>経費・稼働費</span><button type="button" id="open-all">すべて開く</button></div>
     <div class="kpis" id="money-kpis" style="margin-top:12px"></div>
@@ -352,7 +370,7 @@
   </div>
 
   <p class="note">
-    獲得は獲得報告から、日報は日報フォームから、稼働費は稼働費入力（社員はシート、パートナー様は新しい画面）から、経費精算は経費精算のシートから読んでいます。<br>
+    獲得は獲得報告から、日報は日報フォームから、シフト集計はパートナー用シフトの表（「集計」シートと同じ数え方）から、稼働費は稼働費入力（社員はシート、パートナー様は新しい画面）から、経費精算は経費精算のシートから読んでいます。<br>
     日報はパートナー様だけ、稼働費・経費精算は使っている人だけ出します（ほかは「—」）。どれも上で選んだ月の分だけを出します。<br>
     社員の稼働費と経費精算は、シートがその月ならシートから、前の月なら履歴から読みます（稼働費の履歴は、月を切り替えたときかPDFを保存したときに残ります）。
   </p>
@@ -576,6 +594,12 @@
       stamp();
       if (waiting === 0 && !pendingMain) { busy = false; $('reload').disabled = false; }
     }
+
+    // シフト集計（パートナー用シフトの GAS。「集計」シートと同じ数え方。前の月は保存したタブから）
+    $('shift-wrap').hidden = true;
+    GasClient.post(SHIFT_PARTNER_GAS, { action: 'getShiftSummary', year: Number(viewYm.slice(0, 4)), month: Number(viewYm.slice(5, 7)) }, { retry: true })
+      .then(function (r) { if (my === gen) renderShiftSummary(r && r.ok ? r.data : { error: (r && r.error) || '読めませんでした' }); },
+            function (e) { if (my === gen) renderShiftSummary({ error: e.message }); });
 
     // 稼働費・経費精算は重いので切り離し、届いた人から順にセルへ入れる
     COMMUTE.forEach(function (n) {
@@ -820,6 +844,44 @@
       return '<div class="lrow"><span class="d">' + esc(l.d) + '</span><span class="t">' + esc(l.t) + (l.sub ? '<small>' + esc(l.sub) + '</small>' : '') + '</span><span class="a">¥' + fmt(Math.round(l.a)) + '</span></div>';
     }).join('') + '</div>';
   }
+  /* ── シフト集計：総稼働日数・稼働スタッフ数・人ごと・取引先ごと ── */
+  function renderShiftSummary(s) {
+    $('shift-wrap').hidden = false;
+    $('shift-title').textContent = Number(viewYm.slice(5, 7)) + '月のシフト集計';
+    var note = $('shift-note');
+    if (s.error) {
+      $('shift-kpis').innerHTML = ''; $('shift-rep').innerHTML = '';
+      note.hidden = false;
+      note.textContent = /不明なaction/.test(s.error) ? 'シフト集計は準備中です（シフトの GAS の更新待ち）。' : 'シフト集計を読めませんでした：' + s.error;
+      return;
+    }
+    if (!s.found) {
+      $('shift-kpis').innerHTML = ''; $('shift-rep').innerHTML = '';
+      note.hidden = false; note.textContent = Number(viewYm.slice(5, 7)) + '月のシフト表がありません（保存したタブも見つかりません）。';
+      return;
+    }
+    note.hidden = true;
+    var worked = s.staff.filter(function (x) { return x.days > 0; });
+    var avg = worked.length ? Math.round(s.totalDays / worked.length * 10) / 10 : 0;
+    $('shift-kpis').innerHTML =
+      '<div class="kpi hero"><div class="k">総稼働日数</div><div class="v num">' + fmt(s.totalDays) + '<small>日</small></div><div class="s">' + s.daysInMonth + '日間の合計</div></div>'
+      + '<div class="kpi"><div class="k">稼働スタッフ数</div><div class="v num">' + s.activeStaff + '<small>名</small></div><div class="s">' + s.staff.length + '名中</div></div>'
+      + '<div class="kpi"><div class="k">1人あたり</div><div class="v num">' + avg + '<small>日</small></div><div class="s">稼働した人の平均・稼働率 ' + Math.round(avg / s.daysInMonth * 100) + '%</div></div>';
+    var staffRows = s.staff.map(function (x) {
+      return '<div class="brow' + (x.days ? '' : ' zero') + '"><span class="bl">' + esc(x.name) + '</span><span class="bb"><i style="width:' + Math.round(x.days / s.daysInMonth * 100) + '%"></i></span>'
+        + '<span class="bv num">' + x.days + '日<small>' + x.pct + '%</small></span></div>';
+    }).join('');
+    var tri = s.torihiki.slice().sort(function (a, b) { return b.days - a.days; });
+    var top = Math.max.apply(null, tri.map(function (x) { return x.days; }).concat([1]));
+    var triRows = tri.map(function (x) {
+      return '<div class="brow' + (x.days ? '' : ' zero') + '"><span class="bl">' + esc(x.name) + '</span><span class="bb"><i style="width:' + Math.round(x.days / top * 100) + '%"></i></span>'
+        + '<span class="bv num">' + x.days + '日<small>' + x.pct + '%</small></span></div>';
+    }).join('');
+    $('shift-rep').innerHTML =
+      '<div class="scard"><h3>スタッフ別 稼働日数<span>月稼働率</span></h3><div class="bars">' + staffRows + '</div></div>'
+      + '<div class="scard"><h3>取引先別 稼働日数<span>割合</span></h3><div class="bars">' + triRows + '</div></div>';
+  }
+
   function renderMoney() {
     var people = PEOPLE.filter(function (n) { return COMMUTE.indexOf(n) >= 0 || KEIHI.indexOf(n) >= 0; }).map(function (n, i) {
       var c = data.commute[n], k = data.keihi[n];

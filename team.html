@@ -821,7 +821,7 @@
     var left = COMMUTE.filter(function (n) { return !data.commute[n]; }).length;
     return '<div class="kpi"><div class="k">稼働費の入力' + (isNow() ? '' : '（' + mWord() + '）') + '</div><div class="v num">'
       + cm.reduce(function (a, c) { return a + c.days; }, 0) + '<small>日分</small></div><div class="s num">'
-      + cm.length + '人・合計 ¥' + fmt(cm.reduce(function (a, c) { return a + c.amount; }, 0))
+      + cm.filter(function (c) { return c.days > 0 || c.amount > 0; }).length + '人が入力・合計 ¥' + fmt(cm.reduce(function (a, c) { return a + c.amount; }, 0))   // 0日の人は数えない
       + (left ? '<span class="wait">（残り ' + left + '人）</span>' : '') + '</div></div>';
   }
   function paintCommuteKpi() {

@@ -125,7 +125,18 @@
   /* ───────── 並べ替え ───────── */
   .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   /* 見る内容のタブ（スマホだけ。上にくっついて残る） */
-  .vtabs { display: none; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px; position: sticky; top: 6px; z-index: 6;
+  /* スマホもパソコンも、上のタブで1つずつ見せる（全部つなげると縦に長すぎるため） */
+  .app[data-view="list"] #shift-wrap, .app[data-view="list"] #shouryu-wrap, .app[data-view="list"] #money-wrap,
+  .app:not([data-view="list"]) #kpis, .app:not([data-view="list"]) #mix, .app:not([data-view="list"]) #bar,
+  .app:not([data-view="list"]) #tcard, .app:not([data-view="list"]) #state,
+  .app[data-view="shift"] #shouryu-wrap, .app[data-view="shift"] #money-wrap,
+  .app[data-view="flow"] #shift-wrap, .app[data-view="flow"] #money-wrap,
+  .app[data-view="money"] #shift-wrap, .app[data-view="money"] #shouryu-wrap { display: none !important; }
+  /* 広い画面では、商流の1人ずつのカードを3列に（中身の少ないカードは縦に伸ばさない） */
+  #shouryu.srep { align-items: start; }
+  @media (min-width: 1100px) { #shouryu.srep { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  #shouryu-all .brow { grid-template-columns: 6.2em 1fr 6.2em; }
+  .vtabs { display: grid; max-width: 520px; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px; position: sticky; top: 6px; z-index: 6;
     background: color-mix(in srgb, var(--t-sunk) 92%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
     border: 1px solid var(--t-hair); border-radius: var(--t-r-sm); box-shadow: var(--t-lift); }
   .vtabs button { border: 0; background: none; min-height: 38px; border-radius: 9px; font-size: 13px; font-weight: 800; color: var(--t-mute); }
@@ -135,9 +146,9 @@
   .seg button[aria-pressed="true"] { background: var(--t-card); color: var(--t-ink); box-shadow: 0 1px 3px rgba(13,25,42,.14); }
 
   /* ───────── 一覧 ───────── */
-  .tcard { background: var(--t-card); border: 1px solid var(--t-hair); border-radius: var(--t-r); box-shadow: var(--t-lift); }
+  .tcard { background: var(--t-card); border: 1px solid var(--t-hair); border-radius: var(--t-r); box-shadow: var(--t-lift); overflow-x: auto; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; }
-  th, td { padding: 13px 12px; text-align: right; font-size: 14px; white-space: nowrap; }
+  th, td { padding: 12px 9px; text-align: right; font-size: 14px; white-space: nowrap; }   /* 12列が枠に収まるように */
   td { border-top: 1px solid var(--t-hair2); }
   thead th {
     position: sticky; top: 0; z-index: 2; background: var(--t-sunk); color: var(--t-mute);
@@ -195,7 +206,7 @@
     .kpi .s { font-size: 10px; line-height: 1.45; margin-top: 3px; }
     /* スマホでは一覧の表（#table）だけカードの形に。商流別の表（.stab）はそのまま表で出す */
     #table, #table thead, #table tbody, #table tr, #table td { display: block; }
-    .tcard { background: none; border: 0; box-shadow: none; border-radius: 0; }
+    .tcard { background: none; border: 0; box-shadow: none; border-radius: 0; overflow: visible; }
     #table thead { display: none; }
     #table tbody { display: flex; flex-direction: column; gap: 10px; }
     #table tr {
@@ -214,14 +225,6 @@
       color: var(--t-mute); margin-bottom: 3px;
     }
     .mini { width: 100%; max-width: 90px; margin-left: 0; }
-    /* スマホは上のタブで1つずつ見せる（パソコンは全部並べる） */
-    .vtabs { display: grid; }
-    .app[data-view="list"] #shift-wrap, .app[data-view="list"] #shouryu-wrap, .app[data-view="list"] #money-wrap,
-    .app:not([data-view="list"]) #kpis, .app:not([data-view="list"]) #mix, .app:not([data-view="list"]) #bar,
-    .app:not([data-view="list"]) #tcard, .app:not([data-view="list"]) #state,
-    .app[data-view="shift"] #shouryu-wrap, .app[data-view="shift"] #money-wrap,
-    .app[data-view="flow"] #shift-wrap, .app[data-view="flow"] #money-wrap,
-    .app[data-view="money"] #shift-wrap, .app[data-view="money"] #shouryu-wrap { display: none !important; }
     .small { white-space: normal; }
   }
 
@@ -1003,7 +1006,7 @@
     $('shouryu-all').innerHTML = '<h3>全員の合計（商流ごと）<span>稼働費＋経費</span></h3>' + (allKeys.length ? '<div class="bars">' + allKeys.map(function (f) {
       var v = all[f].c + all[f].k;
       return '<div class="brow' + (isOther(f) ? ' zero' : '') + '"><span class="bl">' + esc(f) + '</span><span class="bb"><i style="width:' + Math.round(v / top * 100) + '%"></i></span>'
-        + '<span class="bv num">¥' + fmt(v) + '</span></div><div class="sub-all" style="margin:-4px 0 4px 5.4em">稼働費 ¥' + fmt(all[f].c) + '・経費 ¥' + fmt(all[f].k) + '</div>';
+        + '<span class="bv num">¥' + fmt(v) + '</span></div><div class="sub-all" style="margin:-4px 0 4px 6.8em">稼働費 ¥' + fmt(all[f].c) + '・経費 ¥' + fmt(all[f].k) + '</div>';
     }).join('') + '</div>' : '<div class="snote">まだありません。</div>');
     $('shouryu').innerHTML = cards;
     $('shouryu-note').textContent = '経費は、経費精算で1件ずつ選んだ商流で分けています（選んでいない分は「' + UNSET_FLOW + '」。経費精算の履歴から、前の月の分もあとから選べます）。'
@@ -1098,7 +1101,7 @@
     $('tcard').hidden = true; $('money-wrap').hidden = true; $('kpis').hidden = true; $('mix').hidden = true; $('bar').hidden = true;
     load();   // 前の月の数字が混ざらないよう、表は消してから読み直す（読み込み中の古い応答は gen で捨てる）
   }
-  // スマホのタブ（一覧・シフト・商流・経費）。最後に見たタブを覚える
+  // 上のタブ（一覧・シフト・商流・経費）。スマホもパソコンも。最後に見たタブを覚える
   var VIEW_KEY = 'siegTeamView';
   function setView(v) {
     if (['list', 'shift', 'flow', 'money'].indexOf(v) < 0) v = 'list';

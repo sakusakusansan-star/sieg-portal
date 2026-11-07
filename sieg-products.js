@@ -54,6 +54,7 @@
       { label: 'auMNP',            cat: 'MNP',  pt: 200 },
       { label: 'UQMNP',            cat: 'MNP',  pt: 100 },
       { label: '光新規',           cat: '固定', pt: 100 },
+      { label: 'auでんき',         cat: '固定', pt: 40 },
       { label: 'auカードゴールド', cat: 'カード', pt: 80 },
       { label: 'auカード',         cat: 'カード', pt: 40 },
       { label: '新規',             cat: '新規', pt: 30 }

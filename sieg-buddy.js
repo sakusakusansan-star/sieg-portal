@@ -127,9 +127,11 @@
       return Promise.all([
         G.get(PR.API, { action: 'gainStats', from: month }).catch(function () { return null; }),
         partner ? G.get(PR.API, { action: 'nippouStatus', month: month }).catch(function () { return null; }) : null,
-        partner && R.shiftPartnerApi ? G.post(R.shiftPartnerApi, { action: 'getMyShifts', name: me }, { retry: true }).catch(function () { return null; }) : null
+        partner && R.shiftPartnerApi ? G.post(R.shiftPartnerApi, { action: 'getMyShifts', name: me }, { retry: true }).catch(function () { return null; }) : null,
+        // 日報へのAIのひとこと（日報の GAS が、きょう・きのうの日報を読んで作る）
+        partner ? G.get(PR.API, { action: 'cheer', name: me }).catch(function () { return null; }) : null
       ]).then(function (r) {
-        facts = buildFacts(PR, R, me, month, today, hour, r[0], r[1], r[2]);
+        facts = buildFacts(PR, R, me, month, today, hour, r[0], r[1], r[2], r[3]);
         // 届いたら、いちばん大事なひとことを自分からしゃべる（走ってくる途中なら、着いたときにしゃべる）
         if (facts.length && !factsUsed) setTimeout(function () {
           if (factsUsed || el.classList.contains('run')) return;
@@ -138,8 +140,9 @@
       });
     }).catch(function () {});
   }
-  function buildFacts(PR, R, me, month, today, hour, stats, nip, shift) {
+  function buildFacts(PR, R, me, month, today, hour, stats, nip, shift, cheer) {
     var out = [];
+    var ai = cheer && cheer.ok && cheer.text ? String(cheer.text) : '';
     // 日報（パートナー様）：きょうシフトの日で、夕方になっても出ていなければ知らせる。出していればお礼
     if (nip && nip.ok && nip.days) {
       var sent = (nip.days[me] || []).indexOf(today) >= 0;
@@ -148,9 +151,11 @@
         var mine = shift.data.filter(function (x) { return Number(x.year) === Number(today.slice(0, 4)) && Number(x.month) === Number(today.slice(5, 7)); });
         if (mine.length === shift.data.length) onShift = mine.some(function (x) { return x.startDay <= d && d <= x.endDay; });
       }
-      if (sent) out.push('にっぽう ありがと！ おつかれさま');
-      else if (onShift && hour >= 17) out.push('きょうの日報 まだだよ〜');
-    }
+      if (!sent && onShift && hour >= 17) out.push('きょうの日報 まだだよ〜');
+      // 日報を読んだAIのひとこと（あれば「ありがと」の代わりに）
+      if (ai) out.push(ai);
+      else if (sent) out.push('にっぽう ありがと！ おつかれさま');
+    } else if (ai) out.push(ai);
     // 戦闘力：順位・ひとつ上まで・次のランクまで（今月の分）
     if (stats && stats.ok && stats.rows) {
       var people = R.forTool('power'), by = {};

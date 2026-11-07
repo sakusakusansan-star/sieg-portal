@@ -644,6 +644,27 @@ details p{margin:10px 0 0;line-height:1.7}
   }
   function mlabel(k){ return Number(k.slice(5, 7)) + '月'; }
 
+  /* 大きい数字（今月の戦闘力）を、ファイターの枠に収まる大きさにする。
+     「Dela Gothic One」は幅が広く、スマホでは 1,270 のような4桁でも右が切れていた。
+     いちばん長くなる最後の数（to）で幅を測り、はみ出す分だけ文字を小さくする（数え上げの途中も同じ大きさ） */
+  function fitPower(to){
+    var el = $('power'), info = el.closest('.info');
+    if (!el || !info || !info.clientWidth) return;
+    var keep = el.textContent;
+    if (to != null) el.textContent = fmt(to);
+    el.style.fontSize = '';
+    var cs = getComputedStyle(info);
+    var avail = info.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var extra = 10 + (parseFloat(getComputedStyle(el).webkitTextStrokeWidth) || 0);   // 縁取りと影の分
+    var need = el.getBoundingClientRect().width + extra;
+    if (need > avail) {
+      var fs = parseFloat(getComputedStyle(el).fontSize) * (avail - extra) / (need - extra);
+      el.style.fontSize = Math.max(20, Math.floor(fs)) + 'px';
+    }
+    if (to != null) el.textContent = keep;
+  }
+  window.fitPower = function(){ fitPower(); };   // 確認用（テストから呼ぶ）
+
   function countUp(el, to){
     if (reduced()) { el.textContent = fmt(to); return; }
     var t0 = performance.now(), d = 900;
@@ -708,6 +729,7 @@ details p{margin:10px 0 0;line-height:1.7}
     var num = $('power');
     num.style.setProperty('--rankc', RANK_COLOR[rankOf(p.pw)] || '#fff');
     num.classList.toggle('d5', p.pw >= 10000);
+    fitPower(p.pw);
     // 右上：順位と月末の見込み
     var pos = posOf(p), pb = $('posb');
     pb.hidden = !p.pw; pb.innerHTML = '<b>' + pos + '</b>位 / ' + P.length;
@@ -971,7 +993,9 @@ details p{margin:10px 0 0;line-height:1.7}
       else if (k) { e.preventDefault(); tab(TABS[(i + k + TABS.length) % TABS.length], true); }
     };
   });
-  addEventListener('resize', function(){ if (!$('view-status').hidden) drawLines(); });
+  addEventListener('resize', function(){ if (!$('view-status').hidden) { drawLines(); fitPower(); } });
+  // 太字フォントが読み込まれたら測り直す（読み込み前の細いフォントで測ると小さくしすぎない・大きすぎる）
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ if (P && P[cur]) fitPower(P[cur].pw); });
 
   /* 計算のしかた（商品表とランクの境目から作る） */
   $('formula-note').textContent = 'ポータルの「獲得報告」で送った件数から計算します（日報の数字は使いません）。ランクは '

@@ -102,7 +102,84 @@
   say.setAttribute('aria-live', 'polite');
   head.appendChild(say);
 
+  /* ── その人の数字に合わせたひとこと ──
+     戦闘力（獲得報告）と日報の提出から、「いま2位だよ」「あと1件でAランク」「日報まだだよ」などを作る。
+     読めなかったときは何も足さない（時間帯のひとことだけになる）。他の人の名前は出さない。
+     facts は大事な順。はじめてタップしたときは facts[0]、そのあとは時間帯のひとことと混ぜる */
+  var facts = [], factsUsed = false;
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function needProducts() {
+    if (window.SiegProducts) return Promise.resolve(window.SiegProducts);
+    return new Promise(function (ok, ng) {
+      var s = document.createElement('script');
+      s.src = 'sieg-products.js';
+      s.onload = function () { window.SiegProducts ? ok(window.SiegProducts) : ng(new Error('no products')); };
+      s.onerror = ng;
+      document.head.appendChild(s);
+    });
+  }
+  function loadFacts() {
+    var R = window.SiegRoster, G = window.GasClient, me = lsGet('siegStaff');
+    if (!R || !G || !me || R.everyone.indexOf(me) < 0) return;
+    var now = new Date(), month = ymd(now).slice(0, 7), today = ymd(now), hour = now.getHours();
+    var partner = R.isPartner(me);
+    needProducts().then(function (PR) {
+      return Promise.all([
+        G.get(PR.API, { action: 'gainStats', from: month }).catch(function () { return null; }),
+        partner ? G.get(PR.API, { action: 'nippouStatus', month: month }).catch(function () { return null; }) : null,
+        partner && R.shiftPartnerApi ? G.post(R.shiftPartnerApi, { action: 'getMyShifts', name: me }, { retry: true }).catch(function () { return null; }) : null
+      ]).then(function (r) {
+        facts = buildFacts(PR, R, me, month, today, hour, r[0], r[1], r[2]);
+        // 届いたら、いちばん大事なひとことを自分からしゃべる（走ってくる途中なら、着いたときにしゃべる）
+        if (facts.length && !factsUsed) setTimeout(function () {
+          if (factsUsed || el.classList.contains('run')) return;
+          factsUsed = true; speak(facts[0]);
+        }, 600);
+      });
+    }).catch(function () {});
+  }
+  function buildFacts(PR, R, me, month, today, hour, stats, nip, shift) {
+    var out = [];
+    // 日報（パートナー様）：きょうシフトの日で、夕方になっても出ていなければ知らせる。出していればお礼
+    if (nip && nip.ok && nip.days) {
+      var sent = (nip.days[me] || []).indexOf(today) >= 0;
+      var d = Number(today.slice(8, 10)), onShift = null;
+      if (shift && shift.ok && Array.isArray(shift.data)) {
+        var mine = shift.data.filter(function (x) { return Number(x.year) === Number(today.slice(0, 4)) && Number(x.month) === Number(today.slice(5, 7)); });
+        if (mine.length === shift.data.length) onShift = mine.some(function (x) { return x.startDay <= d && d <= x.endDay; });
+      }
+      if (sent) out.push('にっぽう ありがと！ おつかれさま');
+      else if (onShift && hour >= 17) out.push('きょうの日報 まだだよ〜');
+    }
+    // 戦闘力：順位・ひとつ上まで・次のランクまで（今月の分）
+    if (stats && stats.ok && stats.rows) {
+      var people = R.forTool('power'), by = {};
+      stats.rows.forEach(function (row) {
+        if (row[0] !== month || people.indexOf(row[1]) < 0) return;
+        (by[row[1]] = by[row[1]] || []).push({ carrier: row[2], label: row[3], count: row[4] });
+      });
+      var pw = {}; people.forEach(function (n) { pw[n] = PR.score(by[n]).power; });
+      var mine = pw[me] || 0;
+      if (!mine) {
+        out.push('こんげつの 1けんめ、まってるよ');
+      } else {
+        var pos = 1, above = null;
+        people.forEach(function (n) { if (pw[n] > mine) { pos++; if (above === null || pw[n] < above) above = pw[n]; } });
+        out.push(pos === 1 ? 'いま 1位だよ！ すごい！' : 'いま ' + pos + '位！ あと ' + (above - mine + 1).toLocaleString('ja-JP') + 'pt で ' + (pos - 1) + '位');
+        var next = null; (PR.RANKS || []).forEach(function (x) { if (!next && mine < x[1]) next = x; });
+        out.push(next ? 'あと ' + (next[1] - mine).toLocaleString('ja-JP') + 'pt で ' + next[0] + 'ランク！' : 'Sランク たっせい！ さいこう！');
+        out.push('こんげつ ' + mine.toLocaleString('ja-JP') + 'pt！ いいかんじ');
+      }
+    }
+    return out;
+  }
+  loadFacts();
+  window.siegBuddyFacts = function () { return facts.slice(); };   // 確認用（テストから見る）
+
   function line() {
+    // はじめは、いちばん大事な数字のひとこと。そのあとは数字と時間帯のひとことを半々くらいで
+    if (facts.length && !factsUsed) { factsUsed = true; return facts[0]; }
+    if (facts.length && Math.random() < 0.5) return facts[Math.floor(Math.random() * facts.length)];
     var h = new Date().getHours();
     var list = LINES[h < 10 ? 'morning' : h < 18 ? 'day' : 'night'];
     var name = lsGet('siegStaff');
@@ -115,7 +192,8 @@
     say.textContent = text;
     say.classList.add('show');
     clearTimeout(sayTimer);
-    sayTimer = setTimeout(function () { say.classList.remove('show'); }, 2400);
+    // 長いひとこと（数字のもの）は少し長めに出す
+    sayTimer = setTimeout(function () { say.classList.remove('show'); }, 2400 + Math.max(0, text.length - 10) * 90);
   }
 
   function jump() {

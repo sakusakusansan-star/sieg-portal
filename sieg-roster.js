@@ -61,8 +61,12 @@
   // 空のあいだは、パートナー様の画面は「準備中」になり、山口さんは前の画面のまま。
   var COMMUTE_PARTNER_API = 'https://script.google.com/macros/s/AKfycbwKGhybd3Y-8VYGh3OwgqNqIIpzOqMUBWZH03sEzEjLM46HbThs198G0A6UGjo8jg_cRg/exec';
 
+  // パートナー様のシフト（shift-form と同じ GAS）。ホームのぼのぼのが「きょうシフトの日か」を見るのに使う
+  var SHIFT_PARTNER_API = 'https://script.google.com/macros/s/AKfycbwx4-wjr4Qmx6zeXDXZhht-65W7veveJvaXXmC9V5MQLipOLxLoWfz-XEUBau8NZ58h/exec';
+
   global.SiegRoster = {
     commutePartnerApi: COMMUTE_PARTNER_API,
+    shiftPartnerApi: SHIFT_PARTNER_API,
     staff: names('staff'),
     partners: names('partner'),
     everyone: names(),

@@ -688,7 +688,7 @@ details.tgroup[open] > summary{margin-bottom:6px}
   }
 
   // ランクの境目とレベルの刻み（ここだけ直せば、ランク表示・次の目標・計算のしかたがそろって変わる）
-  var RANKS = [['B', 1000], ['A', 1500], ['S', 2000]];
+  var RANKS = PR.RANKS || [['B', 1000], ['A', 1500], ['S', 2000]];   // 境目は sieg-products.js でそろえる
   var LV_STEP = 1000;   // これまでの戦闘力の合計がこれだけ増えるごとにレベルが1上がる（月が変わっても下がらない）
   function rankOf(v){ var r = 'C'; RANKS.forEach(function(x){ if (v >= x[1]) r = x[0]; }); return r; }
   var RANK_COLOR = { S:'#F0453F', A:'#FF8A3D', B:'#FFC93C', C:'#FFFFFF' };   // 戦闘力の数字の色

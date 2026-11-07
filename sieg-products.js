@@ -74,9 +74,13 @@
     return null;
   }
 
+  // ランクの境目（戦闘力の画面と、ホームのぼのぼのが同じものを使う）。下から順に [ランク, この点数以上]
+  var RANKS = [['B', 1000], ['A', 1500], ['S', 2000]];
+
   global.SiegProducts = {
     API: API,
     CATS: CATS,
+    RANKS: RANKS,
     carriers: CARRIERS.map(function (c) { return { id: c.id, label: c.label }; }),
     carrierLabel: function (id) { var c = carrier(id); return c ? c.label : String(id || ''); },
     /** 入力に出す商品（hidden を除く）。[{label, cat, pt}] */

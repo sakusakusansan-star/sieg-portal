@@ -134,6 +134,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 /* 次の目標 */
 .goal{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.goal[hidden]{display:none}
 .gl{background:var(--panel);padding:12px 14px 13px;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);display:flex;flex-direction:column;gap:6px;min-width:0}
 .gl .t{font-size:11px;font-weight:900;color:var(--mute);letter-spacing:.06em}
 .gl .v{font-family:var(--disp);font-size:24px;line-height:1.05}
@@ -342,6 +343,56 @@ details p{margin:10px 0 0;line-height:1.7}
   #view-log .col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
   #view-log .col > .wide{grid-column:1 / -1}
 }
+/* ═══ 読みやすさ：小さすぎた文字（9〜10.5px）を大きく、弱い文字を少し明るく ═══ */
+:root{--mute:#AEB9D6}
+.fighter .pace{font-size:11.5px}
+.fighter .nx{font-size:12.5px}
+.power .lbl{font-size:12px}
+.pick span{font-size:11.5px}
+.item .lb small{font-size:11.5px}
+.badge.off small{font-size:11.5px}
+.gl .t{font-size:12px}
+.gl .s{font-size:12.5px}
+.trow .cond{font-size:12.5px}
+.trow .who{font-size:11.5px}
+.hp .sub{font-size:12px;color:#C9D2EA}
+.hp .you{font-size:11px}
+
+/* ═══ ランキング：まだ獲得のない人は、大きいカードにせず1行にまとめる ═══ */
+.zeros{grid-column:1 / -1;background:var(--panel);padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%)}
+.zeros .t{font-size:12px;font-weight:900;color:var(--mute);margin-right:4px}
+.zeros .z{font-family:var(--disp);font-size:13px;padding:3px 10px;background:rgba(255,255,255,.07);border-left:3px solid var(--c)}
+.zeros .z.me{background:var(--gold);color:#1A1405}
+
+/* ═══ 記録：次に取れそうな称号＋区分ごとに折りたたみ ═══ */
+.tnext{background:var(--panel);padding:12px 14px;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
+.tnext h3{margin:0 0 6px;font-family:var(--disp);font-weight:400;font-size:13px;color:var(--gold)}
+details.tgroup > summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;text-align:left;font-family:var(--disp);font-weight:400;font-size:13px;color:var(--mute);padding:2px 0}
+details.tgroup > summary::-webkit-details-marker{display:none}
+details.tgroup > summary b{font-weight:400;color:#fff;margin-left:8px}
+details.tgroup > summary::before{content:none}
+details.tgroup > summary::after{content:"＋";color:var(--gold)}
+details.tgroup[open] > summary::after{content:"－"}
+details.tgroup[open] > summary{margin-bottom:6px}
+
+/* ═══ 前の月を見る（‹ 2026年10月 ›） ═══ */
+.mnav{display:inline-flex;align-items:center;gap:6px}
+.mnav button{width:30px;height:30px;border:0;background:rgba(255,255,255,.08);color:#fff;font-family:var(--disp);font-size:16px;line-height:1;cursor:pointer;
+  clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.mnav button:disabled{opacity:.25;cursor:default}
+.past-note{font-size:12px;font-weight:900;color:#1A1405;background:var(--gold);padding:4px 12px;align-self:flex-start;clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
+.past-note[hidden]{display:none}
+
+/* ═══ パソコン：成長のグラフが横いっぱいに広がって大きくなりすぎないように ═══ */
+@media (min-width:900px){ #growth svg{display:block;width:100%;height:240px} }
+
+/* ═══ スマホ：キャラ選びは横にスクロールする1段（自分のカードを上に） ═══ */
+@media (max-width:560px){
+  .roster{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px;margin:0 -2px;scrollbar-width:none}
+  .roster::-webkit-scrollbar{display:none}
+  .roster .slot{flex:0 0 76px;aspect-ratio:3/4;scroll-snap-align:start}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -351,7 +402,7 @@ details p{margin:10px 0 0;line-height:1.7}
 
   <div class="title-row">
     <h1 class="it">戦闘力</h1>
-    <span class="month" id="month-label"></span>
+    <span class="mnav"><button type="button" id="m-prev" aria-label="前の月">‹</button><span class="month" id="month-label"></span><button type="button" id="m-next" aria-label="次の月">›</button></span>
   </div>
 
   <div class="tabs" role="tablist" aria-label="表示の切り替え">
@@ -360,6 +411,7 @@ details p{margin:10px 0 0;line-height:1.7}
     <button class="tab" id="tab-log" role="tab" aria-selected="false" aria-controls="view-log" tabindex="-1" disabled>記録</button>
   </div>
   <div class="stale" id="stale" hidden>前回の表示です・更新中…</div>
+  <div class="past-note" id="past-note" hidden></div>
 
   <div class="skel-wrap" id="skel" aria-hidden="true">
     <div class="skel-row"><i class="skel"></i><i class="skel"></i><i class="skel"></i><i class="skel"></i><i class="skel"></i></div>
@@ -388,7 +440,7 @@ details p{margin:10px 0 0;line-height:1.7}
           <div class="exp" id="exp"></div>
           <div class="nx" id="nx"></div>
           <div class="power">
-            <div class="lbl">今月の戦闘力</div>
+            <div class="lbl" id="power-lbl">今月の戦闘力</div>
             <div class="num it" id="power">0</div>
             <span class="diff" id="diff"></span>
           </div>
@@ -402,7 +454,7 @@ details p{margin:10px 0 0;line-height:1.7}
 
       <div class="goal" id="goal"></div>
 
-      <span class="band bd-band">今月の内訳</span>
+      <span class="band bd-band" id="bd-band">今月の内訳</span>
       <div class="bd" id="bd"></div>
 
       <details class="more-box" id="picker-box">
@@ -421,7 +473,7 @@ details p{margin:10px 0 0;line-height:1.7}
     <div class="col">
       <div class="champ" id="champ"></div>
       <div class="rise" id="rise" hidden></div>
-      <span class="band">今月の順位</span>
+      <span class="band" id="rank-band">今月の順位</span>
       <div class="hud" id="hud"></div>
       <span class="band">部門賞</span>
       <div class="kings" id="kings"></div>
@@ -518,6 +570,10 @@ details p{margin:10px 0 0;line-height:1.7}
   var urlName = new URLSearchParams(location.search).get('staff') || '';
   var ME = PEOPLE.indexOf(urlName) >= 0 ? urlName : SiegNav.staff(PEOPLE);
   var P = [], MONTHS = [], CUR = '', cur = 0;
+  // 見る月：ふだんは今月。‹ › で前の月へ（アドレスの &ym=2026-10 に残す）。NOWM は今月
+  var NOWM = '', VIEW = (function(){ var q = new URLSearchParams(location.search).get('ym'); return /^\d{4}-\d{2}$/.test(q || '') ? q : ''; })();
+  function isNowM(){ return CUR === NOWM; }
+  function mw(){ return isNowM() ? '今月' : mlabel(CUR); }
 
   // to から数えて n か月（古い順）
   function lastMonths(to, n){
@@ -528,7 +584,9 @@ details p{margin:10px 0 0;line-height:1.7}
   function prevMonth(k){ return lastMonths(k, 2)[0]; }
   var ALL_FROM = '2026-01';   // 獲得報告を始める前の月。ここから全部読んで、称号とレベル（消えないもの）を数える
   function build(data){
-    CUR = data.month; MONTHS = lastMonths(CUR, 6);
+    NOWM = data.month;
+    CUR = VIEW && VIEW < NOWM && VIEW >= ALL_FROM ? VIEW : NOWM;
+    MONTHS = lastMonths(CUR, 6);
     var byPM = {}, monthsSeen = {};   // 名前 → 月 → [{carrier,label,count}]
     (data.rows || []).forEach(function(r){
       if (PEOPLE.indexOf(r[1]) < 0) return;
@@ -748,8 +806,9 @@ details p{margin:10px 0 0;line-height:1.7}
     renderGoal(p);
     renderBreakdown(p);
     renderStrip(p);
-    $('share').hidden = p.name !== ME || !p.pw;
-    $('live').textContent = p.name + 'さん。今月の戦闘力 ' + fmt(p.pw) + (p.pw ? '、' + pos + '位' : '') + '。レベル ' + lvOf(p) + '。';
+    $('share').hidden = p.name !== ME || !p.pw || !isNowM();
+    $('goal').hidden = !isNowM();   // 次の目標は今月だけ
+    $('live').textContent = p.name + 'さん。' + mw() + 'の戦闘力 ' + fmt(p.pw) + (p.pw ? '、' + pos + '位' : '') + '。レベル ' + lvOf(p) + '。';
   }
 
   // 称号の帯：持っている称号をレア度の高い順に。まだ1つもなければ、いちばん近い称号を
@@ -817,7 +876,7 @@ details p{margin:10px 0 0;line-height:1.7}
   function renderBreakdown(p){
     var box = $('bd');
     if (!p.items.length) {
-      box.innerHTML = '<div class="stack empty"></div><div class="empty-msg">今月はまだ報告がありません。<br>獲得報告を送ると、ここに積み上がっていきます。</div>';
+      box.innerHTML = '<div class="stack empty"></div><div class="empty-msg">' + (isNowM() ? '今月はまだ報告がありません。<br>獲得報告を送ると、ここに積み上がっていきます。' : mw() + 'は報告がありませんでした。') + '</div>';
       return;
     }
     var catPt = {}; p.items.forEach(function(it){ catPt[it.cat] = (catPt[it.cat] || 0) + it.pt * it.count; });
@@ -896,19 +955,22 @@ details p{margin:10px 0 0;line-height:1.7}
     var list = P.slice().sort(function(a, b){ return b.pw - a.pw || a.i - b.i; });
     var c = list[0], ch = $('champ'); paint(ch, c); ch.innerHTML = '';
     if (!c.pw) {
-      ch.insertAdjacentHTML('beforeend', '<span class="w">今月のチャンピオン</span><div><div class="n it">まだいません</div></div><div><div class="p it">最初の報告で1位！</div></div>');
+      ch.insertAdjacentHTML('beforeend', '<span class="w">' + mw() + 'のチャンピオン</span><div><div class="n it">' + (isNowM() ? 'まだいません' : 'いませんでした') + '</div></div><div><div class="p it">' + (isNowM() ? '最初の報告で1位！' : '') + '</div></div>');
     } else {
-      ch.insertAdjacentHTML('beforeend', '<span class="w">今月のチャンピオン（' + P.length + '人中）</span><div><div class="n it">' + esc(c.name) + '</div></div><div><div class="p it">' + fmt(c.pw) + '</div></div>');
+      ch.insertAdjacentHTML('beforeend', '<span class="w">' + mw() + 'のチャンピオン（' + P.length + '人中）</span><div><div class="n it">' + esc(c.name) + '</div></div><div><div class="p it">' + fmt(c.pw) + '</div></div>');
       ch.appendChild(figEl(c.char));
     }
     // 今月の急上昇：先月からいちばん伸びた人（チャンピオンと別の軸。累計で下の人にも見せ場を）
     var riser = P.slice().sort(function(a, b){ return (b.pw - b.last) - (a.pw - a.last) || a.i - b.i; })[0];
     var rise = $('rise');
     rise.hidden = !(riser && riser.pw - riser.last > 0);
-    if (!rise.hidden) rise.innerHTML = '<span class="t">今月の急上昇</span><span class="n">' + esc(riser.name) + '</span><span class="v it">▲ +' + fmt(riser.pw - riser.last) + '</span>';
+    if (!rise.hidden) rise.innerHTML = '<span class="t">' + mw() + 'の急上昇</span><span class="n">' + esc(riser.name) + '</span><span class="v it">▲ +' + fmt(riser.pw - riser.last) + '</span>';
 
     var hud = $('hud'); hud.innerHTML = '';
     var pos = 0, lastPw = null, topPw = Math.max(1, list[0].pw);
+    // まだ獲得のない人（0pt）は大きいカードにせず、最後に1行でまとめる（「0・同じ順位」が並んで上位が目立たなくなるため）
+    var zeros = list.filter(function(r){ return !r.pw; });
+    list = list.filter(function(r){ return r.pw > 0; });
     list.forEach(function(r, i){
       if (r.pw !== lastPw) { pos = i + 1; lastPw = r.pw; }
       var d = r.pw - r.last, el = document.createElement('div');
@@ -921,6 +983,14 @@ details p{margin:10px 0 0;line-height:1.7}
         '<div class="gauge" style="--w:' + Math.round(r.pw / topPw * 100) + '%"><i></i></div>');
       hud.appendChild(el);
     });
+    if (zeros.length) {
+      var zb = document.createElement('div'); zb.className = 'zeros';
+      zb.innerHTML = '<span class="t">' + (isNowM() ? 'まだ獲得なし' : '獲得なし') + '（' + zeros.length + '人）</span>' + zeros.map(function(r){
+        return '<span class="z' + (r.name === ME ? ' me' : '') + '" style="--c:var(' + r.col + ')">' + esc(r.name) + (r.name === ME ? '（あなた）' : '') + '</span>';
+      }).join('');
+      hud.appendChild(zb);
+    }
+    list = P.slice().sort(function(a, b){ return b.pw - a.pw || a.i - b.i; });   // 下の「あなたの行」用に全員へ戻す
     var kb = $('kings'); kb.innerHTML = '';
     [['MNP王','MNP'],['固定王','固定'],['端末王','端末'],['カード王','カード'],['新規王','新規']].forEach(function(k){
       var t = P.slice().sort(function(a, b){ return b.cats[k[1]] - a.cats[k[1]] || a.i - b.i; })[0];
@@ -942,6 +1012,7 @@ details p{margin:10px 0 0;line-height:1.7}
   }
 
   /* 記録：消えない数字と称号のコレクション */
+  var openGroups = {};   // 開いた区分は、見る人を変えても開いたまま
   function renderLog(){
     var p = P[cur];
     $('log-band').textContent = p.name + 'さんの記録';
@@ -954,13 +1025,20 @@ details p{margin:10px 0 0;line-height:1.7}
       : '<span class="empty">その月の1位になると、ここにトロフィーが増えていきます。</span>';
     var groups = [];
     p.titles.forEach(function(t){ if (!t.champ && groups.indexOf(t.g) < 0) groups.push(t.g); });
-    $('titles').innerHTML = groups.map(function(g){
-      return '<div class="tgroup"><h3>' + esc(g) + '</h3>' + p.titles.filter(function(t){ return t.g === g; }).map(function(t){
-        return '<div class="trow">' + badgeHtml(t, true) + '<span class="cond">' + esc(RAR[t.rar] + '・' + t.cond) + (t.have ? '' : '<br>' + esc(t.left)) + '</span>'
-          + '<span class="who">' + P.length + '人中 ' + (HAVE[t.id] || 0) + '人</span>'
-          + (t.have ? '' : '<div class="tbar"><i style="width:' + t.pct + '%"></i></div>') + '</div>';
-      }).join('') + '</div>';
-    }).join('');
+    function trow(t){
+      return '<div class="trow">' + badgeHtml(t, true) + '<span class="cond">' + esc(RAR[t.rar] + '・' + t.cond) + (t.have ? '' : '<br>' + esc(t.left)) + '</span>'
+        + '<span class="who">' + P.length + '人中 ' + (HAVE[t.id] || 0) + '人</span>'
+        + (t.have ? '' : '<div class="tbar"><i style="width:' + t.pct + '%"></i></div>') + '</div>';
+    }
+    // いちばん上に「次に取れそうな称号」3つ（近い順）。区分ごとの一覧は折りたたむ（全部並べると長すぎるため）
+    var next = p.titles.filter(function(t){ return !t.have && !t.champ; }).sort(function(a, b){ return b.pct - a.pct || RAR_ORDER[a.rar] - RAR_ORDER[b.rar]; }).slice(0, 3);
+    $('titles').innerHTML = (next.length ? '<div class="tnext wide"><h3>次に取れそうな称号</h3>' + next.map(trow).join('') + '</div>' : '')
+      + groups.map(function(g){
+        var ts = p.titles.filter(function(t){ return t.g === g; });
+        var got = ts.filter(function(t){ return t.have; }).length;
+        return '<details class="tgroup" data-g="' + esc(g) + '"' + (openGroups[g] ? ' open' : '') + '><summary><span>' + esc(g) + '<b>' + got + ' / ' + ts.length + '</b></span></summary>' + ts.map(trow).join('') + '</details>';
+      }).join('');
+    $('titles').querySelectorAll('details.tgroup').forEach(function(d){ d.addEventListener('toggle', function(){ openGroups[d.dataset.g] = d.open; }); });
     renderGrowth(p);
   }
 
@@ -1077,11 +1155,37 @@ details p{margin:10px 0 0;line-height:1.7}
 
   // 前回のデータがあれば先にそれで出し、裏で取り直す（電波の弱い現場でも、開いてすぐ見える）
   var CACHE_KEY = 'siegPowerCache';
+  var LAST = null;
+  // さかのぼれる一番古い月：報告がある一番古い月（無ければ ALL_FROM）
+  function FIRSTM(data){
+    var first = '';
+    (data.rows || []).forEach(function(r){ if (PEOPLE.indexOf(r[1]) >= 0 && (!first || r[0] < first)) first = r[0]; });
+    return first && first > ALL_FROM ? first : ALL_FROM;
+  }
+  function goMonth(d){
+    if (!LAST) return;
+    var m = lastMonths(CUR, 2)[0];
+    if (d > 0) { var y = +CUR.slice(0, 4), mo = +CUR.slice(5, 7) + 1; if (mo > 12) { mo = 1; y++; } m = y + '-' + (mo < 10 ? '0' : '') + mo; }
+    if (m > LAST.month || m < FIRSTM(LAST)) return;
+    VIEW = m === LAST.month ? '' : m;
+    try { var u = new URL(location.href); if (VIEW) u.searchParams.set('ym', VIEW); else u.searchParams.delete('ym'); history.replaceState(null, '', u); } catch (e) {}
+    show(LAST);
+  }
+  $('m-prev').onclick = function(){ goMonth(-1); };
+  $('m-next').onclick = function(){ goMonth(1); };
   function show(data){
     var keep = P.length ? P[cur].name : '';   // 取り直したときは、見ていた人のまま
     build(data);
     if (keep && PEOPLE.indexOf(keep) >= 0) cur = PEOPLE.indexOf(keep);
     $('month-label').textContent = Number(CUR.slice(0, 4)) + '年' + mlabel(CUR);
+    LAST = data;
+    $('m-prev').disabled = CUR <= FIRSTM(data);
+    $('m-next').disabled = isNowM();
+    $('power-lbl').textContent = mw() + 'の戦闘力';
+    $('bd-band').textContent = mw() + 'の内訳';
+    $('rank-band').textContent = mw() + 'の順位';
+    $('past-note').hidden = isNowM();
+    $('past-note').textContent = Number(CUR.slice(0, 4)) + '年' + mlabel(CUR) + 'のふり返り（今月は ›）';
     $('skel').hidden = true; $('state').hidden = true;
     TABS.forEach(function(n){ $('tab-' + n).disabled = false; });
     renderRoster();
@@ -1094,7 +1198,7 @@ details p{margin:10px 0 0;line-height:1.7}
     store(CACHE_KEY, { at: Date.now(), data: data });
     $('stale').hidden = true;
     show(data);
-    celebrate();
+    if (isNowM()) celebrate();   // 演出は今月を見ているときだけ
   }).catch(function(err){
     if (P.length) { $('stale').textContent = '前回の表示です（更新できませんでした：' + err.message + '）'; return; }
     $('skel').hidden = true;

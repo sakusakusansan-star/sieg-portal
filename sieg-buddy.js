@@ -124,11 +124,14 @@
     if (!R || !G || !me || R.everyone.indexOf(me) < 0) return;
     var now = new Date(), month = ymd(now).slice(0, 7), today = ymd(now), hour = now.getHours();
     var partner = R.isPartner(me);
+    // ホーム（index.html）が同じものを読んでいれば、それを使う（二重に取りに行かない）
+    var shared = typeof window.siegHomeData === 'function' ? window.siegHomeData() : null;
     needProducts().then(function (PR) {
+      return Promise.resolve(shared).then(function (h) { return h && h.me === me && h.month === month ? h : null; }, function () { return null; }).then(function (h) {
       return Promise.all([
-        G.get(PR.API, { action: 'gainStats', from: month }).catch(function () { return null; }),
-        partner ? G.get(PR.API, { action: 'nippouStatus', month: month }).catch(function () { return null; }) : null,
-        partner && R.shiftPartnerApi ? G.post(R.shiftPartnerApi, { action: 'getMyShifts', name: me }, { retry: true }).catch(function () { return null; }) : null,
+        h ? h.stats : G.get(PR.API, { action: 'gainStats', from: month }).catch(function () { return null; }),
+        h ? h.nip : partner ? G.get(PR.API, { action: 'nippouStatus', month: month }).catch(function () { return null; }) : null,
+        h ? h.shift : partner && R.shiftPartnerApi ? G.post(R.shiftPartnerApi, { action: 'getMyShifts', name: me }, { retry: true }).catch(function () { return null; }) : null,
         // 日報へのAIのひとこと（日報の GAS が、きょう・きのうの日報を読んで作る）
         partner ? G.get(PR.API, { action: 'cheer', name: me }).catch(function () { return null; }) : null
       ]).then(function (r) {
@@ -138,6 +141,7 @@
           if (factsUsed || el.classList.contains('run')) return;
           factsUsed = true; factIdx = 1; speak(facts[0]);
         }, 600);
+      });
       });
     }).catch(function () {});
   }

@@ -106,7 +106,7 @@
      戦闘力（獲得報告）と日報の提出から、「いま2位だよ」「あと1件でAランク」「日報まだだよ」などを作る。
      読めなかったときは何も足さない（時間帯のひとことだけになる）。他の人の名前は出さない。
      facts は大事な順。はじめてタップしたときは facts[0]、そのあとは時間帯のひとことと混ぜる */
-  var facts = [], factsUsed = false;
+  var facts = [], factsUsed = false, factIdx = 0;   // factIdx … 次に順番でしゃべる数字のひとこと
   function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function needProducts() {
     if (window.SiegProducts) return Promise.resolve(window.SiegProducts);
@@ -135,7 +135,7 @@
         // 届いたら、いちばん大事なひとことを自分からしゃべる（走ってくる途中なら、着いたときにしゃべる）
         if (facts.length && !factsUsed) setTimeout(function () {
           if (factsUsed || el.classList.contains('run')) return;
-          factsUsed = true; speak(facts[0]);
+          factsUsed = true; factIdx = 1; speak(facts[0]);
         }, 600);
       });
     }).catch(function () {});
@@ -143,6 +143,8 @@
   function buildFacts(PR, R, me, month, today, hour, stats, nip, shift, cheer) {
     var out = [];
     var ai = cheer && cheer.ok && cheer.text ? String(cheer.text) : '';
+    // 日報を読んだAIの「のびた（できるようになったね）」と「やわらかいヒント」（無い日は空）
+    var aiMore = ai ? [cheer.grow, cheer.hint].filter(function (x) { return x; }).map(String) : [];
     // 日報（パートナー様）：きょうシフトの日で、夕方になっても出ていなければ知らせる。出していればお礼
     if (nip && nip.ok && nip.days) {
       var sent = (nip.days[me] || []).indexOf(today) >= 0;
@@ -156,6 +158,7 @@
       if (ai) out.push(ai);
       else if (sent) out.push('にっぽう ありがと！ おつかれさま');
     } else if (ai) out.push(ai);
+    out = out.concat(aiMore);
     // 戦闘力：順位・ひとつ上まで・次のランクまで（今月の分）
     if (stats && stats.ok && stats.rows) {
       var people = R.forTool('power'), by = {};
@@ -182,8 +185,8 @@
   window.siegBuddyFacts = function () { return facts.slice(); };   // 確認用（テストから見る）
 
   function line() {
-    // はじめは、いちばん大事な数字のひとこと。そのあとは数字と時間帯のひとことを半々くらいで
-    if (facts.length && !factsUsed) { factsUsed = true; return facts[0]; }
+    // はじめは大事な順に1つずつ（日報まだ → AIのほめる → のびた → ヒント → 順位…）。言い終わったら、数字と時間帯のひとことを半々くらいで
+    if (factIdx < facts.length) { factsUsed = true; return facts[factIdx++]; }
     if (facts.length && Math.random() < 0.5) return facts[Math.floor(Math.random() * facts.length)];
     var h = new Date().getHours();
     var list = LINES[h < 10 ? 'morning' : h < 18 ? 'day' : 'night'];

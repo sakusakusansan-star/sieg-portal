@@ -330,6 +330,54 @@
     background: var(--t-navy1); color: var(--t-on-dark); cursor: pointer; }
   .gate button:disabled { opacity: .55; cursor: default; }
   .gate .msg { min-height: 1.6em; margin: 10px 0 0; font-size: 13px; font-weight: 700; color: var(--t-red); }
+  /* ───────── 1人の詳しい画面（名前を押すと開く。パソコンは右から、スマホは下から） ───────── */
+  #rows tr[data-row], #shift-rep .brow[data-name], #shouryu .scard[data-flow] { cursor: pointer; }
+  #rows tr[data-row]:hover td { background: var(--t-sunk); }
+  #shift-rep .brow[data-name]:hover .bl, #shouryu .scard[data-flow]:hover .who-h b { text-decoration: underline; text-underline-offset: 3px; }
+  .open-mark { color: var(--t-faint); font-weight: 900; margin-left: 4px; }
+  .pd-bg { position: fixed; inset: 0; z-index: 60; background: rgba(8,13,21,.45); display: flex; justify-content: flex-end; }
+  .pd-bg[hidden] { display: none; }
+  .pd { background: var(--t-bg); width: min(560px, 100%); height: 100%; overflow-y: auto; overscroll-behavior: contain;
+    padding: 0 16px 40px; box-shadow: -12px 0 32px rgba(0,0,0,.25); display: flex; flex-direction: column; gap: 12px; }
+  @media (max-width: 840px) {
+    .pd-bg { align-items: flex-end; }
+    .pd { height: 92vh; border-radius: 20px 20px 0 0; }
+  }
+  .pd-h { position: sticky; top: 0; z-index: 2; background: var(--t-bg); display: flex; align-items: center; gap: 10px; padding: 14px 0 10px; }
+  .pd-h .av { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 900; color: #fff; background: var(--t-navy1); flex: none; }
+  .pd-h .av.partner { background: var(--t-green); }
+  .pd-h b { font-size: 19px; font-weight: 900; display: block; line-height: 1.2; }
+  .pd-h small { font-size: 11.5px; font-weight: 800; color: var(--t-mute); letter-spacing: .04em; }
+  .pd-h .x { margin-left: auto; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-ink); font-size: 20px; font-weight: 900; cursor: pointer; }
+  .pd .scard { padding-bottom: 12px; }
+  .pd-kp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .pd-kp div { background: var(--t-card); border: 1px solid var(--t-hair); border-radius: 14px; padding: 10px 12px; }
+  .pd-kp small { display: block; font-size: 10.5px; font-weight: 800; color: var(--t-mute); }
+  .pd-kp b { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .pd-kp b i { font-style: normal; font-size: 11px; color: var(--t-mute); margin-left: 2px; }
+  .pd-li { display: grid; grid-template-columns: auto 1fr auto; gap: 2px 10px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--t-hair2); font-size: 13px; }
+  .pd-li:first-of-type { border-top: 0; }
+  .pd-li.nod { grid-template-columns: 1fr auto; }
+  .pd-li .d { font-weight: 800; color: var(--t-mute); font-variant-numeric: tabular-nums; min-width: 3.2em; }
+  .pd-li .t { font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+  .pd-li .t small { display: block; font-weight: 700; color: var(--t-mute); font-size: 11.5px; }
+  .pd-li .a { font-weight: 900; font-variant-numeric: tabular-nums; text-align: right; }
+  .pd-empty { font-size: 12.5px; font-weight: 700; color: var(--t-mute); padding: 4px 0; }
+  .fl { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 800; color: #fff; background: var(--fc, #64748B); vertical-align: 1px; }
+  .fl.other { background: var(--t-sunk); color: var(--t-mute); }
+  /* シフトのカレンダー（日ごとに取引先の色） */
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .cal .wd { font-size: 10.5px; font-weight: 800; color: var(--t-mute); text-align: center; padding-bottom: 2px; }
+  .cal .cd { position: relative; aspect-ratio: 1 / 1; border-radius: 8px; background: var(--t-sunk); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; }
+  .cal .cd .n { font-size: 11.5px; font-weight: 800; color: var(--t-mute); font-variant-numeric: tabular-nums; }
+  .cal .cd .f { font-size: 9.5px; font-weight: 900; max-width: 100%; overflow: hidden; white-space: nowrap; }
+  .cal .cd.on { background: var(--fc, #64748B); }
+  .cal .cd.on .n, .cal .cd.on .f { color: #fff; }
+  .cal .cd.today { box-shadow: inset 0 0 0 2px var(--t-ink); }
+  .cal .cd .nip { position: absolute; top: 3px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--t-gold); box-shadow: 0 0 0 1.5px var(--t-card); }
+  .cal-lg { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 10px; font-size: 12px; font-weight: 800; color: var(--t-ink2); }
+  .cal-lg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--fc); margin-right: 4px; vertical-align: -1px; }
+  .cal-lg .nipk i { border-radius: 50%; background: var(--t-gold); }
 </style>
 </head>
 <body>
@@ -423,7 +471,12 @@
     <div class="money" id="money" style="margin-top:10px"></div>
   </div>
 
+  <div class="pd-bg" id="pd-bg" hidden>
+    <section class="pd" id="pd" role="dialog" aria-modal="true" aria-labelledby="pd-name"></section>
+  </div>
+
   <p class="note">
+    名前（一覧の行・シフトの人・商流のカード）を押すと、その人の詳しい内容（獲得の内訳・シフトのカレンダー・日報・商流・稼働費と経費の明細）が開きます。<br>
     獲得は獲得報告から、日報は日報フォームから、シフト集計はパートナー用シフトの表（「集計」シートと同じ数え方）から、稼働費は稼働費入力（社員はシート、パートナー様は新しい画面）から、経費精算は経費精算のシートから読んでいます。<br>
     日報はパートナー様だけ、稼働費・経費精算は使っている人だけ出します（ほかは「—」）。どれも上で選んだ月の分だけを出します。<br>
     社員の稼働費と経費精算は、シートがその月ならシートから、前の月なら履歴から読みます（稼働費の履歴は、月を切り替えたときかPDFを保存したときに残ります）。
@@ -640,6 +693,7 @@
 
   function load() {
     var my = ++gen;
+    closePerson();
     busy = true;
     $('reload').disabled = true;
     data = emptyData();
@@ -865,7 +919,7 @@
     // 名簿順では # は名簿の番号（数字が動かない）。戦闘力順のときだけ順位（1〜3位は色付き）
     var byPower = sortBy === 'power', no = byPower ? x.rank : x.i + 1;
     var rk = 'rk' + (byPower && x.rank <= 3 ? ' r' + x.rank : '');
-    return '<tr data-row="' + esc(x.name) + '">'
+    return '<tr data-row="' + esc(x.name) + '" tabindex="0" aria-label="' + esc(x.name) + 'の詳しい内容を開く">'
       + '<td class="c-rank"><span class="' + rk + '"' + (byPower ? ' title="戦闘力の順位"' : '') + '>' + no + '</span></td>'
       + '<td class="c-name"><span class="who"><span class="av ' + (x.partner ? 'partner' : 'staff') + '" aria-hidden="true">'
         + esc(x.name.slice(0, 1)) + '</span><span><b>' + esc(x.name) + '</b><small>'
@@ -935,7 +989,7 @@
       + '<div class="kpi"><div class="k">稼働スタッフ数</div><div class="v num">' + s.activeStaff + '<small>名</small></div><div class="s">' + s.staff.length + '名中</div></div>'
       + '<div class="kpi"><div class="k">1人あたり</div><div class="v num">' + avg + '<small>日</small></div><div class="s">稼働した人の平均・稼働率 ' + Math.round(avg / s.daysInMonth * 100) + '%</div></div>';
     var staffRows = s.staff.map(function (x) {
-      return '<div class="brow' + (x.days ? '' : ' zero') + '"><span class="bl">' + esc(x.name) + '</span><span class="bb"><i style="width:' + Math.round(x.days / s.daysInMonth * 100) + '%"></i></span>'
+      return '<div class="brow' + (x.days ? '' : ' zero') + '" data-name="' + esc(x.name) + '" role="button" tabindex="0"><span class="bl">' + esc(x.name) + '</span><span class="bb"><i style="width:' + Math.round(x.days / s.daysInMonth * 100) + '%"></i></span>'
         + '<span class="bv num">' + x.days + '日<small>' + x.pct + '%</small></span></div>';
     }).join('');
     var tri = s.torihiki.slice().sort(function (a, b) { return b.days - a.days; });
@@ -975,6 +1029,7 @@
     return flows;
   }
   function renderShouryu() {
+    refreshPerson();
     if (!data || !data.shiftReady) return;
     $('shouryu-wrap').hidden = false;
     $('shouryu-title').textContent = Number(viewYm.slice(5, 7)) + '月の商流別 稼働費・経費';
@@ -999,7 +1054,7 @@
         + (keys.length > 1 ? '<tr class="sum"><td>合計</td><td>' + cell(tc, usesC) + '</td><td>' + cell(tk, usesK) + '</td><td>¥' + fmt(tc + tk) + '</td></tr>' : '')
         + '</table>'
         : '<div class="snote">' + (waiting ? '読み込み中…' : bad ? '読めませんでした' : 'この月の稼働費・経費はありません。') + '</div>';
-      cards += '<div class="scard" data-flow="' + esc(x.name) + '"><div class="who-h"><b><i>' + (x.i + 1) + '.</i>' + esc(x.name) + '</b><span>¥' + fmt(tc + tk) + '</span></div>' + body + '</div>';
+      cards += '<div class="scard" data-flow="' + esc(x.name) + '" role="button" tabindex="0"><div class="who-h"><b><i>' + (x.i + 1) + '.</i>' + esc(x.name) + '<span class="open-mark" aria-hidden="true">›</span></b><span>¥' + fmt(tc + tk) + '</span></div>' + body + '</div>';
     });
     var allKeys = Object.keys(all).sort(function (a, b) { return isOther(a) - isOther(b) || (all[b].c + all[b].k) - (all[a].c + all[a].k); });
     var top = Math.max.apply(null, allKeys.map(function (f) { return all[f].c + all[f].k; }).concat([1]));
@@ -1013,6 +1068,135 @@
       + '稼働費は、その日のその人のシフトの取引先で分けています（シフトが無い日・取引先の無い日・日付の無い分は「' + NO_FLOW + '」）。'
       + (data.shiftSum ? '' : 'いまはシフト集計が読めないので、稼働費は「' + NO_SHIFT + '」にまとめています。');
   }
+
+  /* ── 1人の詳しい画面：獲得の内訳・シフトのカレンダー（日ごとの取引先）・日報・商流・稼働費と経費の明細 ──
+     データは画面に読み込んであるもの（data）だけを使う。読み込み途中なら、届いたときに描き直す（refreshPerson） */
+  // 取引先の色（カレンダー・商流のタグ）
+  var FLOW_COLORS = { '南国殖産': '#C2410C', 'ハイコム': '#15803D', 'サンコミ': '#7C3AED', 'ダル': '#2563EB', 'NOON': '#B45309', '九情': '#0E7490' };
+  function flowColor(f) { return FLOW_COLORS[f] || '#64748B'; }
+  function flowTag(f) {
+    var other = f === NO_FLOW || f === UNSET_FLOW || f === NO_SHIFT;
+    return '<span class="fl' + (other ? ' other' : '') + '" style="--fc:' + flowColor(f) + '">' + esc(f) + '</span>';
+  }
+  var pdName = '', pdBack = null;
+  function personHtml(name) {
+    var partner = R.isPartner(name), y = Number(viewYm.slice(0, 4)), m = Number(viewYm.slice(5, 7));
+    var h = '<div class="pd-h"><span class="av' + (partner ? ' partner' : '') + '" aria-hidden="true">' + esc(name.slice(0, 1)) + '</span>'
+      + '<div><b id="pd-name">' + esc(name) + '</b><small>' + (partner ? 'PARTNER' : 'STAFF') + '・' + y + '年' + m + '月</small></div>'
+      + '<button type="button" class="x" id="pd-x" aria-label="閉じる">×</button></div>';
+
+    // 獲得：商品ごとの件数と点数
+    var gains = {}, tot = 0, pw = 0;
+    ((data.stats && data.stats.rows) || []).forEach(function (r) {
+      if (r[0] !== viewYm || r[1] !== name) return;
+      var it = P.find(r[2], r[3]), n = Number(r[4]) || 0;
+      if (!it || !n) return;
+      var k = r[2] + '\t' + r[3];
+      gains[k] = gains[k] || { carrier: r[2], label: r[3], pt: it.pt, n: 0 };
+      gains[k].n += n; tot += n; pw += it.pt * n;
+    });
+    var gl = Object.keys(gains).map(function (k) { return gains[k]; }).sort(function (a, b) { return b.pt * b.n - a.pt * a.n; });
+    var c = data.commute[name], k = data.keihi[name];
+    var usesC = COMMUTE.indexOf(name) >= 0, usesK = KEIHI.indexOf(name) >= 0;
+    var ca = c && !c.error && !c.pending && !c.none ? c.amount : 0, ka = k && !k.error && !k.none ? k.amount : 0;
+    h += '<div class="pd-kp"><div><small>獲得</small><b>' + tot + '<i>件</i></b></div><div><small>戦闘力</small><b>' + fmt(pw) + '</b></div>'
+      + '<div><small>稼働費＋経費</small><b>¥' + fmt(ca + ka) + '</b></div></div>';
+    h += '<div class="scard"><h3>獲得の内訳<span>' + tot + '件・' + fmt(pw) + 'pt</span></h3>' + (gl.length ? gl.map(function (g) {
+      return '<div class="pd-li"><span class="d">' + esc(P.carrierLabel ? P.carrierLabel(g.carrier) : g.carrier) + '</span><span class="t">' + esc(g.label) + '<small>' + g.n + '件 × ' + g.pt + 'pt</small></span><span class="a">' + fmt(g.pt * g.n) + 'pt</span></div>';
+    }).join('') : '<div class="pd-empty">この月の獲得報告はありません。</div>') + '</div>';
+
+    // シフトのカレンダー（取引先の色）と日報を出した日（金の点）
+    var by = data.shiftSum && data.shiftSum.byDay ? (data.shiftSum.byDay[name] || {}) : null;
+    var nd = (data.nippou && data.nippou.days && data.nippou.days[name]) || [];
+    var dim = new Date(y, m, 0).getDate(), first = new Date(y, m - 1, 1).getDay(), todayD = isNow() ? new Date().getDate() : 0;
+    var counts = {}, worked = 0;
+    var cal = '<div class="cal">' + ['日', '月', '火', '水', '木', '金', '土'].map(function (w) { return '<span class="wd">' + w + '</span>'; }).join('');
+    for (var i = 0; i < first; i++) cal += '<span></span>';
+    for (var d = 1; d <= dim; d++) {
+      var on = by && Object.prototype.hasOwnProperty.call(by, String(d)), f = on ? by[String(d)] : '';
+      if (on) { worked++; var key = f || '取引先なし'; counts[key] = (counts[key] || 0) + 1; }
+      var ds = viewYm + '-' + String(d).padStart(2, '0');
+      cal += '<span class="cd' + (on ? ' on' : '') + (d === todayD ? ' today' : '') + '"' + (on ? ' style="--fc:' + flowColor(f) + '"' : '') + ' title="' + m + '/' + d + (on ? ' ' + esc(f || '取引先なし') : '') + '">'
+        + '<span class="n">' + d + '</span>' + (on ? '<span class="f">' + esc((f || '—').slice(0, 3)) + '</span>' : '')
+        + (nd.indexOf(ds) >= 0 ? '<span class="nip" title="日報あり"></span>' : '') + '</span>';
+    }
+    cal += '</div>';
+    var lg = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).map(function (f) {
+      return '<span style="--fc:' + flowColor(f === '取引先なし' ? '' : f) + '"><i></i>' + esc(f) + ' ' + counts[f] + '日</span>';
+    }).join('') + (NIPPOU.indexOf(name) >= 0 ? '<span class="nipk"><i></i>日報 ' + nd.length + '日</span>' : '');
+    h += '<div class="scard"><h3>シフト<span>' + (by ? '稼働 ' + worked + '日' : '') + '</span></h3>'
+      + (by ? cal + '<div class="cal-lg">' + lg + '</div>' : '<div class="pd-empty">シフト表が読めませんでした（シフトの GAS の更新前か、この月のシフト表がありません）。</div>') + '</div>';
+
+    // 商流別（稼働費はその日のシフトの取引先、経費は選んだ商流）
+    if (usesC || usesK) {
+      var flows = splitByFlow(name), fk = Object.keys(flows).sort(function (a, b) { return isOther(a) - isOther(b) || (flows[b].c + flows[b].k) - (flows[a].c + flows[a].k); });
+      h += '<div class="scard"><h3>商流別<span>稼働費＋経費</span></h3>' + (fk.length ? fk.map(function (f) {
+        return '<div class="pd-li nod"><span class="t">' + flowTag(f) + '<small>稼働費 ¥' + fmt(flows[f].c) + '・経費 ¥' + fmt(flows[f].k) + '</small></span><span class="a">¥' + fmt(flows[f].c + flows[f].k) + '</span></div>';
+      }).join('') : '<div class="pd-empty">この月の稼働費・経費はありません。</div>') + '</div>';
+    }
+    // 稼働費の明細（1日ずつ、その日の商流つき）
+    if (usesC) {
+      h += '<div class="scard"><h3>稼働費<span>' + (c && !c.error && !c.pending && !c.none ? '¥' + fmt(c.amount) + '・' + c.days + '日' : '') + '</span></h3>';
+      if (!c) h += '<div class="pd-empty">読み込み中…</div>';
+      else if (c.pending) h += '<div class="pd-empty">準備中です。</div>';
+      else if (c.error) h += '<div class="pd-empty">読めませんでした：' + esc(c.error) + '</div>';
+      else if (c.none) h += '<div class="pd-empty">この月の記録がありません（今のシートは' + c.sheetMonth + '月）。</div>';
+      else h += (c.lines.length ? c.lines.map(function (l) {
+        return '<div class="pd-li"><span class="d">' + esc(l.d) + '</span><span class="t">' + esc(l.t) + flowTag(flowOf(name, l.day)) + (l.sub ? '<small>' + esc(l.sub) + '</small>' : '') + '</span><span class="a">¥' + fmt(Math.round(l.a)) + '</span></div>';
+      }).join('') : '<div class="pd-empty">まだ入力がありません。</div>');
+      h += '</div>';
+    }
+    // 経費の明細（項目・内容・選んだ商流）
+    if (usesK) {
+      h += '<div class="scard"><h3>経費精算<span>' + (k && !k.error && !k.none ? '¥' + fmt(k.amount) + '・' + k.count + '件' : '') + '</span></h3>';
+      if (!k) h += '<div class="pd-empty">読み込み中…</div>';
+      else if (k.error) h += '<div class="pd-empty">読めませんでした：' + esc(k.error) + '</div>';
+      else if (k.none) h += '<div class="pd-empty">この月の記録がありません（今のシートは' + esc(k.sheet) + '）。</div>';
+      else {
+        if (k.items.length) h += '<div class="parts" style="margin-bottom:6px">' + k.items.map(function (it) { return '<span class="chip">' + esc(it[0]) + ' <b>¥' + fmt(it[1]) + '</b></span>'; }).join('') + '</div>';
+        h += k.lines.length ? k.lines.map(function (l) {
+          return '<div class="pd-li"><span class="d">' + esc(l.d) + '</span><span class="t">' + esc(l.t) + flowTag(keihiFlow(l)) + (l.sub ? '<small>' + esc(l.sub) + '</small>' : '') + '</span><span class="a">¥' + fmt(Math.round(l.a)) + '</span></div>';
+        }).join('') : '<div class="pd-empty">まだ入力がありません。</div>';
+      }
+      h += '</div>';
+    }
+    return h;
+  }
+  function openPerson(name, from) {
+    if (!name || PEOPLE.indexOf(name) < 0 || !data) return;
+    pdName = name; pdBack = from || document.activeElement;
+    $('pd').innerHTML = personHtml(name);
+    $('pd-bg').hidden = false;
+    $('pd').scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+    $('pd-x').onclick = closePerson;
+    $('pd-x').focus();
+  }
+  function closePerson() {
+    if ($('pd-bg').hidden) return;
+    $('pd-bg').hidden = true; pdName = '';
+    document.body.style.overflow = '';
+    if (pdBack && pdBack.focus) try { pdBack.focus(); } catch (e) {}
+  }
+  function refreshPerson() {
+    if (!pdName || $('pd-bg').hidden) return;
+    var top = $('pd').scrollTop;
+    $('pd').innerHTML = personHtml(pdName); $('pd').scrollTop = top;
+    $('pd-x').onclick = closePerson;
+  }
+  $('pd-bg').addEventListener('click', function (e) { if (e.target === this) closePerson(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePerson(); });
+  // 名前を押すと開く：一覧の行・シフトの人・商流のカード
+  function hook(box, sel, attr) {
+    box.addEventListener('click', function (e) { var el = e.target.closest(sel); if (el && box.contains(el)) openPerson(el.getAttribute(attr), el); });
+    box.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var el = e.target.closest(sel); if (el && box.contains(el)) { e.preventDefault(); openPerson(el.getAttribute(attr), el); }
+    });
+  }
+  hook($('rows'), 'tr[data-row]', 'data-row');
+  hook($('shift-rep'), '.brow[data-name]', 'data-name');
+  hook($('shouryu'), '.scard[data-flow]', 'data-flow');
 
   function renderMoney() {
     var people = PEOPLE.filter(function (n) { return COMMUTE.indexOf(n) >= 0 || KEIHI.indexOf(n) >= 0; }).map(function (n, i) {

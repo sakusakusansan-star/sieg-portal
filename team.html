@@ -24,6 +24,7 @@
     --t-green-tint: #E6F2EB; --t-red-tint: #FAEBE9; --t-accent-tint: #E9F0F8; --t-gold-tint: #F8F0DF;
     --t-cat-mnp: #2B6CB0; --t-cat-fix: #177A4C; --t-cat-dev: #A9791F; --t-cat-card: #6B4E9E; --t-cat-new: #8A93A0;
     --t-rank: #AAB3BF; --t-on-dark: #FFFFFF;
+    --t-cc: #1F63B5; --t-cc-tint: #E7F0FB; --t-ck: #C2560C; --t-ck-tint: #FCEFE4;   /* 稼働費＝青・経費＝オレンジ（どの画面でも同じ） */
     --t-lift: 0 10px 26px -12px rgba(13,25,42,.16);
     --t-r: 20px; --t-r-sm: 12px;
     --t-font: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, system-ui, sans-serif;
@@ -38,6 +39,7 @@
       --t-green-tint: #14261F; --t-red-tint: #2A1917; --t-accent-tint: #172232; --t-gold-tint: #272015;
       --t-cat-mnp: #7FAEE8; --t-cat-fix: #5FC48C; --t-cat-dev: #D8AC55; --t-cat-card: #A98FD8; --t-cat-new: #9AA3B0;
       --t-rank: #4A5665;
+      --t-cc: #82B1EE; --t-cc-tint: #16233A; --t-ck: #F2A066; --t-ck-tint: #2B1E13;
       --t-lift: 0 10px 26px -14px rgba(0,0,0,.5);
     }
     .kpi.hero { border-color: #35506F; }
@@ -135,7 +137,8 @@
   /* 広い画面では、商流の1人ずつのカードを3列に（中身の少ないカードは縦に伸ばさない） */
   #shouryu.srep { align-items: start; }
   @media (min-width: 1100px) { #shouryu.srep { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  #shouryu-all .brow { grid-template-columns: 6.2em 1fr 6.2em; }
+  #shouryu-all .brow { grid-template-columns: 7.6em 1fr 6.2em; }
+  .scard .brow.fw { grid-template-columns: 6.6em 1fr 6.2em; }
   .vtabs { display: grid; max-width: 520px; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px; position: sticky; top: 6px; z-index: 6;
     background: color-mix(in srgb, var(--t-sunk) 92%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
     border: 1px solid var(--t-hair); border-radius: var(--t-r-sm); box-shadow: var(--t-lift); }
@@ -244,8 +247,8 @@
   .mcard .mv { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { display: inline-flex; align-items: baseline; gap: 5px; font-size: 12px; font-weight: 700; color: var(--t-ink2); background: var(--t-sunk); border-radius: 999px; padding: 4px 11px; }
   .chip b { font-weight: 900; color: var(--t-ink); font-variant-numeric: tabular-nums; }
-  .chip.c { background: var(--t-green-tint); color: var(--t-green); } .chip.c b { color: var(--t-green); }
-  .chip.k { background: var(--t-accent-tint); color: var(--t-accent); } .chip.k b { color: var(--t-accent); }
+  .chip.c { background: var(--t-cc-tint); color: var(--t-cc); } .chip.c b { color: var(--t-cc); }
+  .chip.k { background: var(--t-ck-tint); color: var(--t-ck); } .chip.k b { color: var(--t-ck); }
   .chip.warn { background: var(--t-gold-tint); color: var(--t-gold); } .chip.warn b { color: var(--t-gold); }
   .mbody { border-top: 1px solid var(--t-hair2); display: grid; grid-template-columns: 1fr 1fr; }
   .mblock { padding: 13px 16px 15px; min-width: 0; }
@@ -368,16 +371,70 @@
   /* シフトのカレンダー（日ごとに取引先の色） */
   .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .cal .wd { font-size: 10.5px; font-weight: 800; color: var(--t-mute); text-align: center; padding-bottom: 2px; }
-  .cal .cd { position: relative; aspect-ratio: 1 / 1; border-radius: 8px; background: var(--t-sunk); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; }
-  .cal .cd .n { font-size: 11.5px; font-weight: 800; color: var(--t-mute); font-variant-numeric: tabular-nums; }
-  .cal .cd .f { font-size: 9.5px; font-weight: 900; max-width: 100%; overflow: hidden; white-space: nowrap; }
-  .cal .cd.on { background: var(--fc, #64748B); }
-  .cal .cd.on .n, .cal .cd.on .f { color: #fff; }
+  .cal .wd:nth-child(1), .cal .cd.sun .n { color: var(--t-red); } .cal .wd:nth-child(7), .cal .cd.sat .n { color: var(--t-accent); }
+  .cal .cd { position: relative; height: clamp(40px, 11vw, 50px); border-radius: 8px; background: transparent; box-shadow: inset 0 0 0 1px var(--t-hair2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 0; }
+  .cal .cd .n { font-size: 11.5px; font-weight: 800; color: var(--t-faint); font-variant-numeric: tabular-nums; }
+  .cal .cd .f { font-size: 9px; font-weight: 900; letter-spacing: -.04em; max-width: 100%; overflow: hidden; white-space: nowrap; }
+  .cal .cd.on { background: var(--fc, #64748B); box-shadow: none; }
+  .cal .cd.on .n, .cal .cd.on .f { color: #fff !important; }
   .cal .cd.today { box-shadow: inset 0 0 0 2px var(--t-ink); }
   .cal .cd .nip { position: absolute; top: 3px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--t-gold); box-shadow: 0 0 0 1.5px var(--t-card); }
   .cal-lg { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 10px; font-size: 12px; font-weight: 800; color: var(--t-ink2); }
   .cal-lg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--fc); margin-right: 4px; vertical-align: -1px; }
   .cal-lg .nipk i { border-radius: 50%; background: var(--t-gold); }
+  /* ───────── 色の決まり：稼働費＝青・経費＝オレンジ／取引先ごとの色（カレンダー・グラフ・タグで同じ） ───────── */
+  .cc { color: var(--t-cc) !important; } .ck { color: var(--t-ck) !important; }
+  th.hc { color: var(--t-cc); } th.hk { color: var(--t-ck); }
+  .kpi.kc .v { color: var(--t-cc); } .kpi.kk .v { color: var(--t-ck); }
+  .kpi.kc { box-shadow: inset 0 3px 0 var(--t-cc), var(--t-lift); } .kpi.kk { box-shadow: inset 0 3px 0 var(--t-ck), var(--t-lift); }
+  .mblock.bc h3, .scard.pc h3 { color: var(--t-cc); } .mblock.bk h3, .scard.pk h3 { color: var(--t-ck); }
+  .mblock.bc .lrow .a, .scard.pc .pd-li .a { color: var(--t-cc); } .mblock.bk .lrow .a, .scard.pk .pd-li .a { color: var(--t-ck); }
+  .bars.ck .bb i { background: var(--t-ck); }
+  .fdot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; background: var(--fc); margin-right: 6px; vertical-align: 0; flex: none; }
+  .bb.stk { display: flex; } .bb.stk i { border-radius: 0; flex: none; }
+  .bb.stk i:first-child { border-radius: 4px 0 0 4px; } .bb.stk i:last-child { border-radius: 0 4px 4px 0; } .bb.stk i:only-child { border-radius: 4px; }
+  /* まだ獲得がない人は少し薄く（動いている人に目が行くように） */
+  #rows tr.zero .c-name b, #rows tr.zero .av, #rows tr.zero .rk { opacity: .5; }
+  #rows tr.zero td[data-k="戦闘力"] .pt { color: var(--t-faint); }
+  @media (max-width: 840px) { #table tr.zero { background: color-mix(in srgb, var(--t-card) 55%, var(--t-sunk)); box-shadow: none; } }
+  /* スマホの「ぎゅっと」表示：1人1行（獲得・戦闘力・日報だけ。押すと詳しい画面） */
+  .dense-seg { display: none; }
+  @media (max-width: 840px) {
+    .dense-seg { display: inline-flex; margin-left: auto; }
+    .app.dense #table tbody { gap: 0; background: var(--t-card); border: 1px solid var(--t-hair); border-radius: var(--t-r); box-shadow: var(--t-lift); overflow: hidden; }
+    .app.dense #table tr { display: grid; grid-template-columns: 28px minmax(0, 1fr) 3.4em 4.6em 4.8em; align-items: center; column-gap: 8px;
+      border: 0; border-radius: 0; box-shadow: none; padding: 9px 12px; border-top: 1px solid var(--t-hair2); }
+    .app.dense #table tr:first-child { border-top: 0; }
+    .app.dense #table tr.zero { background: color-mix(in srgb, var(--t-card) 50%, var(--t-sunk)); }
+    .app.dense #table td { padding: 0; }
+    .app.dense #table td[data-k]:not(.dz) { display: none; }
+    .app.dense #table td[data-k]::before { content: none; }
+    .app.dense td.c-rank { position: static; }
+    .app.dense td.c-rank .rk { width: 24px; height: 24px; font-size: 11px; border-radius: 8px; }
+    .app.dense td.c-name { grid-column: auto; padding: 0; min-width: 0; }
+    .app.dense td.c-name small { display: none; }
+    .app.dense td.c-name b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .app.dense td.c-name .av { width: 26px; height: 26px; font-size: 11px; border-radius: 8px; }
+    .app.dense td.dz { text-align: right; }
+    .app.dense td.dz .mini, .app.dense td.dz .small { display: none; }
+    .app.dense td[data-k="戦闘力"] .pt { font-size: 14px; }
+    .app.dense td[data-k="戦闘力"] .pt::after { content: 'pt'; font-size: 10px; color: var(--t-mute); margin-left: 1px; }
+    .app.dense td.dz .tag { font-size: 10.5px; padding: 3px 8px; min-height: 0; }
+    .app.dense td.dz .big { font-size: 14px; }
+  }
+  /* 詳しい画面の上：キャラとランク */
+  .pd-fig { position: relative; width: 58px; height: 58px; border-radius: 16px; flex: none; display: grid; place-items: center; overflow: hidden;
+    background: radial-gradient(circle at 50% 35%, #36557A, #101C2E 75%); color: #fff; font-weight: 900; font-size: 20px; }
+  .pd-fig.partner { background: radial-gradient(circle at 50% 35%, #2C9B69, #0D4F33 75%); }
+  .pd-fig img { position: absolute; inset: 4px 4px 0; width: calc(100% - 8px); height: calc(100% - 4px); object-fit: contain; object-position: bottom; filter: drop-shadow(2px 3px 0 rgba(0,0,0,.35)); }
+  .pd-fig.has b { display: none; }
+  .pd-nm { display: flex; align-items: center; gap: 8px; }
+  .pd-rank { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; font-size: 14px; font-weight: 900; color: #2A1D00; flex: none; }
+  .pd-rank.rS { background: linear-gradient(135deg, #FFF0A8, #FFC93C 45%, #FF7A45 75%, #C69CFF); }
+  .pd-rank.rA { background: linear-gradient(135deg, #FFE0A0, #FF8A3D); }
+  .pd-rank.rB { background: #D3DBEA; color: #212A34; }
+  .pd-rank.rC { background: #C98A55; color: #2B1703; }
+  .pd-kp em { display: block; font-style: normal; font-size: 10.5px; font-weight: 800; color: var(--t-mute); margin-top: 1px; }
 </style>
 </head>
 <body>
@@ -433,6 +490,10 @@
       <button type="button" data-sort="roster" aria-pressed="true">名簿順</button>
       <button type="button" data-sort="power" aria-pressed="false">戦闘力順</button>
     </div>
+    <div class="seg dense-seg" role="group" aria-label="スマホの見え方">
+      <button type="button" data-dense="1" aria-pressed="true">ぎゅっと</button>
+      <button type="button" data-dense="0" aria-pressed="false">くわしく</button>
+    </div>
   </div>
 
   <div class="state" id="state"><span class="spin" aria-hidden="true" hidden></span>
@@ -444,7 +505,7 @@
       <thead>
         <tr>
           <th class="c-rank">#</th><th class="c-name">名前</th><th>獲得</th><th>戦闘力</th><th>MNP</th><th>固定</th>
-          <th id="th-nip-today">日報（今日）</th><th id="th-nip-month">日報（今月）</th><th>稼働費 入力</th><th>稼働費 金額</th><th>経費 件数</th><th>経費 金額</th>
+          <th id="th-nip-today">日報（今日）</th><th id="th-nip-month">日報（今月）</th><th class="hc">稼働費 入力</th><th class="hc">稼働費 金額</th><th class="hk">経費 件数</th><th class="hk">経費 金額</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -807,7 +868,7 @@
     if (c.pending) return '<span class="dim">準備中</span>';
     if (c.error) return '<span class="err">読めません</span>';
     if (c.none) return '<span class="dim na">—</span>';
-    return '<span class="num big">¥' + fmt(c.amount) + '</span>';
+    return '<span class="num big cc">¥' + fmt(c.amount) + '</span>';
   }
   function findRow(name) {
     var rows = $('rows').children;
@@ -840,7 +901,7 @@
     if (!k) return '<span class="wait">…</span>';
     if (k.error) return '<span class="err">読めません</span>';
     if (k.none) return '<span class="dim na">—</span>';
-    return '<span class="num big">¥' + fmt(k.amount) + '</span>';
+    return '<span class="num big ck">¥' + fmt(k.amount) + '</span>';
   }
   function paintKeihiCells(name) {
     var row = findRow(name);
@@ -876,7 +937,7 @@
   function kpiCommute() {
     var cm = COMMUTE.map(function (n) { return data.commute[n]; }).filter(function (c) { return c && !c.error && !c.pending && !c.none; });
     var left = COMMUTE.filter(function (n) { return !data.commute[n]; }).length;
-    return '<div class="kpi"><div class="k">稼働費の入力' + (isNow() ? '' : '（' + mWord() + '）') + '</div><div class="v num">'
+    return '<div class="kpi kc"><div class="k">稼働費の入力' + (isNow() ? '' : '（' + mWord() + '）') + '</div><div class="v num">'
       + cm.reduce(function (a, c) { return a + c.days; }, 0) + '<small>日分</small></div><div class="s num">'
       + cm.filter(function (c) { return c.days > 0 || c.amount > 0; }).length + '人が入力・合計 ¥' + fmt(cm.reduce(function (a, c) { return a + c.amount; }, 0))   // 0日の人は数えない
       + (left ? '<span class="wait">（残り ' + left + '人）</span>' : '') + '</div></div>';
@@ -919,20 +980,21 @@
     // 名簿順では # は名簿の番号（数字が動かない）。戦闘力順のときだけ順位（1〜3位は色付き）
     var byPower = sortBy === 'power', no = byPower ? x.rank : x.i + 1;
     var rk = 'rk' + (byPower && x.rank <= 3 ? ' r' + x.rank : '');
-    return '<tr data-row="' + esc(x.name) + '" tabindex="0" aria-label="' + esc(x.name) + 'の詳しい内容を開く">'
+    var nz = isNow() ? 'today' : 'month';   // ぎゅっと表示で出す日報の欄（今月は今日、前の月はその月の日数）
+    return '<tr data-row="' + esc(x.name) + '"' + (x.s.total ? '' : ' class="zero"') + ' tabindex="0" aria-label="' + esc(x.name) + 'の詳しい内容を開く">'
       + '<td class="c-rank"><span class="' + rk + '"' + (byPower ? ' title="戦闘力の順位"' : '') + '>' + no + '</span></td>'
       + '<td class="c-name"><span class="who"><span class="av ' + (x.partner ? 'partner' : 'staff') + '" aria-hidden="true">'
         + esc(x.name.slice(0, 1)) + '</span><span><b>' + esc(x.name) + '</b><small>'
         + (x.partner ? 'PARTNER' : 'STAFF') + '</small></span></span></td>'
-      + '<td data-k="獲得" class="num">' + (x.s.total
+      + '<td data-k="獲得" class="num dz">' + (x.s.total
           ? '<span class="big">' + x.s.total + '<small style="font-size:11px;font-weight:800;color:var(--t-mute)">件</small></span><span class="mini"><i style="width:' + pct(x.s.total, maxTotal) + '%"></i></span>'
           : '<span class="dim">0件</span>') + '</td>'
-      + '<td data-k="戦闘力" class="num"><span class="pt">' + fmt(x.s.power) + '</span>'
+      + '<td data-k="戦闘力" class="num dz"><span class="pt">' + fmt(x.s.power) + '</span>'
         + (x.s.power ? '<span class="mini pw"><i style="width:' + pct(x.s.power, maxPower) + '%"></i></span>' : '') + '</td>'
       + '<td data-k="MNP" class="num">' + (x.s.cats['MNP'] ? '<span class="big">' + x.s.cats['MNP'] + '</span>' : '<span class="dim">0</span>') + '</td>'
       + '<td data-k="固定" class="num">' + (x.s.cats['固定'] ? '<span class="big">' + x.s.cats['固定'] + '</span>' : '<span class="dim">0</span>') + '</td>'
-      + '<td data-k="日報（今日）">' + nipToday + '</td>'
-      + '<td data-k="日報（今月）">' + nipMonth + '</td>'
+      + '<td data-k="日報（今日）"' + (nz === 'today' ? ' class="dz"' : '') + '>' + nipToday + '</td>'
+      + '<td data-k="日報（今月）"' + (nz === 'month' ? ' class="dz"' : '') + '>' + nipMonth + '</td>'
       + '<td data-k="稼働費 入力" data-c="cdays">' + commuteDaysHtml(x.name) + '</td>'
       + '<td data-k="稼働費 金額" data-c="camt">' + commuteAmtHtml(x.name) + '</td>'
       + '<td data-k="経費 件数" data-c="kcnt">' + keihiCountHtml(x.name) + '</td>'
@@ -989,13 +1051,20 @@
       + '<div class="kpi"><div class="k">稼働スタッフ数</div><div class="v num">' + s.activeStaff + '<small>名</small></div><div class="s">' + s.staff.length + '名中</div></div>'
       + '<div class="kpi"><div class="k">1人あたり</div><div class="v num">' + avg + '<small>日</small></div><div class="s">稼働した人の平均・稼働率 ' + Math.round(avg / s.daysInMonth * 100) + '%</div></div>';
     var staffRows = s.staff.map(function (x) {
-      return '<div class="brow' + (x.days ? '' : ' zero') + '" data-name="' + esc(x.name) + '" role="button" tabindex="0"><span class="bl">' + esc(x.name) + '</span><span class="bb"><i style="width:' + Math.round(x.days / s.daysInMonth * 100) + '%"></i></span>'
+      // 日ごとの取引先が分かれば、取引先の色で積み上げる（分からない日数は灰色）
+      var by = s.byDay && s.byDay[x.name], cnt = {}, seen = 0, seg;
+      Object.keys(by || {}).forEach(function (d) { var f = by[d] || ''; cnt[f] = (cnt[f] || 0) + 1; seen++; });
+      var w = function (n) { return (n / s.daysInMonth * 100).toFixed(2) + '%'; };
+      seg = Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).map(function (f) {
+        return '<i style="width:' + w(cnt[f]) + ';background:' + (FLOW_COLORS[f] || 'var(--t-faint)') + '" title="' + esc(f || '取引先なし') + ' ' + cnt[f] + '日"></i>';
+      }).join('') + (x.days > seen ? '<i style="width:' + w(x.days - seen) + ';background:' + (seen ? 'var(--t-faint)' : 'var(--t-navy2)') + '"></i>' : '');
+      return '<div class="brow' + (x.days ? '' : ' zero') + '" data-name="' + esc(x.name) + '" role="button" tabindex="0"><span class="bl">' + esc(x.name) + '</span><span class="bb stk">' + seg + '</span>'
         + '<span class="bv num">' + x.days + '日<small>' + x.pct + '%</small></span></div>';
     }).join('');
     var tri = s.torihiki.slice().sort(function (a, b) { return b.days - a.days; });
     var top = Math.max.apply(null, tri.map(function (x) { return x.days; }).concat([1]));
     var triRows = tri.map(function (x) {
-      return '<div class="brow' + (x.days ? '' : ' zero') + '"><span class="bl">' + esc(x.name) + '</span><span class="bb"><i style="width:' + Math.round(x.days / top * 100) + '%"></i></span>'
+      return '<div class="brow fw' + (x.days ? '' : ' zero') + '"><span class="bl">' + flowDot(x.name) + esc(x.name) + '</span><span class="bb"><i style="width:' + Math.round(x.days / top * 100) + '%;background:' + flowColor(x.name) + '"></i></span>'
         + '<span class="bv num">' + x.days + '日<small>' + x.pct + '%</small></span></div>';
     }).join('');
     $('shift-rep').innerHTML =
@@ -1006,6 +1075,10 @@
   /* ── 商流別：稼働費・経費の1件ずつを、その日のその人のシフトの取引先に振り分ける ──
      シフトが無い日・取引先の無い日・日付の無い分（月まとめなど）は「商流なし」 */
   var NO_FLOW = '商流なし', UNSET_FLOW = '商流未選択', NO_SHIFT = 'シフト未取得';
+  // 取引先の色（シフトのグラフ・商流のグラフと表・詳しい画面のカレンダーとタグで同じ）。稼働費の青・経費のオレンジとは別の色にしている
+  var FLOW_COLORS = { '南国殖産': '#BE123C', 'ハイコム': '#15803D', 'サンコミ': '#7C3AED', 'ダル': '#4F46E5', 'NOON': '#A16207', '九情': '#0E7490' };
+  function flowColor(f) { return FLOW_COLORS[f] || '#64748B'; }
+  function flowDot(f) { return '<i class="fdot" style="--fc:' + (FLOW_COLORS[f] || 'var(--t-faint)') + '"></i>'; }
   // 経費は入力のときに選んだ商流（「なし」＝会社の経費など、空＝まだ選んでいない）。稼働費はその日のシフトの取引先
   function keihiFlow(l) { return l.flow === 'なし' ? NO_FLOW : (l.flow || UNSET_FLOW); }
   function flowOf(name, day) {
@@ -1046,12 +1119,12 @@
       keys.sort(function (a, b) { return isOther(a) - isOther(b) || (flows[b].c + flows[b].k) - (flows[a].c + flows[a].k); });
       var tc = 0, tk = 0;
       keys.forEach(function (f) { tc += flows[f].c; tk += flows[f].k; });
-      var cell = function (v, uses) { return uses ? '¥' + fmt(v) : '<span class="dim na">—</span>'; };
-      var body = keys.length ? '<table class="stab"><tr><th>商流</th><th>稼働費</th><th>経費</th><th>計</th></tr>'
+      var cell = function (v, uses, cls) { return uses ? '<span class="' + cls + '">¥' + fmt(v) + '</span>' : '<span class="dim na">—</span>'; };
+      var body = keys.length ? '<table class="stab"><tr><th>商流</th><th class="hc">稼働費</th><th class="hk">経費</th><th>計</th></tr>'
         + keys.map(function (f) {
-            return '<tr' + (isOther(f) ? ' class="none"' : '') + '><td>' + esc(f) + '</td><td>' + cell(flows[f].c, usesC) + '</td><td>' + cell(flows[f].k, usesK) + '</td><td>¥' + fmt(flows[f].c + flows[f].k) + '</td></tr>';
+            return '<tr' + (isOther(f) ? ' class="none"' : '') + '><td>' + flowDot(f) + esc(f) + '</td><td>' + cell(flows[f].c, usesC, 'cc') + '</td><td>' + cell(flows[f].k, usesK, 'ck') + '</td><td>¥' + fmt(flows[f].c + flows[f].k) + '</td></tr>';
           }).join('')
-        + (keys.length > 1 ? '<tr class="sum"><td>合計</td><td>' + cell(tc, usesC) + '</td><td>' + cell(tk, usesK) + '</td><td>¥' + fmt(tc + tk) + '</td></tr>' : '')
+        + (keys.length > 1 ? '<tr class="sum"><td>合計</td><td>' + cell(tc, usesC, 'cc') + '</td><td>' + cell(tk, usesK, 'ck') + '</td><td>¥' + fmt(tc + tk) + '</td></tr>' : '')
         + '</table>'
         : '<div class="snote">' + (waiting ? '読み込み中…' : bad ? '読めませんでした' : 'この月の稼働費・経費はありません。') + '</div>';
       cards += '<div class="scard" data-flow="' + esc(x.name) + '" role="button" tabindex="0"><div class="who-h"><b><i>' + (x.i + 1) + '.</i>' + esc(x.name) + '<span class="open-mark" aria-hidden="true">›</span></b><span>¥' + fmt(tc + tk) + '</span></div>' + body + '</div>';
@@ -1060,8 +1133,8 @@
     var top = Math.max.apply(null, allKeys.map(function (f) { return all[f].c + all[f].k; }).concat([1]));
     $('shouryu-all').innerHTML = '<h3>全員の合計（商流ごと）<span>稼働費＋経費</span></h3>' + (allKeys.length ? '<div class="bars">' + allKeys.map(function (f) {
       var v = all[f].c + all[f].k;
-      return '<div class="brow' + (isOther(f) ? ' zero' : '') + '"><span class="bl">' + esc(f) + '</span><span class="bb"><i style="width:' + Math.round(v / top * 100) + '%"></i></span>'
-        + '<span class="bv num">¥' + fmt(v) + '</span></div><div class="sub-all" style="margin:-4px 0 4px 6.8em">稼働費 ¥' + fmt(all[f].c) + '・経費 ¥' + fmt(all[f].k) + '</div>';
+      return '<div class="brow' + (isOther(f) ? ' zero' : '') + '"><span class="bl">' + flowDot(f) + esc(f) + '</span><span class="bb"><i style="width:' + Math.round(v / top * 100) + '%;background:' + (FLOW_COLORS[f] || 'var(--t-faint)') + '"></i></span>'
+        + '<span class="bv num">¥' + fmt(v) + '</span></div><div class="sub-all" style="margin:-4px 0 4px 8.2em"><span class="cc">稼働費 ¥' + fmt(all[f].c) + '</span>・<span class="ck">経費 ¥' + fmt(all[f].k) + '</span></div>';
     }).join('') + '</div>' : '<div class="snote">まだありません。</div>');
     $('shouryu').innerHTML = cards;
     $('shouryu-note').textContent = '経費は、経費精算で1件ずつ選んだ商流で分けています（選んでいない分は「' + UNSET_FLOW + '」。経費精算の履歴から、前の月の分もあとから選べます）。'
@@ -1071,19 +1144,30 @@
 
   /* ── 1人の詳しい画面：獲得の内訳・シフトのカレンダー（日ごとの取引先）・日報・商流・稼働費と経費の明細 ──
      データは画面に読み込んであるもの（data）だけを使う。読み込み途中なら、届いたときに描き直す（refreshPerson） */
-  // 取引先の色（カレンダー・商流のタグ）
-  var FLOW_COLORS = { '南国殖産': '#C2410C', 'ハイコム': '#15803D', 'サンコミ': '#7C3AED', 'ダル': '#2563EB', 'NOON': '#B45309', '九情': '#0E7490' };
-  function flowColor(f) { return FLOW_COLORS[f] || '#64748B'; }
   function flowTag(f) {
     var other = f === NO_FLOW || f === UNSET_FLOW || f === NO_SHIFT;
     return '<span class="fl' + (other ? ' other' : '') + '" style="--fc:' + flowColor(f) + '">' + esc(f) + '</span>';
   }
   var pdName = '', pdBack = null;
+  var POWER = R.forTool('power'), RANKS = P.RANKS || [['B', 1000], ['A', 1500], ['S', 2000]];
+  function rankOf(v) { var r = 'C'; RANKS.forEach(function (x) { if (v >= x[1]) r = x[0]; }); return r; }
+  // 戦闘力の画面で選んだキャラ（選んでいなければ、戦闘力の画面と同じ決まりで割り当てたキャラ）
+  function fighterId(name) {
+    var f = data.stats && data.stats.fighters ? String(data.stats.fighters[name] || '') : '';
+    if (/^(0[1-9]|1[0-2])$/.test(f)) return f;
+    var i = POWER.indexOf(name);
+    return i < 0 ? '' : (i % 12 < 9 ? '0' : '') + (i % 12 + 1);
+  }
+  function wirePd() {
+    $('pd-x').onclick = closePerson;
+    var im = $('pd').querySelector('.pd-fig img'); if (!im) return;
+    var ok = function () { if (im.naturalWidth) im.parentNode.classList.add('has'); };
+    if (im.complete) ok(); else im.addEventListener('load', ok);
+    im.addEventListener('error', function () { im.remove(); });
+  }
   function personHtml(name) {
     var partner = R.isPartner(name), y = Number(viewYm.slice(0, 4)), m = Number(viewYm.slice(5, 7));
-    var h = '<div class="pd-h"><span class="av' + (partner ? ' partner' : '') + '" aria-hidden="true">' + esc(name.slice(0, 1)) + '</span>'
-      + '<div><b id="pd-name">' + esc(name) + '</b><small>' + (partner ? 'PARTNER' : 'STAFF') + '・' + y + '年' + m + '月</small></div>'
-      + '<button type="button" class="x" id="pd-x" aria-label="閉じる">×</button></div>';
+    var h = '';
 
     // 獲得：商品ごとの件数と点数
     var gains = {}, tot = 0, pw = 0;
@@ -1096,10 +1180,18 @@
       gains[k].n += n; tot += n; pw += it.pt * n;
     });
     var gl = Object.keys(gains).map(function (k) { return gains[k]; }).sort(function (a, b) { return b.pt * b.n - a.pt * a.n; });
+    // 上：戦闘力のキャラ（画像が無ければ頭文字）・名前・その月のランク
+    var fid = fighterId(name), rk = rankOf(pw), nx = null;
+    for (var ri = 0; ri < RANKS.length; ri++) if (pw < RANKS[ri][1]) { nx = RANKS[ri]; break; }
+    h += '<div class="pd-h"><span class="pd-fig' + (partner ? ' partner' : '') + '" aria-hidden="true"><b>' + esc(name.slice(0, 1)) + '</b>'
+      + (fid ? '<img src="fighters/' + fid + '.png" alt="">' : '') + '</span>'
+      + '<div><div class="pd-nm"><b id="pd-name">' + esc(name) + '</b><span class="pd-rank r' + rk + '" title="' + y + '年' + m + '月の戦闘力のランク">' + rk + '</span></div>'
+      + '<small>' + (partner ? 'PARTNER' : 'STAFF') + '・' + y + '年' + m + '月</small></div>'
+      + '<button type="button" class="x" id="pd-x" aria-label="閉じる">×</button></div>';
     var c = data.commute[name], k = data.keihi[name];
     var usesC = COMMUTE.indexOf(name) >= 0, usesK = KEIHI.indexOf(name) >= 0;
     var ca = c && !c.error && !c.pending && !c.none ? c.amount : 0, ka = k && !k.error && !k.none ? k.amount : 0;
-    h += '<div class="pd-kp"><div><small>獲得</small><b>' + tot + '<i>件</i></b></div><div><small>戦闘力</small><b>' + fmt(pw) + '</b></div>'
+    h += '<div class="pd-kp"><div><small>獲得</small><b>' + tot + '<i>件</i></b></div><div><small>戦闘力</small><b>' + fmt(pw) + '</b><em>' + (nx ? nx[0] + 'まで あと ' + fmt(nx[1] - pw) : '最高ランク') + '</em></div>'
       + '<div><small>稼働費＋経費</small><b>¥' + fmt(ca + ka) + '</b></div></div>';
     h += '<div class="scard"><h3>獲得の内訳<span>' + tot + '件・' + fmt(pw) + 'pt</span></h3>' + (gl.length ? gl.map(function (g) {
       return '<div class="pd-li"><span class="d">' + esc(P.carrierLabel ? P.carrierLabel(g.carrier) : g.carrier) + '</span><span class="t">' + esc(g.label) + '<small>' + g.n + '件 × ' + g.pt + 'pt</small></span><span class="a">' + fmt(g.pt * g.n) + 'pt</span></div>';
@@ -1115,9 +1207,9 @@
     for (var d = 1; d <= dim; d++) {
       var on = by && Object.prototype.hasOwnProperty.call(by, String(d)), f = on ? by[String(d)] : '';
       if (on) { worked++; var key = f || '取引先なし'; counts[key] = (counts[key] || 0) + 1; }
-      var ds = viewYm + '-' + String(d).padStart(2, '0');
-      cal += '<span class="cd' + (on ? ' on' : '') + (d === todayD ? ' today' : '') + '"' + (on ? ' style="--fc:' + flowColor(f) + '"' : '') + ' title="' + m + '/' + d + (on ? ' ' + esc(f || '取引先なし') : '') + '">'
-        + '<span class="n">' + d + '</span>' + (on ? '<span class="f">' + esc((f || '—').slice(0, 3)) + '</span>' : '')
+      var ds = viewYm + '-' + String(d).padStart(2, '0'), wd = (first + d - 1) % 7;
+      cal += '<span class="cd' + (on ? ' on' : '') + (wd === 0 ? ' sun' : wd === 6 ? ' sat' : '') + (d === todayD ? ' today' : '') + '"' + (on ? ' style="--fc:' + flowColor(f) + '"' : '') + ' title="' + m + '/' + d + (on ? ' ' + esc(f || '取引先なし') : '') + '">'
+        + '<span class="n">' + d + '</span>' + (on ? '<span class="f">' + esc(f || '—') + '</span>' : '')
         + (nd.indexOf(ds) >= 0 ? '<span class="nip" title="日報あり"></span>' : '') + '</span>';
     }
     cal += '</div>';
@@ -1131,12 +1223,12 @@
     if (usesC || usesK) {
       var flows = splitByFlow(name), fk = Object.keys(flows).sort(function (a, b) { return isOther(a) - isOther(b) || (flows[b].c + flows[b].k) - (flows[a].c + flows[a].k); });
       h += '<div class="scard"><h3>商流別<span>稼働費＋経費</span></h3>' + (fk.length ? fk.map(function (f) {
-        return '<div class="pd-li nod"><span class="t">' + flowTag(f) + '<small>稼働費 ¥' + fmt(flows[f].c) + '・経費 ¥' + fmt(flows[f].k) + '</small></span><span class="a">¥' + fmt(flows[f].c + flows[f].k) + '</span></div>';
+        return '<div class="pd-li nod"><span class="t">' + flowTag(f) + '<small><span class="cc">稼働費 ¥' + fmt(flows[f].c) + '</span>・<span class="ck">経費 ¥' + fmt(flows[f].k) + '</span></small></span><span class="a">¥' + fmt(flows[f].c + flows[f].k) + '</span></div>';
       }).join('') : '<div class="pd-empty">この月の稼働費・経費はありません。</div>') + '</div>';
     }
     // 稼働費の明細（1日ずつ、その日の商流つき）
     if (usesC) {
-      h += '<div class="scard"><h3>稼働費<span>' + (c && !c.error && !c.pending && !c.none ? '¥' + fmt(c.amount) + '・' + c.days + '日' : '') + '</span></h3>';
+      h += '<div class="scard pc"><h3>稼働費<span>' + (c && !c.error && !c.pending && !c.none ? '¥' + fmt(c.amount) + '・' + c.days + '日' : '') + '</span></h3>';
       if (!c) h += '<div class="pd-empty">読み込み中…</div>';
       else if (c.pending) h += '<div class="pd-empty">準備中です。</div>';
       else if (c.error) h += '<div class="pd-empty">読めませんでした：' + esc(c.error) + '</div>';
@@ -1148,12 +1240,12 @@
     }
     // 経費の明細（項目・内容・選んだ商流）
     if (usesK) {
-      h += '<div class="scard"><h3>経費精算<span>' + (k && !k.error && !k.none ? '¥' + fmt(k.amount) + '・' + k.count + '件' : '') + '</span></h3>';
+      h += '<div class="scard pk"><h3>経費精算<span>' + (k && !k.error && !k.none ? '¥' + fmt(k.amount) + '・' + k.count + '件' : '') + '</span></h3>';
       if (!k) h += '<div class="pd-empty">読み込み中…</div>';
       else if (k.error) h += '<div class="pd-empty">読めませんでした：' + esc(k.error) + '</div>';
       else if (k.none) h += '<div class="pd-empty">この月の記録がありません（今のシートは' + esc(k.sheet) + '）。</div>';
       else {
-        if (k.items.length) h += '<div class="parts" style="margin-bottom:6px">' + k.items.map(function (it) { return '<span class="chip">' + esc(it[0]) + ' <b>¥' + fmt(it[1]) + '</b></span>'; }).join('') + '</div>';
+        if (k.items.length) h += '<div class="parts" style="margin-bottom:6px">' + k.items.map(function (it) { return '<span class="chip k">' + esc(it[0]) + ' <b>¥' + fmt(it[1]) + '</b></span>'; }).join('') + '</div>';
         h += k.lines.length ? k.lines.map(function (l) {
           return '<div class="pd-li"><span class="d">' + esc(l.d) + '</span><span class="t">' + esc(l.t) + flowTag(keihiFlow(l)) + (l.sub ? '<small>' + esc(l.sub) + '</small>' : '') + '</span><span class="a">¥' + fmt(Math.round(l.a)) + '</span></div>';
         }).join('') : '<div class="pd-empty">まだ入力がありません。</div>';
@@ -1169,7 +1261,7 @@
     $('pd-bg').hidden = false;
     $('pd').scrollTop = 0;
     document.body.style.overflow = 'hidden';
-    $('pd-x').onclick = closePerson;
+    wirePd();
     $('pd-x').focus();
   }
   function closePerson() {
@@ -1182,7 +1274,7 @@
     if (!pdName || $('pd-bg').hidden) return;
     var top = $('pd').scrollTop;
     $('pd').innerHTML = personHtml(pdName); $('pd').scrollTop = top;
-    $('pd-x').onclick = closePerson;
+    wirePd();
   }
   $('pd-bg').addEventListener('click', function (e) { if (e.target === this) closePerson(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePerson(); });
@@ -1207,8 +1299,8 @@
     var sc = 0, sk = 0, nc = 0, nk = 0;
     people.forEach(function (x) { sc += x.ca; sk += x.ka; if (x.ca) nc++; if (x.ka) nk++; });
     $('money-kpis').innerHTML =
-      '<div class="kpi"><div class="k">' + mWord() + 'の稼働費（全員）</div><div class="v num">¥' + fmt(sc) + '</div><div class="s">' + nc + '人分</div></div>'
-      + '<div class="kpi"><div class="k">' + mWord() + 'の経費精算（全員）</div><div class="v num">¥' + fmt(sk) + '</div><div class="s">' + nk + '人分</div></div>'
+      '<div class="kpi kc"><div class="k">' + mWord() + 'の稼働費（全員）</div><div class="v num">¥' + fmt(sc) + '</div><div class="s">' + nc + '人分</div></div>'
+      + '<div class="kpi kk"><div class="k">' + mWord() + 'の経費精算（全員）</div><div class="v num">¥' + fmt(sk) + '</div><div class="s">' + nk + '人分</div></div>'
       + '<div class="kpi"><div class="k">合計</div><div class="v num">¥' + fmt(sc + sk) + '</div><div class="s">稼働費＋経費精算</div></div>';
     $('money').innerHTML = people.map(function (x) {
       var c = x.c, k = x.k, chips = '';
@@ -1220,7 +1312,7 @@
         : '<span class="chip k">経費 <b>¥' + fmt(k.amount) + '</b>' + k.count + '件</span>' + (k.fromHistory && k.count ? '<span class="chip">経費は履歴から</span>' : '');
       var cb = '', kb = '';
       if (c !== undefined) {
-        cb = '<div class="mblock"><h3>稼働費<span>' + (c && !c.error && !c.pending && !c.none ? '¥' + fmt(c.amount) + '・' + c.days + '日' + (c.km ? '・' + c.km + 'km' : '') : '') + '</span></h3>';
+        cb = '<div class="mblock bc"><h3>稼働費<span>' + (c && !c.error && !c.pending && !c.none ? '¥' + fmt(c.amount) + '・' + c.days + '日' + (c.km ? '・' + c.km + 'km' : '') : '') + '</span></h3>';
         if (!c) cb += '<div class="mempty">読み込み中…</div>';
         else if (c.pending) cb += '<div class="mempty">準備中です。</div>';
         else if (c.error) cb += '<div class="mempty">読めませんでした：' + esc(c.error) + '</div>';
@@ -1235,13 +1327,13 @@
         cb += '</div>';
       }
       if (k !== undefined) {
-        kb = '<div class="mblock"><h3>経費精算<span>' + (k && !k.error && !k.none ? '¥' + fmt(k.amount) + '・' + k.count + '件' + (k.ym ? '・' + esc(k.ym) : '') : '') + '</span></h3>';
+        kb = '<div class="mblock bk"><h3>経費精算<span>' + (k && !k.error && !k.none ? '¥' + fmt(k.amount) + '・' + k.count + '件' + (k.ym ? '・' + esc(k.ym) : '') : '') + '</span></h3>';
         if (!k) kb += '<div class="mempty">読み込み中…</div>';
         else if (k.error) kb += '<div class="mempty">読めませんでした：' + esc(k.error) + '</div>';
         else if (k.none) kb += '<div class="mempty">' + mWord() + 'の記録がありません（今のシートは' + esc(k.sheet) + '）。シートの月を切り替えていない時は、‹ › でシートの月を見てください。</div>';
         else {
           var top = k.items.length ? k.items[0][1] : 1;
-          kb += k.items.length ? '<div class="bars">' + k.items.map(function (it) {
+          kb += k.items.length ? '<div class="bars ck">' + k.items.map(function (it) {
             return '<div class="brow"><span class="bl">' + esc(it[0]) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(it[1] / top * 100)) + '%"></i></span><span class="bv">¥' + fmt(it[1]) + '</span></div>';
           }).join('') + '</div>' : '';
           kb += linesHtml(k.lines);
@@ -1285,6 +1377,14 @@
     $('tcard').hidden = true; $('money-wrap').hidden = true; $('kpis').hidden = true; $('mix').hidden = true; $('bar').hidden = true;
     load();   // 前の月の数字が混ざらないよう、表は消してから読み直す（読み込み中の古い応答は gen で捨てる）
   }
+  var DENSE_KEY = 'siegTeamDense';
+  function setDense(on) {
+    document.querySelector('.app').classList.toggle('dense', on);
+    document.querySelectorAll('[data-dense]').forEach(function (b) { b.setAttribute('aria-pressed', String((b.dataset.dense === '1') === on)); });
+    try { localStorage.setItem(DENSE_KEY, on ? '1' : '0'); } catch (e) {}
+  }
+  document.querySelectorAll('[data-dense]').forEach(function (b) { b.addEventListener('click', function () { setDense(b.dataset.dense === '1'); }); });
+  setDense((function () { try { return localStorage.getItem(DENSE_KEY) !== '0'; } catch (e) { return true; } })());
   // 上のタブ（一覧・シフト・商流・経費）。スマホもパソコンも。最後に見たタブを覚える
   var VIEW_KEY = 'siegTeamView';
   function setView(v) {

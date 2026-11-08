@@ -588,11 +588,18 @@ var STAFF_SHIFT_API = 'https://script.google.com/macros/s/AKfycbz_aHJ4v0Q-s5_m_i
 var HOME = { me:'', loading:false }, homeGen = 0, homePromise = Promise.resolve(null);
 function ymOf(d){ return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
 function fmtN(n){ return Number(n || 0).toLocaleString('ja-JP'); }
+/* 前回読んだ数字をこの端末に残しておき、開いたらまずそれを出す（Google の応答は数秒かかるので、待たせない）。
+   新しい数字が届いたら、そっと入れ替える。名前か月が変わったら使わない */
+var HOME_CACHE = 'siegHomeCache';
+function homeCache(me, month){
+  try { var c = JSON.parse(lsGet(HOME_CACHE) || 'null'); return c && c.me === me && c.month === month ? c : null; } catch(e) { return null; }
+}
 function loadHome(){
   var me = getStaff(), my = ++homeGen, PR = window.SiegProducts, G = window.GasClient;
-  HOME = { me:me, loading:!!(me && PR && G) };
-  if (!HOME.loading) { homePromise = Promise.resolve(null); paintHome(); return; }
   var now = new Date(), month = ymOf(now), nx = new Date(now.getFullYear(), now.getMonth() + 1, 1), partner = isPartner(me);
+  var cached = me ? homeCache(me, month) : null;
+  HOME = cached ? cached : { me:me, loading:!!(me && PR && G) };
+  if (!(me && PR && G)) { HOME.loading = false; homePromise = Promise.resolve(null); paintHome(); return; }
   var skip = function(){ return null; };
   homePromise = Promise.all([
     G.get(PR.API, { action:'gainStats', from:month }).catch(skip),
@@ -602,7 +609,12 @@ function loadHome(){
     partner ? null : G.get(STAFF_SHIFT_API, { action:'list', name:me, year:nx.getFullYear(), month:nx.getMonth() + 1 }).catch(skip)
   ]).then(function(r){
     var d = { me:me, month:month, stats:r[0], nip:r[1], shift:partner ? r[2] : null, staffShift:partner ? null : r[2], staffNext:partner ? null : r[3] };
-    if (my === homeGen) { HOME = d; paintHome(); }
+    // 読めなかったものは、前回の数字のまま
+    if (cached) ['stats', 'nip', 'shift', 'staffShift', 'staffNext'].forEach(function(k){ if (!d[k] && cached[k]) d[k] = cached[k]; });
+    if (my === homeGen) {
+      HOME = d; paintHome();
+      try { localStorage.setItem(HOME_CACHE, JSON.stringify(d)); } catch(e) {}
+    }
     return d;
   });
   paintHome();
@@ -797,6 +809,7 @@ $('#contacts').innerHTML = CONTACTS.map(function(c){
 
 /* ═══ お知らせ（掲示板） ═══ */
 var NOTICES = [];
+var NOTICE_CACHE = 'siegNoticeCache';   // 前回のお知らせ（開いたらまずこれを出し、届いたら入れ替える）
 var HOME_MAX = 2;   // ホームに出す、まだ読んでいないお知らせの数（ほかはお知らせのタブへ）
 var noticeError = '';   // 読み込みに失敗したとき「お知らせはありません」と誤解させないため
 
@@ -937,12 +950,15 @@ function loadNotices(){
       noticeError = '';
       NOTICES = (data.items || []).map(normalize);
       paintNotices();
+      lsSet(NOTICE_CACHE, JSON.stringify(data.items || []));
     })
     .catch(function(err){
+      if (NOTICES.length) return;   // 前回の分を出しているときは、そのまま
       noticeError = err.message;
       paintNotices();
     });
 }
+try { NOTICES = (JSON.parse(lsGet(NOTICE_CACHE) || '[]') || []).map(normalize); if (NOTICES.length) paintNotices(); } catch(e) { NOTICES = []; }
 loadNotices();
 
 /* ═══ タブ ═══ */

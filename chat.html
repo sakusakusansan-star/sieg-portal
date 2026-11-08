@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ぼのぼの｜Sieg</title>
+<meta name="theme-color" content="#DDEFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1726" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   ぼのぼのと会話するホーム（デモ）
+   今のトップ（index.html）はそのまま。ここは別のページとして試す。
+   データはトップと同じもの（獲得報告の集計・日報の記録・シフト・お知らせ・日報へのAIのひとこと）。
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --bg1:#DDEFFF; --bg2:#F2F8FF; --bg3:#F7FAFF;
+  --ink:#17324D; --ink2:#4A6580; --mute:#7B97B3; --line:#CFE0F3;
+  --bub:#FFFFFF; --mine:#2E7CF6; --hot:#E0661F; --accent:#4F46E5;
+  --shadow:0 6px 16px -10px rgba(40,90,150,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg1:#13233B; --bg2:#0F1A2B; --bg3:#0E1726;
+    --ink:#E6EEF8; --ink2:#AFC2D8; --mute:#7F95AD; --line:#2A3B52;
+    --bub:#1A2638; --mine:#3D86F7; --hot:#F07A35; --accent:#7068F2;
+    --shadow:none;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 40%,var(--bg3) 100%) fixed;color:var(--ink);
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+  font-feature-settings:"palt";-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+
+/* ── 上 ── */
+.hd{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  background:color-mix(in srgb,var(--bg1) 82%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.bud{width:46px;height:46px;border-radius:50%;background:#fff;position:relative;overflow:hidden;flex:none;box-shadow:0 4px 12px -4px rgba(40,90,150,.35)}
+.bud img{position:absolute;left:50%;top:2px;width:58px;transform:translateX(-50%)}
+.hd .t b{display:block;font-size:16px;font-weight:900}
+.hd .t small{font-size:11.5px;color:var(--mute);font-weight:700}
+.hd .t small i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3BC57A;margin-right:4px;vertical-align:1px}
+.hd .me{margin-left:auto;font-size:13px;font-weight:900;background:var(--bub);border-radius:999px;padding:7px 13px;box-shadow:var(--shadow)}
+.hd .home{font-size:12px;font-weight:900;color:var(--mute);padding:7px 4px}
+
+/* ── 会話 ── */
+.feed{flex:1;display:flex;flex-direction:column;gap:9px;padding:6px 14px 18px}
+.day{align-self:center;font-size:11px;font-weight:900;color:var(--mute);background:color-mix(in srgb,var(--bub) 70%,transparent);border-radius:999px;padding:3px 10px;margin:4px 0}
+.msg{align-self:flex-start;max-width:84%;background:var(--bub);border-radius:20px 20px 20px 6px;padding:11px 15px;font-size:15px;font-weight:700;line-height:1.6;box-shadow:var(--shadow);overflow-wrap:anywhere}
+.msg em{font-style:normal;color:var(--hot);font-weight:900}
+.msg small{display:block;font-size:12px;color:var(--mute);font-weight:700;margin-top:2px}
+.mine{align-self:flex-end;max-width:80%;background:var(--mine);color:#fff;border-radius:20px 20px 6px 20px;padding:10px 15px;font-size:14.5px;font-weight:700}
+.card{align-self:flex-start;width:min(88%,360px);background:var(--bub);border-radius:20px 20px 20px 6px;overflow:hidden;box-shadow:var(--shadow)}
+.card .top{background:linear-gradient(135deg,var(--accent),#6D63F0);color:#fff;padding:12px 15px}
+.card .top.shift{background:linear-gradient(135deg,#1E8A72,#33B394)}
+.card .top.meet{background:linear-gradient(135deg,#C2410C,#EA7A2E)}
+.card .top small{font-size:11px;font-weight:900;opacity:.85;letter-spacing:.04em}
+.card .top b{display:block;font-size:22px;font-weight:900;line-height:1.3}
+.card .row{display:flex;align-items:center;gap:10px;padding:10px 15px;font-size:13.5px;font-weight:700;color:var(--ink2)}
+.card .row+.row{border-top:1px solid var(--line)}
+.card .row b{color:var(--ink);font-weight:900}
+.card .row .r{margin-left:auto;font-weight:900;color:var(--ink)}
+.rk{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#FFE0A0,#FF8A3D);color:#3A2400;font-weight:900;display:grid;place-items:center;font-size:17px;flex:none}
+.rk.S{background:linear-gradient(135deg,#FFF0A8,#FFC93C 45%,#FF7A45 75%,#C69CFF)}
+.rk.B{background:#D3DBEA;color:#212A34}.rk.C{background:#C98A55;color:#2B1703}
+.bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--line) 70%,transparent);overflow:hidden;flex:1}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#FF8A3D,#FFC93C)}
+.typing{align-self:flex-start;background:var(--bub);border-radius:20px 20px 20px 6px;padding:14px 16px;display:flex;gap:5px;box-shadow:var(--shadow)}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--mute);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+.in{animation:pop .32s cubic-bezier(.2,.8,.3,1.2) backwards}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.in,.typing i{animation:none}}
+
+/* ── 下：なにする？ ── */
+.quick{position:sticky;bottom:0;padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--bg3) 0%,transparent),var(--bg3) 28%)}
+.quick small{display:block;font-size:11px;font-weight:900;color:var(--mute);margin:0 4px 7px}
+.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:2px 14px 4px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 24px),transparent)}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--bub);border:1.5px solid var(--line);border-radius:999px;padding:9px 14px;font-size:14px;font-weight:900;color:var(--ink)}
+.chip:active{transform:scale(.96)}
+.chip.hot{background:var(--hot);border-color:var(--hot);color:#fff}
+.chip.ask{border-style:dashed}
+.chip svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.who{margin:40px auto;text-align:center;max-width:300px}
+.who p{font-size:15px;font-weight:700;line-height:1.7;margin:12px 0}
+.who a{display:inline-block;background:var(--hot);color:#fff;font-weight:900;border-radius:999px;padding:11px 20px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hd">
+    <span class="bud" aria-hidden="true"><img src="buddy/body.png" alt=""><img src="buddy/hold.png" alt=""></span>
+    <div class="t"><b>ぼのぼの</b><small><i></i>Sieg のおてつだい</small></div>
+    <span class="me" id="me" hidden></span>
+    <a class="home" href="./" aria-label="いつものトップへ">トップ</a>
+  </header>
+  <main class="feed" id="feed" aria-live="polite"></main>
+  <div class="quick" id="quick" hidden><small>なにする？</small><div class="chips" id="chips"></div></div>
+</div>
+
+<script src="gas-client.js"></script>
+<script src="sieg-roster.js"></script>
+<script src="sieg-products.js"></script>
+<script>
+(function () {
+  'use strict';
+  var R = window.SiegRoster, PR = window.SiegProducts, G = window.GasClient;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return Number(n || 0).toLocaleString('ja-JP'); }
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* トップ（index.html）と同じ行き先。名前を付けて開く */
+  var NOTICE_API = 'https://script.google.com/macros/s/AKfycbxA1xDkeYuLRSo39iZju6-RUirpwAQbou_WjYe2G0t7KAQJAEADPgl8-56FW9jWzSvT/exec';
+  var STAFF_SHIFT_API = 'https://script.google.com/macros/s/AKfycbz_aHJ4v0Q-s5_m_i7G7gomrJeicz_iRWPF1qcafrG16gQtTV8VA7dU2ViTNgcbtTgYTg/exec';
+  var TOOLS = {
+    nippou: { name: '日報を書く', ic: 'doc', for: R.forTool('nippou'), url: 'https://sakusakusansan-star.github.io/nippou-form/' },
+    gain: { name: '獲得報告', ic: 'flag', for: R.forTool('gain'), url: 'gain.html' },
+    shift: { name: 'シフト入力', ic: 'cal', for: R.everyone, url: 'shift.html', partnerUrl: 'https://sakusakusansan-star.github.io/shift-form/' },
+    commute: { name: '交通費', ic: 'car', for: R.forTool('commute'), url: 'https://sakusakusansan-star.github.io/commute-form/' },
+    keihi: { name: '経費精算', ic: 'rcpt', for: R.forTool('keihi'), url: 'https://sakusakusansan-star.github.io/keihi23/' },
+    power: { name: '戦闘力', ic: 'bolt', for: R.forTool('power'), url: 'power.html' },
+    team: { name: 'みんなの状況', ic: 'team', for: R.forTool('team'), url: 'team.html' }
+  };
+  var ICONS = {
+    doc: '<path d="M4 4h13l3 3v13H4z"/><path d="M8 10h8M8 14h6"/>', flag: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+    cal: '<rect x="3" y="5" width="18" height="16" rx="2.2"/><path d="M8 3v4M16 3v4M3 10h18"/>', car: '<rect x="5" y="3" width="14" height="14" rx="2.2"/><path d="M5 11h14M8 21l-1.6-4M16 21l1.6-4"/>',
+    rcpt: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>', bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    team: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c2.9.3 5 2.6 5 5.8"/>',
+    ask: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1v.5M12 17h.01"/>'
+  };
+  function svg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[k] + '</svg>'; }
+
+  var me = lsGet('siegStaff');
+  if (!R || R.everyone.indexOf(me) < 0) {
+    $('feed').innerHTML = '<div class="who"><span class="bud" style="display:inline-block;width:72px;height:72px"><img src="buddy/body.png" alt="" style="width:90px"></span>'
+      + '<p>はじめまして、ぼのぼのだよ。<br>まず トップで 名前を えらんでね。</p><a href="./">トップへ</a></div>';
+    return;
+  }
+  var partner = R.isPartner(me);
+  $('me').textContent = me; $('me').hidden = false;
+  function canUse(id) { return TOOLS[id] && TOOLS[id].for.indexOf(me) >= 0; }
+  function open(id) {
+    var t = TOOLS[id], url = (partner && t.partnerUrl) || t.url;
+    location.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'staff=' + encodeURIComponent(me) + '&v=' + Date.now();
+  }
+
+  /* ── 日付 ── */
+  var now = new Date(), Y = now.getFullYear(), M = now.getMonth() + 1, D = now.getDate(), H = now.getHours();
+  var month = Y + '-' + ('0' + M).slice(-2), today = month + '-' + ('0' + D).slice(-2);
+  var DOW = ['日', '月', '火', '水', '木', '金', '土'];
+  function md(y, m, d) { return m + '/' + d + '（' + DOW[new Date(y, m - 1, d).getDay()] + '）'; }
+
+  /* ── データ（トップと同じ。前回の分を先に使い、届いたら入れ替える） ── */
+  var CACHE = 'siegChatCache';
+  var data = (function () { try { var c = JSON.parse(lsGet(CACHE) || 'null'); return c && c.me === me && c.month === month ? c : null; } catch (e) { return null; } })();
+  function load() {
+    var skip = function () { return null; };
+    var nx = new Date(Y, M, 1);
+    return Promise.all([
+      G.get(PR.API, { action: 'gainStats', from: month }).catch(skip),
+      partner ? G.get(PR.API, { action: 'nippouStatus', month: month }).catch(skip) : null,
+      partner ? (R.shiftPartnerApi ? G.post(R.shiftPartnerApi, { action: 'getMyShifts', name: me }, { retry: true }).catch(skip) : null)
+              : G.get(STAFF_SHIFT_API, { action: 'list', name: me, year: Y, month: M }).catch(skip),
+      partner ? null : G.get(STAFF_SHIFT_API, { action: 'list', name: me, year: nx.getFullYear(), month: nx.getMonth() + 1 }).catch(skip),
+      G.get(NOTICE_API).catch(skip),
+      partner ? G.get(PR.API, { action: 'cheer', name: me }).catch(skip) : null
+    ]).then(function (r) {
+      var d = { me: me, month: month, stats: r[0], nip: r[1], shift: partner ? r[2] : null, staffShift: partner ? null : r[2], staffNext: partner ? null : r[3], notices: r[4], cheer: r[5] };
+      if (data) Object.keys(d).forEach(function (k) { if (d[k] == null && data[k] != null) d[k] = data[k]; });
+      lsSet(CACHE, JSON.stringify(d));
+      return d;
+    });
+  }
+
+  /* ── データを読みやすい形に ── */
+  function shiftInfo(d) {
+    var out = { today: null, list: [], known: false };
+    if (d.shift && d.shift.ok && Array.isArray(d.shift.data)) {
+      out.known = d.shift.data.every(function (x) { return Number(x.year) === Y && Number(x.month) === M; });
+      d.shift.data.forEach(function (x) {
+        var w = [x.place, x.torihiki].filter(Boolean);
+        for (var k = x.startDay; k <= x.endDay; k++) {
+          var cur = Number(x.year) === Y && Number(x.month) === M;
+          if (cur && k < D) continue;
+          out.list.push({ y: Number(x.year), m: Number(x.month), d: k, place: x.place || '', flow: x.torihiki || '', carrier: x.carrier || '' });
+        }
+      });
+    } else if (d.staffShift && d.staffShift.ok) {
+      out.known = true;
+      var add = function (days, y, m) { Object.keys(days || {}).map(Number).sort(function (a, b) { return a - b; }).forEach(function (k) {
+        if (y === Y && m === M && k < D) return;
+        var e = days[k]; out.list.push({ y: y, m: m, d: k, place: e.place || '', flow: e.client || '', carrier: e.carrier || '' });
+      }); };
+      add(d.staffShift.days, Y, M);
+      if (d.staffNext && d.staffNext.ok) add(d.staffNext.days, M === 12 ? Y + 1 : Y, M === 12 ? 1 : M + 1);
+    }
+    out.list.sort(function (a, b) { return (a.y - b.y) || (a.m - b.m) || (a.d - b.d); });
+    if (out.list[0] && out.list[0].y === Y && out.list[0].m === M && out.list[0].d === D) out.today = out.list[0];
+    return out;
+  }
+  function powerInfo(d) {
+    var st = d.stats; if (!st || !st.ok || !st.rows) return null;
+    var people = R.forTool('power'), by = {};
+    st.rows.forEach(function (r) { if (r[0] === month) (by[r[1]] = by[r[1]] || []).push({ carrier: r[2], label: r[3], count: r[4] }); });
+    var list = people.map(function (n) { var s = PR.score(by[n]); return { name: n, power: s.power, total: s.total }; })
+      .sort(function (a, b) { return b.power - a.power; });
+    var mine = list.filter(function (x) { return x.name === me; })[0] || { power: 0, total: 0 };
+    var pos = 1; list.forEach(function (x) { if (x.power > mine.power) pos++; });
+    var rank = 'C', prev = 0, next = null;
+    (PR.RANKS || []).forEach(function (x) { if (mine.power >= x[1]) { rank = x[0]; prev = x[1]; } else if (!next) next = x; });
+    var above = list.filter(function (x) { return x.power > mine.power; }).pop();
+    return { mine: mine, pos: pos, rank: rank, prev: prev, next: next, list: list, above: above, inPower: people.indexOf(me) >= 0 };
+  }
+  function keyOf(str) { var h = 5381; for (var i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0; return 'n' + h.toString(36); }
+  function notices(d) {
+    if (!d.notices || !d.notices.ok) return [];
+    var read; try { read = new Set(JSON.parse(lsGet('sieg.read') || '[]')); } catch (e) { read = new Set(); }
+    return (d.notices.items || []).map(function (it) {
+      var id = keyOf(String(it.id || '') + '|' + (it.date || '') + '|' + (it.when || '') + '|' + (it.text || ''));   // トップと同じ鍵（既読がそろう）
+      return { id: id, title: String(it.text || '').split('\n')[0] || 'お知らせ', type: it.type || '', when: it.when || '', youbi: it.youbi || '', time: it.time || '', unread: !read.has(id) };
+    });
+  }
+  function daysUntil(s) {
+    var m = String(s || '').match(/(?:(\d{4})[-\/年])?(\d{1,2})[-\/月](\d{1,2})/); if (!m) return null;
+    var t0 = new Date(Y, M - 1, D), y = m[1] ? Number(m[1]) : Y, dt = new Date(y, Number(m[2]) - 1, Number(m[3]));
+    if (!m[1] && dt - t0 < -180 * 864e5) dt = new Date(y + 1, Number(m[2]) - 1, Number(m[3]));
+    return Math.round((dt - t0) / 864e5);
+  }
+  function nippouSent(d) {
+    if (d.nip && d.nip.ok && d.nip.days && (d.nip.days[me] || []).indexOf(today) >= 0) return true;
+    try { return (JSON.parse(lsGet('siegNippouSubmitted') || '{}')[me] || []).indexOf(today) >= 0; } catch (e) { return false; }
+  }
+
+  /* ── ぼのぼのの話（データから作る） ── */
+  function talk(d) {
+    var out = [], sh = shiftInfo(d), pw = powerInfo(d), sent = nippouSent(d);
+    var hi = H < 10 ? 'おはよう' : H < 18 ? 'おつかれさま' : 'きょうも おつかれさま';
+    if (sh.today) out.push({ html: esc(me) + 'さん、' + hi + '！<br>きょうは <em>' + esc([sh.today.place, sh.today.flow && '（' + sh.today.flow + '）'].filter(Boolean).join('')) + '</em> ' + (H < 18 ? 'だね' : 'だったね') });
+    else if (sh.known) out.push({ html: esc(me) + 'さん、' + hi + '！<br>きょうは おやすみだね。ゆっくりしてね' });
+    else out.push({ html: esc(me) + 'さん、' + hi + '！' });
+    // 戦闘力
+    if (pw && pw.inPower) {
+      var p = pw.mine.power, pct = pw.next ? Math.round((p - pw.prev) / (pw.next[1] - pw.prev) * 100) : 100;
+      out.push({ card: '<div class="top"><small>こんげつの せんとうりょく</small><b>' + fmt(p) + 'pt' + (p ? ' ・ ' + pw.pos + '位' : '') + '</b></div>'
+        + '<div class="row"><span class="rk ' + pw.rank + '">' + pw.rank + '</span><span class="bar"><i style="width:' + Math.max(4, pct) + '%"></i></span></div>'
+        + '<div class="row">' + (pw.next ? pw.next[0] + 'ランクまで <b>あと' + fmt(pw.next[1] - p) + 'pt</b>' : '<b>Sランク たっせい！</b>') + '<span class="r">' + pw.mine.total + '件</span></div>' });
+      if (!p) out.push({ html: 'こんげつの 1けんめ、まってるよ' });
+      else if (pw.pos === 1) out.push({ html: 'いま <em>1位</em> だよ！ すごい！' });
+      else if (pw.above) out.push({ html: 'あと <em>' + fmt(pw.above.power - p + 1) + 'pt</em> で ' + esc(pw.above.name) + 'さんを ぬけるよ' });
+    }
+    // 日報へのAIのひとこと（ほめる・のびた・ヒント）
+    var ch = d.cheer && d.cheer.ok && d.cheer.text ? d.cheer : null;
+    if (ch) out.push({ html: esc(ch.text) + (ch.grow ? '<small>のびた：' + esc(ch.grow) + '</small>' : '') + (ch.hint ? '<small>ヒント：' + esc(ch.hint) + '</small>' : '') });
+    // 日報
+    var needNippou = partner && canUse('nippou') && sh.today && !sent;
+    if (partner && canUse('nippou') && sent) out.push({ html: 'にっぽう ありがと！ おつかれさま' });
+    else if (needNippou) out.push({ html: H >= 17 ? 'にっぽう、まだみたい。<br>わすれないうちに かこう〜' : 'しごとが おわったら にっぽう かこうね' });
+    // 来月のシフト（社員・20日から）
+    if (!partner && D >= 20 && d.staffNext && d.staffNext.ok && !Object.keys(d.staffNext.days || {}).length) out.push({ html: 'らいげつの シフト、まだ 1にちも はいってないよ' });
+    // 月末
+    var last = new Date(Y, M, 0).getDate();
+    if (D > last - 3 && (canUse('commute') || canUse('keihi'))) out.push({ html: 'もうすぐ 月末だよ。' + [canUse('commute') && 'こうつうひ', canUse('keihi') && 'けいひ'].filter(Boolean).join('と') + 'の 入れわすれ ない？' });
+    // お知らせ（会議は日にちまで、ほかは まだ読んでいないもの）
+    var ns = notices(d), meet = ns.filter(function (n) { var k = daysUntil(n.when); return n.when && k !== null && k >= 0 && k <= 14; })[0];
+    if (meet) {
+      var k = daysUntil(meet.when);
+      out.push({ card: '<div class="top meet"><small>' + esc(meet.type || 'よてい') + '</small><b>' + esc(meet.title) + '</b></div>'
+        + '<div class="row">' + esc(meet.when + (meet.youbi ? '（' + meet.youbi + '）' : '') + (meet.time ? ' ' + meet.time : '')) + '<span class="r">' + (k === 0 ? 'きょう！' : k === 1 ? 'あした' : 'あと' + k + '日') + '</span></div>' });
+    }
+    var unread = ns.filter(function (n) { return n.unread && n !== meet; });
+    if (unread.length) out.push({ html: 'まだ よんでない おしらせが <em>' + unread.length + 'けん</em> あるよ<small>' + unread.slice(0, 3).map(function (n) { return '・' + esc(n.title); }).join('<br>') + '</small>' });
+    return { lines: out, needNippou: needNippou, sh: sh, pw: pw };
+  }
+
+  /* ── 下のボタン：ツールを開く／その場で答える ── */
+  function chipsFor(t) {
+    var c = [];
+    if (canUse('nippou')) c.push({ tool: 'nippou', hot: t.needNippou });
+    ['gain', 'shift', 'commute', 'keihi'].forEach(function (id) { if (canUse(id)) c.push({ tool: id }); });
+    c.push({ ask: 'shift', label: 'シフトは？' });
+    if (t.pw && t.pw.inPower) c.push({ ask: 'rank', label: 'ランキング' });
+    if (canUse('team')) c.push({ tool: 'team' });
+    return c;
+  }
+  function paintChips(t) {
+    $('chips').innerHTML = chipsFor(t).map(function (c, i) {
+      return c.tool ? '<button type="button" class="chip' + (c.hot ? ' hot' : '') + '" data-i="' + i + '">' + svg(TOOLS[c.tool].ic) + esc(TOOLS[c.tool].name) + '</button>'
+        : '<button type="button" class="chip ask" data-i="' + i + '">' + svg('ask') + esc(c.label) + '</button>';
+    }).join('');
+    var list = chipsFor(t);
+    Array.prototype.forEach.call($('chips').children, function (b) {
+      b.onclick = function () {
+        var c = list[Number(b.dataset.i)];
+        if (c.tool) { say({ mine: TOOLS[c.tool].name }); setTimeout(function () { open(c.tool); }, reduce ? 0 : 280); }
+        else answer(c.ask, c.label);
+      };
+    });
+    $('quick').hidden = false;
+  }
+  function answer(kind, label) {
+    var t = current;
+    queue([{ mine: label }].concat(kind === 'shift' ? shiftAnswer(t.sh) : rankAnswer(t.pw)));
+  }
+  function shiftAnswer(sh) {
+    if (!sh.known && !sh.list.length) return [{ html: 'シフトが よめなかったよ。シフト入力で みてみてね' }];
+    var next = sh.list.slice(0, 6);
+    if (!next.length) return [{ html: 'これからの シフトは まだ はいってないよ' }];
+    return [{ html: 'これからの シフトだよ' }, { card: '<div class="top shift"><small>これからの シフト</small><b>' + next.length + '日ぶん</b></div>'
+      + next.map(function (x) { return '<div class="row"><b>' + md(x.y, x.m, x.d) + '</b>' + esc([x.place, x.flow].filter(Boolean).join('・') || '—') + '</div>'; }).join('') }];
+  }
+  function rankAnswer(pw) {
+    if (!pw) return [{ html: 'いまは よめなかったよ。あとで もういちど きいてね' }];
+    var top = pw.list.filter(function (x) { return x.power > 0; }).slice(0, 5);
+    if (!top.length) return [{ html: 'こんげつは まだ だれも 0ptだよ。いちばんのり しよう！' }];
+    return [{ card: '<div class="top"><small>こんげつの ランキング</small><b>トップ' + top.length + '</b></div>'
+      + top.map(function (x, i) { return '<div class="row"><b>' + (i + 1) + '位</b>' + esc(x.name) + (x.name === me ? '（あなた）' : '') + '<span class="r">' + fmt(x.power) + 'pt</span></div>'; }).join('') }];
+  }
+
+  /* ── 会話を出す（1つずつ、入力中の … を見せてから） ── */
+  var busy = Promise.resolve();
+  function el(item) {
+    var e = document.createElement('div');
+    if (item.mine) { e.className = 'mine in'; e.textContent = item.mine; }
+    else if (item.card) { e.className = 'card in'; e.innerHTML = item.card; }
+    else { e.className = 'msg in'; e.innerHTML = item.html; }
+    return e;
+  }
+  function say(item) { $('feed').appendChild(el(item)); scrollDown(); }
+  function scrollDown() { window.scrollTo({ top: document.body.scrollHeight, behavior: reduce ? 'auto' : 'smooth' }); }
+  function queue(items, fast) {
+    busy = busy.then(function () {
+      return items.reduce(function (p, item) {
+        return p.then(function () {
+          if (item.mine || fast || reduce) { say(item); return; }
+          var ty = document.createElement('div'); ty.className = 'typing'; ty.innerHTML = '<i></i><i></i><i></i>';
+          $('feed').appendChild(ty); scrollDown();
+          var wait = Math.min(900, 380 + String(item.html || '').length * 6);
+          return new Promise(function (ok) { setTimeout(function () { ty.remove(); say(item); ok(); }, wait); });
+        });
+      }, Promise.resolve());
+    });
+    return busy;
+  }
+  var current = null, shownKey = '';
+  function show(d, fresh) {
+    var t = talk(d), key = JSON.stringify(t.lines);
+    current = t;
+    paintChips(t);
+    if (key === shownKey) return;
+    var first = !shownKey;
+    shownKey = key;
+    if (!first) {   // 新しい数字が届いた：前の話を入れ替える（動きは付けない）
+      busy = busy.then(function () {
+        $('feed').innerHTML = '<span class="day">きょう ' + H + ':' + ('0' + now.getMinutes()).slice(-2) + '</span>';
+        t.lines.forEach(say);
+      });
+      return;
+    }
+    var day = '<span class="day">きょう ' + H + ':' + ('0' + now.getMinutes()).slice(-2) + '</span>';
+    if (!$('feed').children.length) $('feed').innerHTML = day;
+    else busy = busy.then(function () { $('feed').innerHTML = day; });   // 「しらべてるよ…」を言い終えてから
+    queue(t.lines);
+  }
+  if (data) show(data, false);
+  else queue([{ html: 'ちょっと まってね、いま しらべてるよ…' }]);
+  load().then(function (d) { show(d, true); });
+  window.siegChat = { talk: function () { return current; } };   // 確認用（テストから見る）
+})();
+</script>
+</body>
+</html>

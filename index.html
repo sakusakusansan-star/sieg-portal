@@ -7,7 +7,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="description" content="Siegの業務ツール入口。日報・シフト入力・交通費計算・経費精算・掲示板・資料・緊急連絡先。">
+<meta name="description" content="Siegの業務ツール入口。日報・獲得報告・シフト入力・稼働費・経費精算・掲示板・資料・緊急連絡先。">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
@@ -112,6 +112,11 @@ button{font-family:inherit;border:none;background:none;color:inherit;cursor:poin
 #v-home .head .d{color:var(--hero-sub)}
 #v-home .head h2{color:var(--hero-ink);font-size:21px;font-weight:900;letter-spacing:.01em;word-break:keep-all;overflow-wrap:anywhere}
 #v-home .head .sub{display:block;margin-top:6px;font-size:12.5px;font-weight:700;color:var(--hero-sub)}
+/* ぼのぼのと話す（会話のページへ） */
+#v-home .head .talk{display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:4px 12px;border-radius:999px;font-size:12.5px;font-weight:800;
+  background:color-mix(in srgb,var(--hero-ink) 10%,transparent);color:var(--hero-ink)}
+#v-home .head .talk span{font-size:15px;line-height:1}
+#v-home .head .talk:active{transform:scale(.96)}
 :root[data-tod="morning"]{--hero:linear-gradient(135deg,#FFE7BF 0%,#FFF4E0 55%,#FFFFFF 100%);--hero-ink:#5A3A00;--hero-sub:#9A6A1A}
 :root[data-tod="day"]{--hero:linear-gradient(135deg,#DDEBFF 0%,#F2F7FF 60%,#FFFFFF 100%);--hero-ink:#13305E;--hero-sub:#4F6A93}
 :root[data-tod="night"]{--hero:linear-gradient(135deg,#1C2B4D 0%,#14203A 60%,#101826 100%);--hero-ink:#F3F6FB;--hero-sub:#A9B8D3}
@@ -166,6 +171,17 @@ button{font-family:inherit;border:none;background:none;color:inherit;cursor:poin
 .tiles .row:nth-child(2){animation-delay:.05s}
 .tiles .row:nth-child(3){animation-delay:.1s}
 
+/* 年末の「あなたの○年」の入口（12月・1月だけ） */
+.wrapped{display:flex;align-items:center;gap:12px;margin:-4px 0 14px;padding:13px 15px;border-radius:var(--r);color:#fff;
+  background:linear-gradient(135deg,#4F46E5,#7C3AED 55%,#DB2777);box-shadow:var(--lift)}
+.wrapped[hidden]{display:none}
+.wrapped .w-ic{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}
+.wrapped .w-ic svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.wrapped .w-tx{flex:1;min-width:0}
+.wrapped b{display:block;font-size:15.5px;font-weight:900}
+.wrapped small{display:block;font-size:12px;font-weight:700;opacity:.88;margin-top:2px}
+.wrapped .w-go{font-size:22px;opacity:.8}
+.wrapped:active{transform:scale(.98)}
 /* きょうやること（その人がやることだけ。済んだものにはチェック） */
 .todo{background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);border:1px solid var(--hair2);margin:-4px 0 14px;overflow:hidden}
 .todo h3{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800;color:var(--mute);letter-spacing:.06em;padding:12px 16px 4px}
@@ -362,7 +378,9 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
           <div class="d" id="today"></div>
           <h2 id="greet">おつかれさまです</h2>
           <span class="sub" id="greetSub"></span>
+          <a class="talk" id="talk" href="chat.html" hidden>ぼのぼのと話す<span aria-hidden="true">›</span></a>
         </div>
+        <a class="wrapped" id="wrapped" href="wrapped.html" hidden><span class="w-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M3 7h18v4H3zM12 7v14M12 7c-1.5-3-5-3.5-5-1.2C7 7 9.5 7 12 7zm0 0c1.5-3 5-3.5 5-1.2C17 7 14.5 7 12 7z"/></svg></span><span class="w-tx"><b id="wrapped-title">あなたの1年</b><small>ぼのぼのと ことしを ふりかえろう</small></span><span class="w-go" aria-hidden="true">›</span></a>
         <div class="todo" id="todo" hidden></div>
         <div class="notice" id="homeNotice" hidden></div>
         <div id="homeTools"></div>
@@ -465,7 +483,7 @@ var TOOLS = [
     for:EVERYONE, withName:true, url:'shift.html',
     partnerUrl:'https://sakusakusansan-star.github.io/shift-form/' },
 
-  { id:'commute', name:'交通費計算', desc:'通勤距離・交通費の自動計算', ic:'car', c:'teal', home:true,
+  { id:'commute', name:'稼働費', desc:'稼働した日・場所から稼働費を計算', ic:'car', c:'teal', home:true,
     for:R.forTool('commute'), withName:true, url:'https://sakusakusansan-star.github.io/commute-form/' },
 
   { id:'keihi', name:'経費精算', desc:'領収書をAIで自動読み取り', ic:'rcpt', c:'green', home:true,
@@ -622,7 +640,14 @@ function loadHome(){
 }
 /* ぼのぼの（sieg-buddy.js）がここで読んだものを使う */
 window.siegHomeData = function(){ return homePromise; };
-function paintHome(){ paintTools(); paintTodo(); }
+function paintHome(){ paintTools(); paintTodo(); paintWrapped(); }
+/* 12月・1月は「あなたの○年」（1月は前の年）。名前を選んでいる人だけ */
+function paintWrapped(){
+  var n = new Date(), m = n.getMonth() + 1, el = $('#wrapped');
+  var on = !!getStaff() && (m === 12 || m === 1);
+  el.hidden = !on;
+  if (on) $('#wrapped-title').textContent = 'あなたの' + (m === 1 ? n.getFullYear() - 1 : n.getFullYear()) + '年 ができたよ';
+}
 
 /* きょう・これからのシフト。{ today:{…}|null, next:{d, label}|null, known:true|false } */
 var DOWJ = ['日','月','火','水','木','金','土'];
@@ -732,7 +757,7 @@ function paintTools(){
 /* ═══ きょうやること ═══
    ・パートナー様：きょうシフトの日なら日報（出したらチェック）
    ・社員：20日を過ぎて来月のシフトが空なら「来月のシフト」
-   ・交通費・経費を使う人：月末の3日間は「今月分を入れ終える」
+   ・稼働費・経費を使う人：月末の3日間は「今月分を入れ終える」
    やることが無い日は出さない。全部済んだら「終わりです」 */
 function paintTodo(){
   var me = getStaff(), box = $('#todo'), items = [];
@@ -747,7 +772,7 @@ function paintTodo(){
     items.push({ tool:'shift', done:false, text:'来月のシフトを入れる', sub:'まだ1日も入っていません' });
   }
   if (d > last - 3) {
-    if (usable(findTool('commute'), me)) items.push({ tool:'commute', info:true, text:'今月の交通費を入れ終える', sub:'月末です（' + (last - d ? 'あと' + (last - d) + '日' : 'きょうまで') + '）' });
+    if (usable(findTool('commute'), me)) items.push({ tool:'commute', info:true, text:'今月の稼働費を入れ終える', sub:'月末です（' + (last - d ? 'あと' + (last - d) + '日' : 'きょうまで') + '）' });
     if (usable(findTool('keihi'), me)) items.push({ tool:'keihi', info:true, text:'今月の経費精算を確認する', sub:'領収書の出し忘れがないか' });
   }
   if (!items.length) { box.hidden = true; box.innerHTML = ''; return; }
@@ -1065,6 +1090,8 @@ function paintWho(){
   var tod = timeOfDay();
   document.documentElement.setAttribute('data-tod', tod);
   $('#greetSub').textContent = { morning:'今日もよろしくお願いします', day:'午後もいい調子でいきましょう', night:'今日もおつかれさまでした' }[tod];
+  $('#talk').hidden = !nm;   // 名前を選んでいれば、ぼのぼのと話せる（あいさつの下の一言の代わりに出す＝高さを増やさない）
+  $('#greetSub').hidden = !!nm;
   if (nm) {
     b.classList.remove('unset');
     $('#whoIni').textContent = initial(nm);

@@ -25,9 +25,10 @@
   // 日報・獲得報告の送り先（日報の GAS。獲得報告もここに記録する）
   var API = 'https://script.google.com/macros/s/AKfycbwEclDIdJiNgdXOmveRvT-BJOVWc6FwyrpxWNrqHs1DB9xgx9Ijuix0qqQ5KyG-XlkF7w/exec';
 
-  // id は日報のキャリア欄と同じ書き方（docomo / Softbank / au）
+  // id は日報のキャリア欄と同じ書き方（docomo / Softbank / au）。保存される値なので変えない
+  // 画面の並びと書き方は全ツールで docomo → au → SoftBank にそろえる（label）
   var CARRIERS = [
-    { id: 'docomo', label: 'ドコモ', items: [
+    { id: 'docomo', label: 'docomo', items: [
       { label: 'MNP',              cat: 'MNP',  pt: 130 },
       { label: 'ドコモ光',         cat: '固定', pt: 100 },
       { label: 'HOME5G',           cat: '固定', pt: 100 },
@@ -37,7 +38,16 @@
       { label: 'DカードゴールドU', cat: 'カード', pt: 80 },
       { label: '新規',             cat: '新規', pt: 30 }
     ] },
-    { id: 'Softbank', label: 'SB', items: [
+    { id: 'au', label: 'au', items: [
+      { label: 'auMNP',            cat: 'MNP',  pt: 200 },
+      { label: 'UQMNP',            cat: 'MNP',  pt: 100 },
+      { label: '光新規',           cat: '固定', pt: 100 },
+      { label: 'auでんき',         cat: '固定', pt: 40 },
+      { label: 'auカードゴールド', cat: 'カード', pt: 80 },
+      { label: 'auカード',         cat: 'カード', pt: 40 },
+      { label: '新規',             cat: '新規', pt: 30 }
+    ] },
+    { id: 'Softbank', label: 'SoftBank', items: [
       { label: 'SMNP',             cat: 'MNP',  pt: 200 },
       { label: 'YMNP',             cat: 'MNP',  pt: 100 },
       { label: '光新規',           cat: '固定', pt: 100 },
@@ -48,15 +58,6 @@
       { label: 'YS',               cat: '端末', pt: 50 },
       { label: 'Pカードゴールド',  cat: 'カード', pt: 80 },
       { label: 'Pカード',          cat: 'カード', pt: 40 },
-      { label: '新規',             cat: '新規', pt: 30 }
-    ] },
-    { id: 'au', label: 'au', items: [
-      { label: 'auMNP',            cat: 'MNP',  pt: 200 },
-      { label: 'UQMNP',            cat: 'MNP',  pt: 100 },
-      { label: '光新規',           cat: '固定', pt: 100 },
-      { label: 'auでんき',         cat: '固定', pt: 40 },
-      { label: 'auカードゴールド', cat: 'カード', pt: 80 },
-      { label: 'auカード',         cat: 'カード', pt: 40 },
       { label: '新規',             cat: '新規', pt: 30 }
     ] }
   ];

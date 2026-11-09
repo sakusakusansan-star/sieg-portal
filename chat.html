@@ -132,7 +132,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     nippou: { name: '日報を書く', ic: 'doc', for: R.forTool('nippou'), url: 'https://sakusakusansan-star.github.io/nippou-form/' },
     gain: { name: '獲得報告', ic: 'flag', for: R.forTool('gain'), url: 'gain.html' },
     shift: { name: 'シフト入力', ic: 'cal', for: R.everyone, url: 'shift.html', partnerUrl: 'https://sakusakusansan-star.github.io/shift-form/' },
-    commute: { name: '交通費', ic: 'car', for: R.forTool('commute'), url: 'https://sakusakusansan-star.github.io/commute-form/' },
+    commute: { name: '稼働費', ic: 'car', for: R.forTool('commute'), url: 'https://sakusakusansan-star.github.io/commute-form/' },
     keihi: { name: '経費精算', ic: 'rcpt', for: R.forTool('keihi'), url: 'https://sakusakusansan-star.github.io/keihi23/' },
     power: { name: '戦闘力', ic: 'bolt', for: R.forTool('power'), url: 'power.html' },
     team: { name: 'みんなの状況', ic: 'team', for: R.forTool('team'), url: 'team.html' }
@@ -275,7 +275,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     if (!partner && D >= 20 && d.staffNext && d.staffNext.ok && !Object.keys(d.staffNext.days || {}).length) out.push({ html: 'らいげつの シフト、まだ 1にちも はいってないよ' });
     // 月末
     var last = new Date(Y, M, 0).getDate();
-    if (D > last - 3 && (canUse('commute') || canUse('keihi'))) out.push({ html: 'もうすぐ 月末だよ。' + [canUse('commute') && 'こうつうひ', canUse('keihi') && 'けいひ'].filter(Boolean).join('と') + 'の 入れわすれ ない？' });
+    if (D > last - 3 && (canUse('commute') || canUse('keihi'))) out.push({ html: 'もうすぐ 月末だよ。' + [canUse('commute') && 'かどうひ', canUse('keihi') && 'けいひ'].filter(Boolean).join('と') + 'の 入れわすれ ない？' });
     // お知らせ（会議は日にちまで、ほかは まだ読んでいないもの）
     var ns = notices(d), meet = ns.filter(function (n) { var k = daysUntil(n.when); return n.when && k !== null && k >= 0 && k <= 14; })[0];
     if (meet) {
@@ -283,6 +283,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
       out.push({ card: '<div class="top meet"><small>' + esc(meet.type || 'よてい') + '</small><b>' + esc(meet.title) + '</b></div>'
         + '<div class="row">' + esc(meet.when + (meet.youbi ? '（' + meet.youbi + '）' : '') + (meet.time ? ' ' + meet.time : '')) + '<span class="r">' + (k === 0 ? 'きょう！' : k === 1 ? 'あした' : 'あと' + k + '日') + '</span></div>' });
     }
+    if (M === 12 || M === 1) out.push({ html: (M === 1 ? (Y - 1) : Y) + 'ねんの <em>ふりかえり</em> が できたよ。下の ボタンから みてね' });
     var unread = ns.filter(function (n) { return n.unread && n !== meet; });
     if (unread.length) out.push({ html: 'まだ よんでない おしらせが <em>' + unread.length + 'けん</em> あるよ<small>' + unread.slice(0, 3).map(function (n) { return '・' + esc(n.title); }).join('<br>') + '</small>' });
     return { lines: out, needNippou: needNippou, sh: sh, pw: pw };
@@ -296,10 +297,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     c.push({ ask: 'shift', label: 'シフトは？' });
     if (t.pw && t.pw.inPower) c.push({ ask: 'rank', label: 'ランキング' });
     if (canUse('team')) c.push({ tool: 'team' });
+    if (M === 12 || M === 1) c.unshift({ link: 'wrapped.html', label: 'ことしのふりかえり', hot: true });
     return c;
   }
   function paintChips(t) {
     $('chips').innerHTML = chipsFor(t).map(function (c, i) {
+      if (c.link) return '<button type="button" class="chip hot" data-i="' + i + '">' + esc(c.label) + '</button>';
       return c.tool ? '<button type="button" class="chip' + (c.hot ? ' hot' : '') + '" data-i="' + i + '">' + svg(TOOLS[c.tool].ic) + esc(TOOLS[c.tool].name) + '</button>'
         : '<button type="button" class="chip ask" data-i="' + i + '">' + svg('ask') + esc(c.label) + '</button>';
     }).join('');
@@ -307,7 +310,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     Array.prototype.forEach.call($('chips').children, function (b) {
       b.onclick = function () {
         var c = list[Number(b.dataset.i)];
-        if (c.tool) { say({ mine: TOOLS[c.tool].name }); setTimeout(function () { open(c.tool); }, reduce ? 0 : 280); }
+        if (c.link) { say({ mine: c.label }); setTimeout(function () { location.href = c.link; }, reduce ? 0 : 280); }
+        else if (c.tool) { say({ mine: TOOLS[c.tool].name }); setTimeout(function () { open(c.tool); }, reduce ? 0 : 280); }
         else answer(c.ask, c.label);
       };
     });

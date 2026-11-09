@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>あなたの1年｜Sieg</title>
+<meta name="theme-color" content="#0B1022">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 数字の字（Dela Gothic One）は待たずに画面を出す。届いたら字だけ入れ替わる -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap"></noscript>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   あなたの○年（年末のふりかえり）
+   その人の1年分を、カードを1枚ずつめくって見る。タップ（右半分で次・左半分で前）・スワイプ・矢印キー。
+   データ：獲得報告の集計（gainStats・1月から）＋ 日報の GAS の yearReview（日報の日数・現場・AIのひとこと）
+   yearReview がまだ無い（GAS の更新前）ときは、獲得のカードだけで出す。
+   ═══════════════════════════════════════════════════════════════ */
+:root { --disp: "Dela Gothic One", "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+  --body: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, system-ui, sans-serif; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: #0B1022; color: #fff; font-family: var(--body); overflow: hidden; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+a { color: inherit; }
+.stage { position: fixed; inset: 0; display: flex; flex-direction: column; }
+.bars { display: flex; gap: 4px; padding: calc(10px + env(safe-area-inset-top)) 12px 0; position: relative; z-index: 3; }
+.bars i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,.28); overflow: hidden; }
+.bars i b { display: block; height: 100%; width: 0; background: #fff; }
+.bars i.done b { width: 100%; }
+.bars i.now b { width: 100%; transition: width .4s ease; }
+.top { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 0; position: relative; z-index: 3; font-size: 12.5px; font-weight: 800; opacity: .85; }
+.top a { text-decoration: none; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,.14); }
+.cards { position: relative; flex: 1; }
+.card { position: absolute; inset: 0; padding: 26px 26px calc(40px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  background: var(--bg); opacity: 0; transform: scale(.98); transition: opacity .35s ease, transform .35s ease; pointer-events: none; overflow: hidden; }
+.card.on { opacity: 1; transform: none; pointer-events: auto; }
+.card::before { content: ''; position: absolute; width: 140vmax; height: 140vmax; left: 50%; top: 40%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,.14), transparent 55%); pointer-events: none; }
+.k { font-size: 15px; font-weight: 900; letter-spacing: .06em; opacity: .9; position: relative; }
+.big { font-family: var(--disp); font-size: clamp(64px, 22vw, 120px); line-height: 1; letter-spacing: .01em; position: relative; text-shadow: 0 6px 0 rgba(0,0,0,.18); }
+.big small { font-family: var(--body); font-size: 22px; font-weight: 900; margin-left: 6px; text-shadow: none; }
+.mid { font-family: var(--disp); font-size: clamp(34px, 11vw, 56px); line-height: 1.12; position: relative; word-break: keep-all; overflow-wrap: anywhere; }
+.sub { font-size: 16px; font-weight: 800; line-height: 1.7; opacity: .92; position: relative; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; position: relative; }
+.chips span { background: rgba(255,255,255,.18); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 800; }
+.rank { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; position: relative; }
+.rank div { display: flex; align-items: baseline; gap: 12px; font-size: 18px; font-weight: 900; }
+.rank div i { font-style: normal; font-family: var(--disp); font-size: 22px; width: 1.4em; opacity: .8; }
+.rank div em { font-style: normal; margin-left: auto; font-family: var(--disp); }
+.months { display: flex; align-items: flex-end; gap: 5px; height: 140px; margin-top: 18px; position: relative; }
+.months span { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; font-size: 10.5px; font-weight: 800; opacity: .85; }
+.months span i { display: block; width: 100%; border-radius: 6px 6px 3px 3px; background: rgba(255,255,255,.35); min-height: 3px; }
+.months span.best { opacity: 1; }
+.months span.best i { background: #FFE27A; box-shadow: 0 0 18px rgba(255,226,122,.6); }
+.bud { position: relative; width: 120px; height: 200px; align-self: center; margin-bottom: 4px; }
+.bud img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.bubble { position: relative; background: #fff; color: #17324D; border-radius: 22px; padding: 16px 18px; font-size: 18px; font-weight: 900; line-height: 1.7; box-shadow: 0 10px 30px -12px rgba(0,0,0,.4); }
+.bubble::after { content: ''; position: absolute; left: 50%; top: -10px; transform: translateX(-50%) rotate(45deg); width: 20px; height: 20px; background: #fff; border-radius: 4px; }
+.acts { display: flex; gap: 10px; margin-top: 18px; position: relative; }
+.acts a, .acts button { flex: 1; text-align: center; text-decoration: none; padding: 14px 10px; border-radius: 16px; font-size: 15px; font-weight: 900; background: rgba(255,255,255,.16); }
+.acts .hot { background: #fff; color: #0B1022; }
+.hint { position: absolute; bottom: calc(14px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 800; opacity: .6; z-index: 2; pointer-events: none; }
+.nav { position: absolute; top: 0; bottom: 0; width: 34%; z-index: 2; }
+.nav.prev { left: 0; } .nav.next { right: 0; width: 66%; }
+.nav:focus-visible { outline: 3px solid #FFE27A; outline-offset: -6px; }
+.wait { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-size: 16px; font-weight: 800; line-height: 1.8; padding: 24px; }
+.wait[hidden] { display: none; }
+.wait .bud { width: 90px; height: 150px; margin: 0 auto 10px; animation: bob 1.2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .card, .bars i.now b { transition: none; } .wait .bud { animation: none; } }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="bars" id="bars" aria-hidden="true"></div>
+  <div class="top"><span id="who"></span><a href="./">トップへ</a></div>
+  <div class="cards" id="cards" aria-live="polite"></div>
+  <button type="button" class="nav prev" id="prev" aria-label="前のカード"></button>
+  <button type="button" class="nav next" id="next" aria-label="次のカード"></button>
+  <div class="hint" id="hint">タップで つぎへ</div>
+  <div class="wait" id="wait"><div><div class="bud"><img src="buddy/body.png" alt=""><img src="buddy/hold.png" alt=""></div><span id="wait-msg">1年を ふりかえってるよ…</span></div></div>
+</div>
+
+<script src="gas-client.js"></script>
+<script src="sieg-roster.js"></script>
+<script src="sieg-products.js"></script>
+<script>
+(function () {
+  'use strict';
+  var R = window.SiegRoster, P = window.SiegProducts, G = window.GasClient;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return Number(n || 0).toLocaleString('ja-JP'); }
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  var q = new URLSearchParams(location.search);
+  var me = R.everyone.indexOf(q.get('staff')) >= 0 ? q.get('staff') : lsGet('siegStaff');
+  var now = new Date();
+  // ふりかえる年：1月に開いたら前の年（?year=2026 で指定もできる）
+  var year = /^\d{4}$/.test(q.get('year') || '') ? q.get('year') : String(now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear());
+  document.title = 'あなたの' + year + '年｜Sieg';
+
+  if (!me || R.everyone.indexOf(me) < 0) {
+    $('wait-msg').innerHTML = 'まず トップで 名前を えらんでね。<br><a href="./">トップへ</a>';
+    return;
+  }
+  $('who').textContent = me + 'さんの' + year + '年';
+
+  // 色（カードごと）
+  var BG = ['linear-gradient(160deg,#4F46E5,#7C3AED 55%,#DB2777)', 'linear-gradient(160deg,#F97316,#E11D48)', 'linear-gradient(160deg,#0EA5E9,#2563EB 60%,#4338CA)',
+    'linear-gradient(160deg,#16A34A,#0D9488)', 'linear-gradient(160deg,#F59E0B,#EA580C)', 'linear-gradient(160deg,#0F766E,#1E3A8A)',
+    'linear-gradient(160deg,#9333EA,#4F46E5)', 'linear-gradient(160deg,#1E293B,#0B1022)'];
+
+  function build(stats, rv) {
+    var mine = (stats && stats.ok && stats.rows || []).filter(function (r) { return String(r[0]).slice(0, 4) === year && r[1] === me; });
+    var rows = mine.map(function (r) { return { carrier: r[2], label: r[3], count: Number(r[4]) || 0 }; });
+    var sc = P.score(rows), byMonth = {}, items = {};
+    mine.forEach(function (r) {
+      (byMonth[r[0]] = byMonth[r[0]] || []).push({ carrier: r[2], label: r[3], count: Number(r[4]) || 0 });
+      var k = r[2] + '\t' + r[3]; items[k] = (items[k] || 0) + (Number(r[4]) || 0);
+    });
+    var monthPw = [], best = null, pwTotal = 0;
+    for (var m = 1; m <= 12; m++) {
+      var ym = year + '-' + ('0' + m).slice(-2), pw = byMonth[ym] ? P.score(byMonth[ym]).power : 0;
+      monthPw.push(pw); pwTotal += pw;
+      if (pw > 0 && (!best || pw > best.pw)) best = { m: m, pw: pw };
+    }
+    var top = Object.keys(items).map(function (k) { var a = k.split('\t'); return { carrier: a[0], label: a[1], count: items[k] }; })
+      .filter(function (x) { return x.count > 0; }).sort(function (a, b) { return b.count - a.count; }).slice(0, 3);
+    var hasRv = rv && rv.ok && typeof rv.days === 'number';   // GAS の更新前は無い
+    var cards = [];
+    cards.push('<div class="k">' + esc(year) + '年の ふりかえり</div><div class="mid">' + esc(me) + 'さんの<br>' + esc(year) + '年</div>'
+      + '<div class="sub">ことしも おつかれさま！<br>1年を いっしょに ふりかえろう</div>');
+    if (sc.total) {
+      cards.push('<div class="k">ことし 獲得したのは</div><div class="big">' + fmt(sc.total) + '<small>件</small></div>'
+        + '<div class="sub">戦闘力にすると 合計 ' + fmt(pwTotal) + 'pt</div>'
+        + '<div class="chips">' + P.CATS.filter(function (c) { return sc.cats[c]; }).map(function (c) { return '<span>' + esc(c) + ' ' + sc.cats[c] + '件</span>'; }).join('') + '</div>');
+    }
+    if (top.length) {
+      cards.push('<div class="k">いちばん 多かった商品</div><div class="mid">' + esc(top[0].label) + '</div>'
+        + '<div class="sub">' + esc(P.carrierLabel(top[0].carrier)) + '・' + top[0].count + '件</div>'
+        + (top.length > 1 ? '<div class="rank">' + top.map(function (x, i) { return '<div><i>' + (i + 1) + '</i>' + esc(x.label) + '<em>' + x.count + '件</em></div>'; }).join('') + '</div>' : ''));
+    }
+    if (best) {
+      var mx = Math.max.apply(null, monthPw.concat([1]));
+      cards.push('<div class="k">いちばん 強かった月</div><div class="big">' + best.m + '<small>月</small></div>'
+        + '<div class="sub">戦闘力 ' + fmt(best.pw) + 'pt</div>'
+        + '<div class="months" aria-hidden="true">' + monthPw.map(function (v, i) {
+          return '<span class="' + (best.m === i + 1 ? 'best' : '') + '"><i style="height:' + Math.round(v / mx * 100) + '%"></i>' + (i + 1) + '</span>';
+        }).join('') + '</div>');
+    }
+    if (hasRv && rv.days) {
+      cards.push('<div class="k">日報を 出した日</div><div class="big">' + rv.days + '<small>日</small></div>'
+        + '<div class="sub">' + (rv.first ? 'はじめては ' + Number(rv.first.slice(5, 7)) + '月' + Number(rv.first.slice(8, 10)) + '日。' : '')
+        + (rv.approach ? '<br>アプローチは ぜんぶで ' + fmt(rv.approach) + '件' : '') + '</div>'
+        + (rv.bestDay ? '<div class="chips"><span>いちばん獲得した日：' + Number(rv.bestDay.date.slice(5, 7)) + '/' + Number(rv.bestDay.date.slice(8, 10)) + '（' + rv.bestDay.gain + '件）</span></div>' : ''));
+    }
+    if (hasRv && rv.placeCount) {
+      cards.push('<div class="k">行った 現場</div><div class="big">' + rv.placeCount + '<small>か所</small></div>'
+        + '<div class="rank">' + rv.places.slice(0, 3).map(function (x, i) { return '<div><i>' + (i + 1) + '</i>' + esc(x.name) + '<em>' + x.days + '日</em></div>'; }).join('') + '</div>');
+    }
+    var ai = hasRv && rv.ai ? rv.ai : (sc.total ? 'ことしも いっぱい がんばったね。らいねんも いっしょに がんばろう' : 'らいねんは いっしょに 1けんめ めざそう');
+    cards.push('<div class="bud"><img src="buddy/body.png" alt=""><img src="buddy/hold.png" alt=""></div><div class="bubble">' + esc(ai) + '</div>');
+    cards.push('<div class="k">' + esc(year) + '年、ありがとう</div><div class="mid">らいねんも<br>よろしく！</div>'
+      + '<div class="acts"><button type="button" id="again">もう一度見る</button><a class="hot" href="./">トップへ</a></div>');
+    return cards;
+  }
+
+  var idx = 0, cards = [];
+  function show(i) {
+    idx = Math.max(0, Math.min(cards.length - 1, i));
+    Array.prototype.forEach.call($('cards').children, function (c, k) { c.classList.toggle('on', k === idx); c.setAttribute('aria-hidden', String(k !== idx)); });
+    Array.prototype.forEach.call($('bars').children, function (b, k) { b.className = k < idx ? 'done' : k === idx ? 'now' : ''; });
+    $('hint').hidden = idx === cards.length - 1;
+    $('next').hidden = $('prev').hidden = idx === cards.length - 1;   // 最後のカードはボタン（もう一度見る・トップへ）を押せるように
+  }
+  function paint(list) {
+    cards = list;
+    $('cards').innerHTML = list.map(function (h, i) { return '<section class="card" style="--bg:' + BG[i % BG.length] + '">' + h + '</section>'; }).join('');
+    $('bars').innerHTML = list.map(function () { return '<i><b></b></i>'; }).join('');
+    $('wait').hidden = true;
+    show(0);
+    var again = $('again'); if (again) again.addEventListener('click', function () { show(0); });
+  }
+  $('next').addEventListener('click', function () { show(idx + 1); });
+  $('prev').addEventListener('click', function () { show(idx - 1); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(idx + 1); } if (e.key === 'ArrowLeft') show(idx - 1); });
+  var sx = null;
+  $('stage').addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+  $('stage').addEventListener('touchend', function (e) {
+    if (sx === null) return;
+    var dx = e.changedTouches[0].clientX - sx; sx = null;
+    if (Math.abs(dx) > 50) { e.preventDefault(); show(idx + (dx < 0 ? 1 : -1)); }
+  });
+
+  var skip = function () { return null; };
+  Promise.all([
+    G.get(P.API, { action: 'gainStats', from: year + '-01' }).catch(skip),
+    G.get(P.API, { action: 'yearReview', name: me, year: year }, { timeoutMs: 45000 }).catch(skip)
+  ]).then(function (r) {
+    paint(build(r[0], r[1]));
+  });
+  window.siegWrapped = { cards: function () { return cards.length; } };   // 確認用（テストから見る）
+})();
+</script>
+</body>
+</html>

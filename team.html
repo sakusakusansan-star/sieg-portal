@@ -10,9 +10,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="stylesheet" href="sieg-theme.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+<!-- 字はスマホの標準の字を使う（Webフォントは読まない＝軽い）。iPhone はヒラギノ、Android は Noto Sans CJK -->
 <style>
   /* ───────── このページだけの配色（sieg-theme.css は触らない） ───────── */
   .app {
@@ -740,9 +738,11 @@
     $('mix-title').textContent = mWord() + 'の内訳';
     $('th-nip-today').textContent = isNow() ? '日報（今日）' : '日報（最後）';
     $('th-nip-month').textContent = '日報（' + mWord() + '）';
-    var txt = data.at ? '最終更新 ' + hhmm(data.at) : '読み込み中…';
+    var txt = data.fromCache ? '前回の表示（' + hhmm(data.at) + '）・' + (data.failed ? '更新できませんでした' : '最新を読み込み中…')
+      : data.at ? '最終更新 ' + hhmm(data.at) : '読み込み中…';
     if (waiting > 0 && data.at) txt += ' ・ 稼働費・経費を読み込み中（残り ' + waiting + '人）';
     else if (waiting > 0) txt += '（稼働費・経費 残り ' + waiting + '人）';
+    if (data.kept && data.kept.length && !waiting) txt += ' ・ 読めなかった人は前回のまま（' + data.kept.join('・') + '）';
     $('sub').textContent = txt;
   }
   // 読み込み中はほかの画面と同じ「形だけの枠」（sieg-theme.css の .sg-skel）。失敗したときは文だけ
@@ -752,15 +752,49 @@
     $('state-msg').textContent = spinning ? '' : msg;
   }
 
+  /* ── 前回の表示：月ごとにこの端末に残し、開いたらまずそれを出す（Google の応答は数秒かかるため）。
+     届いたものから入れ替える。読めなかった人・シフト集計は前回のまま。残すのは新しい3か月分だけ。
+     日報（きょう出したか）とシフト（きょう入っているか）は、きょう残した分だけ使う（日付をまたぐと意味が変わるため） */
+  var CACHE_KEY = 'siegTeamCache';
+  function cacheAll() { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function cacheGet(ym) { var c = cacheAll()[ym]; return c && c.stats && c.stats.rows ? c : null; }
+  function saveCache() {
+    if (!data || data.month !== viewYm || !data.stats || data.fromCache) return;
+    var all = cacheAll(), old = all[viewYm] || {};
+    var good = function (fresh, prev) {
+      var o = {};
+      Object.keys(prev || {}).forEach(function (k) { o[k] = prev[k]; });
+      Object.keys(fresh || {}).forEach(function (k) { var v = fresh[k]; if (v && !v.error && !v.pending) o[k] = v; });
+      return o;
+    };
+    all[viewYm] = { savedAt: Date.now(), day: todayYmd(), at: data.at ? data.at.getTime() : Date.now(), stats: data.stats, nippou: data.nippou, shift: data.shift || {},
+      shiftSum: data.shiftRaw || old.shiftSum || null, commute: good(data.commute, old.commute), keihi: good(data.keihi, old.keihi) };
+    Object.keys(all).sort(function (a, b) { return (all[b].savedAt || 0) - (all[a].savedAt || 0); }).slice(3).forEach(function (k) { delete all[k]; });
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(all)); }
+    catch (e) { try { localStorage.removeItem(CACHE_KEY); } catch (e2) {} }   // 入りきらないときは残さない
+  }
+  function fromCache(c) {
+    var d = emptyData(), sameDay = c.day === todayYmd();
+    d.stats = c.stats; d.month = viewYm; d.at = new Date(c.at); d.fromCache = true;
+    d.nippou = sameDay || !isNow() ? c.nippou : null;
+    d.shift = sameDay || !isNow() ? (c.shift || {}) : {};
+    d.commute = c.commute || {}; d.keihi = c.keihi || {};
+    d.shiftRaw = c.shiftSum || null;
+    return d;
+  }
+
   function load() {
     var my = ++gen;
     closePerson();
     busy = true;
     $('reload').disabled = true;
-    data = emptyData();
+    var cached = cacheGet(viewYm);
+    data = cached ? fromCache(cached) : emptyData();
+    data.kept = [];
     waiting = COMMUTE.length + KEIHI.length;
     stamp();
-    if (!$('tcard').hidden) { /* 2回目以降は表を残したまま更新する */ } else showState(true, '読み込み中…');
+    if (cached) render();   // 前回の分で、まず全部出す
+    else if (!$('tcard').hidden) { /* 2回目以降は表を残したまま更新する */ } else showState(true, '読み込み中…');
 
     var pendingMain = true;
     function settled() {
@@ -772,26 +806,35 @@
 
     // シフト集計（パートナー用シフトの GAS。「集計」シートと同じ数え方。前の月は保存したタブから）
     $('shift-wrap').hidden = true; $('shouryu-wrap').hidden = true;
+    if (data.shiftRaw) renderShiftSummary(data.shiftRaw);   // 前回の分
+    var cachedSum = data.shiftRaw;
     GasClient.post(SHIFT_PARTNER_GAS, { action: 'getShiftSummary', year: Number(viewYm.slice(0, 4)), month: Number(viewYm.slice(5, 7)) }, { retry: true })
-      .then(function (r) { if (my === gen) renderShiftSummary(r && r.ok ? r.data : { error: (r && r.error) || '読めませんでした' }); },
-            function (e) { if (my === gen) renderShiftSummary({ error: e.message }); });
+      .then(function (r) {
+        if (my !== gen) return;
+        if (r && r.ok) { data.shiftRaw = r.data; renderShiftSummary(r.data); saveCache(); }
+        else if (!cachedSum) renderShiftSummary({ error: (r && r.error) || '読めませんでした' });   // 前回の分があれば、そのまま
+      }, function (e) { if (my === gen && !cachedSum) renderShiftSummary({ error: e.message }); });
 
     // 稼働費・経費精算は重いので切り離し、届いた人から順にセルへ入れる
     COMMUTE.forEach(function (n) {
       commuteOf(n).then(function (c) {
         if (my !== gen) return;
-        data.commute[n] = c;
+        if (c && c.error && data.commute[n] && !data.commute[n].error) data.kept.push(n);   // 読めなかった：前回のまま
+        else data.commute[n] = c;
         if (data.stats) { paintCommuteCells(n); paintCommuteKpi(); renderMoney(); }
         renderShouryu();
+        saveCache();
         settled();
       });
     });
     KEIHI.forEach(function (n) {
       keihiOf(n).then(function (k) {
         if (my !== gen) return;
-        data.keihi[n] = k;
+        if (k && k.error && data.keihi[n] && !data.keihi[n].error) { if (data.kept.indexOf(n) < 0) data.kept.push(n); }   // 読めなかった：前回のまま
+        else data.keihi[n] = k;
         if (data.stats) { paintKeihiCells(n); renderMoney(); }
         renderShouryu();
+        saveCache();
         settled();
       });
     });
@@ -811,9 +854,12 @@
       data.nippou = nip && nip.ok && nip.days ? nip : null;
       data.month = viewYm;
       data.at = new Date();
+      data.fromCache = false;
       render();
+      saveCache();
     }).catch(function (e) {
       if (my !== gen) return;
+      if (data.fromCache) { data.failed = true; stamp(); return; }   // 前回の表示のまま（上に「更新できませんでした」）
       showState(false, '読み込めませんでした：' + e.message);
       $('kpis').hidden = true; $('mix').hidden = true; $('bar').hidden = true; $('tcard').hidden = true;
     }).then(function () {
@@ -919,7 +965,7 @@
       + '<small>件</small></div><div class="s num">戦闘力 合計 ' + fmt(pw) + '</div></div>';
   }
   function kpiNippou() {
-    if (!data.nippou) return '<div class="kpi"><div class="k">きょうの日報</div><div class="v">—</div><div class="s">準備中（Google 側の更新待ち）</div></div>';
+    if (!data.nippou) return '<div class="kpi"><div class="k">きょうの日報</div><div class="v">—</div><div class="s">' + (data.fromCache ? '読み込み中…' : '準備中（Google 側の更新待ち）') + '</div></div>';
     var need = NIPPOU.map(function (n) { return list.filter(function (x) { return x.name === n; })[0]; }).filter(Boolean);
     if (!isNow()) {   // 前の月：その月に出した日数の合計
       var days = need.reduce(function (a, x) { return a + x.nippouDays; }, 0), none = need.filter(function (x) { return !x.nippouDays; });
@@ -968,7 +1014,7 @@
   function rowHtml(x) {
     var useN = NIPPOU.indexOf(x.name) >= 0;
     var nipToday = !useN ? '<span class="dim na">—</span>'
-      : !data.nippou ? '<span class="dim">準備中</span>'
+      : !data.nippou ? (data.fromCache ? '<span class="wait">…</span>' : '<span class="dim">準備中</span>')
       : !isNow() ? (x.nippouLast ? '<span class="small">' + esc(x.nippouLast) + '</span>' : '<span class="dim na">—</span>')
       : x.nippouToday ? '<span class="tag ok">提出済み</span>'
       : x.shift.known && !x.shift.today ? '<span class="dim">休み</span>'
@@ -1162,8 +1208,11 @@
     $('pd-x').onclick = closePerson;
     var im = $('pd').querySelector('.pd-fig img'); if (!im) return;
     var ok = function () { if (im.naturalWidth) im.parentNode.classList.add('has'); };
-    if (im.complete) ok(); else im.addEventListener('load', ok);
-    im.addEventListener('error', function () { im.remove(); });
+    im.addEventListener('load', ok); if (im.complete) ok();   // PNG に切り替えたときも、読めたら頭文字を消す
+    im.addEventListener('error', function () {   // 軽い版（.webp）が無ければ PNG、それも無ければ頭文字のまま
+      if (im.dataset.png) { var png = im.dataset.png; im.removeAttribute('data-png'); im.src = png; return; }
+      im.remove();
+    });
   }
   function personHtml(name) {
     var partner = R.isPartner(name), y = Number(viewYm.slice(0, 4)), m = Number(viewYm.slice(5, 7));
@@ -1184,7 +1233,7 @@
     var fid = fighterId(name), rk = rankOf(pw), nx = null;
     for (var ri = 0; ri < RANKS.length; ri++) if (pw < RANKS[ri][1]) { nx = RANKS[ri]; break; }
     h += '<div class="pd-h"><span class="pd-fig' + (partner ? ' partner' : '') + '" aria-hidden="true"><b>' + esc(name.slice(0, 1)) + '</b>'
-      + (fid ? '<img src="fighters/' + fid + '.png" alt="">' : '') + '</span>'
+      + (fid ? '<img src="fighters/' + fid + '.webp" data-png="fighters/' + fid + '.png" alt="">' : '') + '</span>'
       + '<div><div class="pd-nm"><b id="pd-name">' + esc(name) + '</b><span class="pd-rank r' + rk + '" title="' + y + '年' + m + '月の戦闘力のランク">' + rk + '</span></div>'
       + '<small>' + (partner ? 'PARTNER' : 'STAFF') + '・' + y + '年' + m + '月</small></div>'
       + '<button type="button" class="x" id="pd-x" aria-label="閉じる">×</button></div>';
@@ -1435,7 +1484,7 @@
     unlock();
     GasClient.post(P.API, { action: 'teamPass', token: saved }, { retry: false }).then(function (r) {
       if (r && r.expired) {   // 合言葉が変わった。表示中の数字も消して入り直し
-        setToken(''); try { sessionStorage.setItem('siegTeamExpired', '1'); } catch (e) {}
+        setToken(''); try { sessionStorage.setItem('siegTeamExpired', '1'); localStorage.removeItem(CACHE_KEY); } catch (e) {}
         location.reload();
       }
     }).catch(function () {});

@@ -4,14 +4,19 @@
  *  - ページ本体（index.html）はネットワーク優先。連絡先やお知らせが古いまま
  *    表示されるのを防ぎ、オフライン時だけキャッシュにフォールバックする。
  *  - アイコン等の静的ファイルとGoogle Fontsはキャッシュ優先（裏で更新）。
+ *  - 画像とフォントは版の付かないキャッシュに入れる（ポータルを更新しても捨てない。
+ *    以前は更新のたびに消えて、キャラ画像やフォントを毎回読み直させていた）。
  *  - お知らせAPI（GAS）は一切キャッシュせず、常にネットワークへ通す。
  */
 
-var VERSION = 'v65'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
+var VERSION = 'v66'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
 var SHELL_CACHE = 'sieg-shell-' + VERSION;
 var ASSET_CACHE = 'sieg-asset-' + VERSION;
-var FONT_CACHE = 'sieg-font-' + VERSION;
-var CURRENT = [SHELL_CACHE, ASSET_CACHE, FONT_CACHE];
+// 画像・フォント：版を付けない＝更新しても残す。中身が変わったら裏で入れ替わり、消えたファイルはキャッシュからも消える
+var IMG_CACHE = 'sieg-img';
+var FONT_CACHE = 'sieg-font';
+var CURRENT = [SHELL_CACHE, ASSET_CACHE, IMG_CACHE, FONT_CACHE];
+var IMG_REFRESH_MS = 60 * 60 * 1000;   // 画像は1時間たったら裏で新しい版を確かめる
 
 var SHELL = './index.html';
 var PRECACHE = [
@@ -94,26 +99,43 @@ function networkFirst(req) {
     });
 }
 
+// キャッシュに入れてからの時間（読めないときは「古い」とみなす）
+function ageOf(res) {
+  var d = res && res.headers && res.headers.get('date');
+  var t = d ? Date.parse(d) : NaN;
+  return isNaN(t) ? Infinity : Date.now() - t;
+}
+
 // 静的ファイル：キャッシュ優先 → 裏でネットワーク更新
-function cacheFirst(req, cacheName) {
+//   refreshAfter … キャッシュがこれより古いときだけ裏で取り直す（0＝毎回、Infinity＝取り直さない）
+function cacheFirst(req, cacheName, refreshAfter) {
   return caches.open(cacheName).then(function(cache) {
     return cache.match(req).then(function(hit) {
       if (hit) {
-        fetch(req).then(function(res) {
-          if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
-        }).catch(function() {});
+        if (ageOf(hit) > (refreshAfter || 0)) {
+          fetch(req).then(function(res) {
+            if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+            else if (res && res.status === 404) cache.delete(req);   // サーバーから消えたファイル（差し替えで消した画像など）
+          }).catch(function() {});
+        }
         return hit;
       }
-      return fetch(req).then(function(res) {
-        if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
-        return res;
-      }).catch(function() {
-        // 事前キャッシュ側（docs.cssなど）にあれば、そちらから返す
-        return caches.match(req, { ignoreSearch: true });
+      // 画像は、事前キャッシュ（アイコン・ぼのぼの）にあればそれを使う（取りに行かない）。
+      // JS・CSS は今まで通りネットワークから（版を上げ忘れても、新しい中身が届くように）
+      return (cacheName === IMG_CACHE ? caches.match(req) : Promise.resolve(null)).then(function(pre) {
+        if (pre) return pre;
+        return fetch(req).then(function(res) {
+          if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+          return res;
+        }).catch(function() {
+          // 事前キャッシュ側（docs.cssなど）にあれば、そちらから返す
+          return caches.match(req, { ignoreSearch: true });
+        });
       });
     });
   });
 }
+function isImage(url) { return /\.(png|webp|jpe?g|gif|svg|ico)$/i.test(url.pathname); }
 
 self.addEventListener('fetch', function(e) {
   var req = e.request;
@@ -131,11 +153,13 @@ self.addEventListener('fetch', function(e) {
   }
 
   if (isFontHost(url)) {
-    e.respondWith(cacheFirst(req, FONT_CACHE));
+    // フォントのファイル（fonts.gstatic.com）は中身が変わらないので取り直さない。指定のCSSだけ裏で確かめる
+    e.respondWith(cacheFirst(req, FONT_CACHE, url.hostname === 'fonts.gstatic.com' ? Infinity : 0));
     return;
   }
 
   if (url.origin === self.location.origin) {
-    e.respondWith(cacheFirst(req, ASSET_CACHE));
+    if (isImage(url)) { e.respondWith(cacheFirst(req, IMG_CACHE, IMG_REFRESH_MS)); return; }
+    e.respondWith(cacheFirst(req, ASSET_CACHE, 0));
   }
 });

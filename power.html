@@ -10,7 +10,8 @@
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<!-- 数字・見出しの字（Dela Gothic One）だけ読む。本文は端末の字。待たずに画面を出す -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap"></noscript>
 <style>
 /* 対戦アクションゲーム風。斜めに切ったパネル、プレイヤー色、太い斜体の数字。ゲーム画面としてあえて暗い一色（スマホの明暗設定によらない） */
 :root{
@@ -25,8 +26,8 @@
   --mnp:#FF7A45; --kotei:#3ED39A; --tan:#5BA4FF; --card:#FFC93C; --new:#B6F06A;
   /* 「‹ ポータル」ボタン（sieg-nav.js）をこの画面の色に合わせる */
   --sg-surface:#171F36; --sg-ink:#FFFFFF; --sg-hair:#2A3556; --sg-lift:none;
-  --disp:"Dela Gothic One","Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;
-  --body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+  --disp:"Dela Gothic One","Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  --body:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,system-ui,sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -526,9 +527,10 @@ details.tgroup[open] > summary{margin-bottom:6px}
 
   /* ── キャラの枠（12体）──
      画像は fighters/ フォルダに 01.png 〜 12.png の名前で置く（背景が透明な PNG がきれい）。
+     画面では軽い版（01.webp 〜。長い辺 640px）を使い、無い番号だけ PNG を読む（README に作り方）。
      名前を付けたいときは、下の NAMES を書き換える。画像が無い枠はシルエットと「？」を出す。 */
   var NAMES = ['キャラ1','キャラ2','キャラ3','キャラ4','キャラ5','キャラ6','キャラ7','キャラ8','キャラ9','キャラ10','キャラ11','キャラ12'];
-  var FIGHTERS = NAMES.map(function(n, i){ var no = (i < 9 ? '0' : '') + (i + 1); return { id: no, name: n, img: 'fighters/' + no + '.png' }; });
+  var FIGHTERS = NAMES.map(function(n, i){ var no = (i < 9 ? '0' : '') + (i + 1); return { id: no, name: n, img: 'fighters/' + no + '.webp', png: 'fighters/' + no + '.png' }; });
   function fighterOf(id){ for (var i = 0; i < FIGHTERS.length; i++) if (FIGHTERS[i].id === id) return FIGHTERS[i]; return FIGHTERS[0]; }
   var SIL = '<svg viewBox="0 0 100 120" aria-hidden="true"><g fill="currentColor">' +
     '<circle cx="50" cy="30" r="17"/><path d="M22 112c0-30 10-50 28-50s28 20 28 50z"/></g>' +
@@ -540,7 +542,8 @@ details.tgroup[open] > summary{margin-bottom:6px}
     if (imgOk[f.id] === false) return box;
     var img = new Image(); img.alt = f.name; img.decoding = 'async';
     img.onload = function(){ imgOk[f.id] = true; box.innerHTML = ''; box.appendChild(img); };
-    img.onerror = function(){ imgOk[f.id] = false; };
+    // 軽い版（.webp）が無ければ PNG、それも無ければシルエットのまま
+    img.onerror = function(){ if (img.src.indexOf('.webp') >= 0) { img.src = f.png; return; } imgOk[f.id] = false; };
     img.src = f.img;
     return box;
   }
@@ -1074,6 +1077,8 @@ details.tgroup[open] > summary{margin-bottom:6px}
   addEventListener('resize', function(){ if (!$('view-status').hidden) { drawLines(); fitPower(); } });
   // 太字フォントが読み込まれたら測り直す（読み込み前の細いフォントで測ると小さくしすぎない・大きすぎる）
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ if (P && P[cur]) fitPower(P[cur].pw); });
+  // 字は画面を出したあとに届く（待たずに表示しているため）。届くたびに大きい数字の幅を合わせ直す
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function(){ if (P && P[cur]) fitPower(P[cur].pw); });
 
   /* 計算のしかた（商品表とランクの境目から作る） */
   $('formula-note').textContent = 'ポータルの「獲得報告」で送った件数から計算します（日報の数字は使いません）。ランクは '

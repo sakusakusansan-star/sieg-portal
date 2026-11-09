@@ -355,7 +355,7 @@
       <button class="btn small ghost" type="button" data-sel="clear">クリア</button>
     </div>
     <div class="cal-dow">
-      <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
+      <div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div><div class="sun">日</div>
     </div>
     <div class="cal-grid" id="cal"></div>
     <div class="cal-legend">
@@ -429,7 +429,7 @@
 
   var STAFF    = window.SiegRoster ? SiegRoster.forTool('shiftStaff') : [];   // 名簿は sieg-roster.js
   var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル'];
-  var CARRIERS = ['docomo', 'SoftBank', 'au'];
+  var CARRIERS = ['docomo', 'au', 'SoftBank'];   // 並びは全ツールで docomo → au → SoftBank
   // 開催場所のボタンは3つだけ。近見・下通は固定で、3つ目はよく選ぶ場所に入れ替わる
   // （この端末で送った回数＋その月にもう登録されている回数で決める）。それ以外は入力欄に書く。
   var PLACES_FIXED = ['近見', '下通'];
@@ -699,7 +699,7 @@
     var cal = $('cal');
     cal.innerHTML = '';
     if (!state.year) return;
-    var first = new Date(state.year, state.month - 1, 1).getDay();
+    var first = (new Date(state.year, state.month - 1, 1).getDay() + 6) % 7;   // 月曜始まり（ほかのカレンダーとそろえる）
     var total = daysInMonth(state.year, state.month);
 
     for (var i = 0; i < first; i++) {

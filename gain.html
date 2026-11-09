@@ -103,6 +103,18 @@
     font-size: 18px; font-weight: 700; display: grid; place-items: center;
   }
   .tile.zero .tile-minus { visibility: hidden; }
+  /* 1つしかない区分・奇数の最後は横長1行（半分が空いて長くならないように） */
+  .tiles.one { grid-template-columns: 1fr; }
+  .tiles.one .tile-hit, .tile.wide .tile-hit { min-height: 62px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; padding-right: 108px; }
+  .tile.wide { grid-column: 1 / -1; }
+  .tiles.one .t-label, .tile.wide .t-label { flex: 1; padding-right: 0; font-size: 15px; }
+  .tiles.one .tile-plus, .tile.wide .tile-plus { top: 50%; bottom: auto; transform: translateY(-50%); }
+  .tiles.one .tile-minus, .tile.wide .tile-minus { top: 50%; right: 58px; transform: translateY(-50%); }
+  .tiles.one .t-num, .tile.wide .t-num { font-size: 28px; }
+  /* よく使う（その人がよく報告する商品） */
+  .fav .cat-head { color: var(--sg-amber); }
+  .fav .cat-head::before { content: '★'; width: auto; height: auto; background: none; font-size: 12px; }
+  .fav .cat-head small { margin-left: 6px; font-weight: 700; color: var(--sg-faint); font-size: 11px; }
   .t-num.bump { animation: bump .22s ease; }
   @keyframes bump { 40% { transform: scale(1.25); } }
 
@@ -190,6 +202,26 @@
   .pop small { display: block; text-align: center; font-size: 14px; color: var(--sg-ink); }
   @keyframes pop { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
     75% { opacity: 1; transform: translate(-50%, -55%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1); } }
+  /* 送ったあと：今月の戦闘力がどう変わったか */
+  .cele { background: linear-gradient(140deg, #1B2D4F, #0E1A2C); color: #fff; border-radius: 20px; padding: 16px 18px; position: relative; overflow: hidden; }
+  .cele[hidden] { display: none; }
+  .cele .k { font-size: 12px; font-weight: 800; opacity: .75; }
+  .cele .v { font-size: 40px; font-weight: 900; line-height: 1.1; margin-top: 2px; letter-spacing: -.01em; }
+  .cele .v small { font-size: 15px; opacity: .7; margin-left: 3px; }
+  .cele .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; font-weight: 800; }
+  .cele .up { background: #FFC93C; color: #2A1D00; border-radius: 999px; padding: 3px 10px; }
+  .cele .chip2 { background: rgba(255,255,255,.14); border-radius: 999px; padding: 3px 10px; }
+  .cele .msg2 { margin-top: 8px; font-size: 13px; font-weight: 700; opacity: .85; }
+  .cele .hey { margin-top: 10px; font-size: 18px; font-weight: 900; color: #FFC93C; }
+  .cele .hey[hidden] { display: none; }
+  .cele.big::after { content: ''; position: absolute; inset: -40%; background: radial-gradient(circle at 80% 20%, rgba(255,201,60,.35), transparent 45%); animation: glow 1.6s ease-out; pointer-events: none; }
+  @keyframes glow { from { opacity: 0; transform: scale(.6); } 30% { opacity: 1; } to { opacity: .6; transform: scale(1); } }
+  /* 送ったあとの「次はこれ」 */
+  .next { display: flex; flex-wrap: wrap; gap: 8px; }
+  .next[hidden] { display: none; }
+  .next a { flex: 1 1 30%; text-align: center; text-decoration: none; background: var(--sg-surface); border: 1px solid var(--sg-hair); color: var(--sg-ink);
+    border-radius: 14px; padding: 11px 8px; font-size: 14px; font-weight: 800; }
+  .next a.hot { background: var(--sg-primary); border-color: var(--sg-primary); color: var(--sg-on-primary); }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .pop { display: none; } }
 </style>
 </head>
@@ -220,6 +252,16 @@
     <div class="names" id="names" hidden></div>
   </section>
 
+  <div class="banner ok" id="result" hidden></div>
+  <section class="cele" id="cele" hidden aria-live="polite">
+    <div class="k" id="cele-k">今月の戦闘力</div>
+    <div class="v num"><span id="cele-num">0</span><small>pt</small></div>
+    <div class="row"><span class="up num" id="cele-up"></span><span class="chip2" id="cele-pos" hidden></span><span class="chip2" id="cele-rank" hidden></span></div>
+    <div class="hey" id="cele-hey" hidden></div>
+    <div class="msg2" id="cele-msg"></div>
+  </section>
+  <nav class="next" id="next" hidden aria-label="次はこれ"></nav>
+
   <div class="seg" id="carriers" role="group" aria-label="キャリア"></div>
 
   <div id="products"></div>
@@ -228,8 +270,6 @@
     <label for="memo">メモ（なくてもよい）</label>
     <textarea id="memo" maxlength="500" placeholder="例：達成のため11月まわし"></textarea>
   </section>
-
-  <div class="banner ok" id="result" hidden></div>
 
   <section class="sent" id="sent">
     <h2>きょう送った報告 <small id="sent-sum"></small></h2>
@@ -391,12 +431,49 @@
     $('carriers').appendChild(b);
   });
 
+  // ─── よく使う商品：その人がよく報告するもの（新しい通信はしない。戦闘力・トップが端末に残した記録を使う） ───
+  var FREQ_KEY = 'siegGainFreq';   // { 名前: { 'キャリア\t商品': 件数 } }  この端末で送った分（記録が無いとき用）
+  function favorites(name, carrier) {
+    if (!name || !carrier) return [];
+    var cnt = {}, rows = null;
+    var pc = load('siegPowerCache'); if (pc && pc.data && pc.data.rows) rows = pc.data.rows;            // これまで全部
+    if (!rows) { var hc = load('siegHomeCache'); if (hc && hc.stats && hc.stats.rows) rows = hc.stats.rows; }   // 今月だけ
+    if (rows) rows.forEach(function (r) { if (r[1] === name && r[2] === carrier) cnt[r[3]] = (cnt[r[3]] || 0) + (Number(r[4]) || 0); });
+    else {
+      var mine = (load(FREQ_KEY) || {})[name] || {};
+      Object.keys(mine).forEach(function (k) { var a = k.split('\t'); if (a[0] === carrier) cnt[a[1]] = (cnt[a[1]] || 0) + mine[k]; });
+    }
+    var items = P.items(carrier);
+    if (items.length <= 4) return [];   // 少ないキャリアは全部見えるので要らない
+    return items.filter(function (it) { return cnt[it.label] > 0; })
+      .sort(function (a, b) { return cnt[b.label] - cnt[a.label]; }).slice(0, 4);
+  }
+  function rememberSent(p) {
+    var all = load(FREQ_KEY) || {}, mine = all[p.name] = all[p.name] || {};
+    p.items.forEach(function (x) { var k = p.carrier + '\t' + x.label; mine[k] = (mine[k] || 0) + (Number(x.count) || 0); });
+    store(FREQ_KEY, all);
+  }
+
   // ─── 商品のタイル ───
-  var tiles = {};
+  var tiles = {};   // 商品 → [{ wrap, num }]（「よく使う」と区分の両方に同じ商品が出る）
   function renderProducts() {
     var box = $('products'); box.innerHTML = ''; tiles = {};
     Array.prototype.forEach.call($('carriers').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state.carrier)); });
     if (!state.carrier) { box.innerHTML = '<div class="pick-carrier">キャリアを選んでください</div>'; return; }
+    var fav = favorites(state.name, state.carrier);
+    if (fav.length >= 2) {
+      var fs = document.createElement('section'); fs.className = 'fav';
+      fs.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-bottom:8px';
+      fs.innerHTML = '<div class="cat-head">よく使う<small>よく報告する順</small></div>';
+      var fg = document.createElement('div'); fg.className = 'tiles';
+      fav.forEach(function (it, i) {
+        var v = CAT_CSS[it.cat] || 'new', t = tile(it);
+        t.style.cssText = '--c:var(--c-' + v + ');--c-t:var(--c-' + v + '-t)';
+        if (fav.length % 2 && i === fav.length - 1) t.classList.add('wide');
+        fg.appendChild(t);
+      });
+      fs.appendChild(fg); box.appendChild(fs);
+    }
     P.CATS.forEach(function (cat) {
       var list = P.items(state.carrier).filter(function (it) { return it.cat === cat; });
       if (!list.length) return;
@@ -404,8 +481,12 @@
       var sec = document.createElement('section');
       sec.style.cssText = '--c:var(--c-' + v + ');--c-t:var(--c-' + v + '-t);display:flex;flex-direction:column;gap:10px;margin-bottom:8px';
       sec.innerHTML = '<div class="cat-head">' + esc(cat) + '<span class="sum num" data-cat="' + esc(cat) + '"></span></div>';
-      var grid = document.createElement('div'); grid.className = 'tiles';
-      list.forEach(function (it) { grid.appendChild(tile(it)); });
+      var grid = document.createElement('div'); grid.className = 'tiles' + (list.length === 1 ? ' one' : '');
+      list.forEach(function (it, i) {
+        var t = tile(it);
+        if (list.length > 1 && list.length % 2 && i === list.length - 1) t.classList.add('wide');   // 奇数の最後は横長
+        grid.appendChild(t);
+      });
       sec.appendChild(grid); box.appendChild(sec);
     });
     renderCounts();
@@ -422,7 +503,7 @@
     hit.addEventListener('click', function () { change(it.label, 1); });
     minus.addEventListener('click', function () { change(it.label, -1); });
     wrap.appendChild(hit); wrap.appendChild(minus);
-    tiles[it.label] = { wrap: wrap, num: hit.querySelector('.t-num') };
+    (tiles[it.label] = tiles[it.label] || []).push({ wrap: wrap, num: hit.querySelector('.t-num') });
     return wrap;
   }
 
@@ -431,19 +512,16 @@
     if (after === before) return;
     state.counts[label] = after;
     buzz(10); renderCounts(); saveDraft();
-    $('result').hidden = true;
-    var n = tiles[label] && tiles[label].num;
-    if (n && !reduced()) { n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
+    $('result').hidden = true; $('cele').hidden = true; $('next').hidden = true;   // 次の報告を入れはじめたら、前の結果はしまう
+    if (!reduced()) (tiles[label] || []).forEach(function (t) { var n = t.num; n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); });
   }
 
   function renderCounts() {
     var catSum = {};
     P.items(state.carrier).forEach(function (it) {
-      var n = state.counts[it.label] || 0, t = tiles[it.label];
+      var n = state.counts[it.label] || 0;
       catSum[it.cat] = (catSum[it.cat] || 0) + n;
-      if (!t) return;
-      t.num.textContent = n;
-      t.wrap.classList.toggle('zero', n === 0);
+      (tiles[it.label] || []).forEach(function (t) { t.num.textContent = n; t.wrap.classList.toggle('zero', n === 0); });
     });
     document.querySelectorAll('.cat-head .sum').forEach(function (el) {
       var n = catSum[el.dataset.cat] || 0; el.textContent = n ? n + '件' : '';
@@ -555,6 +633,53 @@
     var b = $('result'); b.className = 'banner ' + kind; b.innerHTML = html; b.hidden = false;
   }
 
+  // 送ったあとの「次はこれ」：パートナー様は日報、みんなは戦闘力・トップ
+  function showNext(name) {
+    var q = '?staff=' + encodeURIComponent(name), h = '';
+    if (R.isPartner(name) && R.forTool('nippou').indexOf(name) >= 0) h += '<a class="hot" href="/nippou-form/' + q + '">日報を書く</a>';
+    if (R.forTool('power').indexOf(name) >= 0) h += '<a href="power.html' + q + '">戦闘力を見る</a>';
+    h += '<a href="./">トップへ</a>';
+    $('next').innerHTML = h; $('next').hidden = false;
+  }
+  function rankOf(v) { var r = 'C'; (P.RANKS || []).forEach(function (x) { if (v >= x[1]) r = x[0]; }); return r; }
+  function nextRank(v) { var n = null; (P.RANKS || []).forEach(function (x) { if (!n && v < x[1]) n = x; }); return n; }
+  // 今月の戦闘力：送る前 → 送ったあと（数字が増えていく）。順位・ランクが上がったら大きく出す
+  function celebrate(p, gained) {
+    $('cele').hidden = true;
+    if (!gained || R.forTool('power').indexOf(p.name) < 0) return;
+    var month = p.date.slice(0, 7);
+    GasClient.get(P.API, { action: 'gainStats', from: month }).then(function (st) {
+      if (!st || !st.ok || !st.rows) return;
+      var people = R.forTool('power'), by = {}, pw = {};
+      st.rows.forEach(function (r) { if (r[0] === month) (by[r[1]] = by[r[1]] || []).push({ carrier: r[2], label: r[3], count: r[4] }); });
+      people.forEach(function (n) { pw[n] = P.score(by[n]).power; });
+      var after = pw[p.name] || 0, before = Math.max(0, after - gained);
+      var posA = 1 + people.filter(function (n) { return pw[n] > after; }).length;
+      var posB = 1 + people.filter(function (n) { return n !== p.name && pw[n] > before; }).length;
+      var rA = rankOf(after), rB = rankOf(before), nx = nextRank(after);
+      var thisMonth = month === todayStr().slice(0, 7);
+      $('cele-k').textContent = (thisMonth ? '今月' : Number(month.slice(5)) + '月') + 'の戦闘力';
+      $('cele-up').textContent = '+' + fmt(gained);
+      $('cele-pos').hidden = !after; $('cele-pos').textContent = posA + '位' + (posA < posB ? '（↑' + (posB - posA) + '）' : '');
+      $('cele-rank').hidden = false; $('cele-rank').textContent = rA + 'ランク';
+      var hey = posA < posB && rA !== rB ? 'ランクアップ＆順位アップ！' : rA !== rB ? 'ランクアップ！ ' + rB + ' → ' + rA : posA < posB ? '順位アップ！ ' + posB + '位 → ' + posA + '位' : '';
+      $('cele-hey').hidden = !hey; $('cele-hey').textContent = hey;
+      $('cele-msg').textContent = nx ? nx[0] + 'ランクまで あと' + fmt(nx[1] - after) + 'pt' : 'Sランク達成中！';
+      $('cele').classList.toggle('big', !!hey && !reduced());
+      $('cele').hidden = false;
+      // 数字が増えていく（動きを減らす設定・戦闘力の演出オフなら、すぐ最後の数字）
+      var el = $('cele-num'), fxOff = !!load('siegPowerFxOff');
+      if (reduced() || fxOff) { el.textContent = fmt(after); return; }
+      var t0 = performance.now(), dur = 900;
+      (function step() {
+        var k = Math.min(1, (performance.now() - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        el.textContent = fmt(Math.round(before + (after - before) * e));
+        if (k < 1) requestAnimationFrame(step);
+      })();
+      if (hey) buzz([30, 60, 30, 60, 60]);
+    }).catch(function () {});
+  }
+
   // ─── 確認と送信 ───
   var sheetOpen = false, sending = false, pending = null;
   function openSheet() { $('scrim').hidden = false; $('sheet').hidden = false; sheetOpen = true; }
@@ -607,11 +732,15 @@
       state.counts = {}; state.memo = ''; $('memo').value = '';
       renderCounts();
       if (data.reports) renderSent(data.reports, data.discordOn);
+      rememberSent(p);
+      showNext(p.name);
+      celebrate(p, gained);
       var partnerNote = R.isPartner(p.name) ? '<br>日報を開くと、この件数が獲得欄に入っています。' : '';
       if (data.discord === true) showResult('ok', 'Discord に送りました。' + partnerNote);
       else if (data.discord === false) showResult('warn', '記録はできましたが、Discord が混み合っていて投稿できませんでした'
         + (data.discordCode ? '（' + Number(data.discordCode) + '）' : '') + '。少し待ってから、下の一覧の「Discordに再送」を押してください。' + partnerNote);
       else showResult('warn', '記録しました（Discord への投稿はまだ設定されていません）。' + partnerNote);
+      renderProducts();   // 「よく使う」を今の分で出し直す
       window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
       buzz([20, 40, 20]);
       if (gained && !reduced()) {

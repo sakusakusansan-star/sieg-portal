@@ -388,7 +388,7 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
           <i>＋</i>
           <span class="tx"><b>ホーム画面に追加</b><small>アプリのように1タップで開けます</small></span>
         </button>
-        <p class="hint"><b>ホーム画面に追加すると1タップで開けます</b><br>
+        <p class="hint" id="a2hsHint"><b>ホーム画面に追加すると1タップで開けます</b><br>
         共有ボタン →「ホーム画面に追加」。開けないときはリンクを長押しして「他のブラウザで開く」を選んでください。</p>
       </div>
       <aside class="hside" aria-label="お知らせ">
@@ -402,10 +402,7 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
   <!-- ══ ツール ══ -->
   <section class="view pad" id="v-tool">
     <div class="head"><h2>ツール</h2></div>
-    <h3 class="sec" style="margin-top:0">申請する</h3>
-    <div class="list" id="toolsA"></div>
-    <h3 class="sec">見る・共有する</h3>
-    <div class="list" id="toolsB"></div>
+    <div id="toolList"></div>
   </section>
 
   <!-- ══ お知らせ（掲示板） ══ -->
@@ -584,7 +581,7 @@ function toolRow(t, showFlag){
 var HOME_GROUPS = [
   { name:'毎日', size:'big', ids:['nippou', 'gain'] },
   { name:'月に1回', size:'small', ids:['shift', 'commute', 'keihi'] },
-  { name:'見る', size:'small', ids:['power', 'team'] }
+  { name:'見る', size:'small', ids:['power', 'team'], more:['sheet', 'docs'] }   // more はツール一覧だけに出す
 ];
 
 /* 日報の「提出済み／未提出」（ホームのタイルだけに出す）。
@@ -743,10 +740,17 @@ function paintTools(){
     var rest = home.filter(function(t){ return !used[t.id]; });
     return rest.length ? '<h3 class="sec">そのほか</h3><div class="tiles small" style="--n:' + Math.min(rest.length, 3) + '">' + rest.map(function(t){ return toolRow(t, true); }).join('') + '</div>' : '';
   })();
-  $('#toolsA').innerHTML = mine.filter(function(t){ return t.group !== 'B'; })
-    .map(function(t){ return toolRow(t, false); }).join('');
-  $('#toolsB').innerHTML = mine.filter(function(t){ return t.group === 'B'; })
-    .map(function(t){ return toolRow(t, false); }).join('');
+  /* ツール一覧も、ホームと同じまとまり（毎日／月に1回／見る）で並べる */
+  var listed = {};
+  $('#toolList').innerHTML = HOME_GROUPS.map(function(g, i){
+    var ts = g.ids.concat(g.more || []).map(findTool).filter(function(t){ return t && mine.indexOf(t) >= 0; });
+    ts.forEach(function(t){ listed[t.id] = true; });
+    return ts.length ? '<h3 class="sec">' + esc(g.name) + '</h3><div class="list">' + ts.map(function(t){ return toolRow(t, false); }).join('') + '</div>' : '';
+  }).join('') + (function(){
+    var rest = mine.filter(function(t){ return !listed[t.id]; });
+    return rest.length ? '<h3 class="sec">そのほか</h3><div class="list">' + rest.map(function(t){ return toolRow(t, false); }).join('') + '</div>' : '';
+  })();
+  var firstSec = $('#toolList .sec'); if (firstSec) firstSec.style.marginTop = '0';
 
   Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'), function(a){
     var t = findTool(a.getAttribute('data-tool'));
@@ -1132,7 +1136,12 @@ if (!getStaff()) setTimeout(function(){ pickPerson(); }, 350);
     deferred.prompt();
     deferred.userChoice.then(function(){ deferred = null; });
   });
-  addEventListener('appinstalled', function(){ deferred = null; bar.classList.remove('show'); });
+  addEventListener('appinstalled', function(){ deferred = null; bar.classList.remove('show'); hideHint(); });
+  /* もうホーム画面から開いている人には、追加の案内を出さない */
+  function hideHint(){ var h = $('#a2hsHint'); if (h) h.hidden = true; }
+  var standalone = false;
+  try { standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch (e) {}
+  if (standalone) hideHint();
 })();
 
 /* ═══ Service Worker（オフライン対応）═══ */

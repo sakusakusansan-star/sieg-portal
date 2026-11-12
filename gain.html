@@ -30,12 +30,12 @@
   }
   .num { font-variant-numeric: tabular-nums; }
 
-  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding-top: 8px; }
+  .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-top: 8px; }
   .eyebrow { font-size: 11px; letter-spacing: .14em; color: var(--sg-mute); font-weight: 700; }
   h1 { margin: 2px 0 0; font-size: 26px; font-weight: 900; letter-spacing: .04em; }
   .date-pill {
-    position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
-    border-radius: 999px; background: var(--sg-surface); border: 1px solid var(--sg-hair); font-weight: 700; font-size: 14px;
+    position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px 0 10px; margin-top: 6px;
+    border-radius: 999px; background: var(--sg-surface); border: 1px solid var(--sg-hair); font-weight: 800; font-size: 13px;
   }
   .date-pill svg { width: 16px; height: 16px; color: var(--sg-mute); }
   .date-pill input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; }
@@ -233,24 +233,16 @@
     <div>
       <div class="sg-eyebrow">Sieg 業務ポータル</div>
       <h1 class="sg-title">獲得報告</h1>
+      <label class="date-pill" id="date-pill" for="date">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <span id="date-text"></span>
+        <input type="date" id="date" aria-label="獲得した日">
+      </label>
     </div>
-    <label class="date-pill" id="date-pill" for="date">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
-      <span id="date-text"></span>
-      <input type="date" id="date" aria-label="獲得した日">
-    </label>
+    <button type="button" class="sg-who" id="name-change" aria-label="名前を変える"><i id="avatar">?</i><span id="who-name"></span></button>
   </header>
 
   <div class="banner bad" id="setup-msg" hidden></div>
-
-  <section class="card">
-    <div class="who">
-      <div class="avatar" id="avatar">?</div>
-      <div class="who-name" id="who-name"></div>
-      <button type="button" class="link-btn" id="name-change">変更</button>
-    </div>
-    <div class="names" id="names" hidden></div>
-  </section>
 
   <div class="banner ok" id="result" hidden></div>
   <section class="cele" id="cele" hidden aria-live="polite">
@@ -280,7 +272,7 @@
 <div class="bar">
   <div class="bar-inner">
     <div class="tot"><b class="num" id="tot-n">0</b><span>件</span><small class="num" id="tot-pt">0pt</small></div>
-    <button type="button" class="primary" id="to-confirm" disabled>Discordに送る</button>
+    <button type="button" class="primary" id="to-confirm" disabled>内容を確認する</button>
   </div>
 </div>
 
@@ -390,28 +382,21 @@
   });
 
   // ─── 名前 ───
-  NAMES.forEach(function (n) {
-    var b = document.createElement('button');
-    b.type = 'button'; b.className = 'chip'; b.textContent = n; b.dataset.v = n;
-    b.addEventListener('click', function () {
-      if (n !== state.name) {
-        state.name = n; state.counts = {}; state.memo = ''; $('memo').value = '';
-        var rc = rememberedCarrier(n); state.carrier = validCarrier(rc) ? rc : '';
-        try { localStorage.setItem('siegStaff', n); } catch (e) {}
-      }
-      $('names').hidden = true;
+  // 右上の名前を押すと、名前を選ぶシートが出る（どのツールも同じ）
+  function pickName() {
+    return SiegNav.pickName(NAMES, state.name).then(function (n) {
+      if (!n || n === state.name) return;
+      state.name = n; state.counts = {}; state.memo = ''; $('memo').value = '';
+      var rc = rememberedCarrier(n); state.carrier = validCarrier(rc) ? rc : '';
+      SiegNav.setStaff(n);
       renderAll(); loadToday();
     });
-    $('names').appendChild(b);
-  });
-  $('name-change').addEventListener('click', function () { $('names').hidden = !$('names').hidden; renderName(); });
+  }
+  $('name-change').addEventListener('click', pickName);
   function renderName() {
     $('avatar').textContent = state.name ? state.name.charAt(0) : '?';
-    $('who-name').innerHTML = state.name ? esc(state.name) + '<small>' + (R.isPartner(state.name) ? 'パートナー様' : 'Sieg社員') + '</small>'
-      : '<small>名前を選んでください</small>';
-    if (!state.name) $('names').hidden = false;
-    $('name-change').hidden = !state.name;
-    Array.prototype.forEach.call($('names').children, function (c) { c.setAttribute('aria-pressed', String(c.dataset.v === state.name)); });
+    $('who-name').textContent = state.name || '名前を選ぶ';
+    $('who-name').classList.toggle('unset', !state.name);
   }
 
   // ─── キャリア ───
@@ -576,7 +561,7 @@
     var s = P.score(all);
     $('sent-sum').textContent = s.total ? s.total + '件 ・ 戦闘力 +' + fmt(s.power) : '';
     $('sent').querySelector('h2').firstChild.textContent = (state.date === todayStr() ? 'きょう' : dayLabel(state.date)) + '送った報告 ';
-    if (!reports.length) { list.innerHTML = '<div class="empty">まだありません</div>'; return; }
+    if (!reports.length) { list.innerHTML = SiegNav.empty('まだ送っていません', '上で件数を入れて送ると、ここに並びます'); return; }
     list.innerHTML = '';
     reports.forEach(function (r) {
       var row = document.createElement('div'); row.className = 'rep';
@@ -695,7 +680,7 @@
   }
 
   $('to-confirm').addEventListener('click', function () {
-    if (!state.name) { $('names').hidden = false; $('names').scrollIntoView({ block: 'center' }); return; }
+    if (!state.name) { pickName(); return; }
     if (!state.carrier) { $('carriers').classList.add('invalid'); return; }
     var items = rows().filter(function (r) { return r.count > 0; }).map(function (r) { return { label: r.label, count: r.count }; });
     if (!items.length) return;

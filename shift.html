@@ -326,12 +326,12 @@
     <div>
       <div class="sg-eyebrow">Sieg 業務ポータル</div>
       <h1 class="sg-title">シフト入力</h1>
-      <div class="sg-sub">選んで押すだけ。シフト表に直接書き込まれます。</div>
     </div>
     <!-- 名前（押すと選び直せる） -->
     <button type="button" class="sg-who" id="who-change" aria-label="名前を選ぶ"><i id="who-initial">?</i><span id="who-name" class="unset">名前を選ぶ</span></button>
   </header>
 
+  <p class="sg-lead">選んで押すだけ。シフト表に直接書き込まれます。</p>
   <div class="msg" id="msg"></div>
 
   <!-- モード -->
@@ -390,9 +390,9 @@
     <div class="day-list" id="day-list"></div>
   </div>
 
-  <div class="send-bar">
-    <div class="send-sub" id="send-sub">名前・内容・日にちを選ぶと送信できます</div>
-    <button class="send" type="button" id="send" disabled>送信する</button>
+  <div class="send-bar" data-sg-actionbar>
+    <div class="send-sub" id="send-sub" data-sg-hint>名前・内容・日にちを選ぶと送信できます</div>
+    <button class="send" type="button" id="send" data-sg-primary disabled>送信する</button>
   </div>
 
   <div class="foot">
@@ -507,23 +507,10 @@
     syncSend();
   }
 
+  // 右上の名前を押すと、名前を選ぶシートが出る（どのツールも同じ）
   function openNamePicker() {
-    $('ov-title').textContent = 'あなたの名前をえらんでください';
-    $('ov-lede').textContent = '一度えらぶと次回から覚えています。';
-    $('ov-list').style.display = 'none';
-    $('ov-acts').style.display = 'none';
-    var box = $('ov-names');
-    box.style.display = 'flex';
-    box.innerHTML = '';
-    STAFF.forEach(function(n) {
-      var b = document.createElement('button');
-      b.className = 'btn';
-      b.type = 'button';
-      b.textContent = n;
-      b.addEventListener('click', function() { setName(n); closeOv(); });
-      box.appendChild(b);
-    });
-    openOv();
+    SiegNav.pickName(STAFF, state.name, { title: 'あなたの名前をえらんでください', note: '一度えらぶと次回から覚えています。' })
+      .then(function(n) { if (n) setName(n); });
   }
 
   function closeOv() {
@@ -867,7 +854,7 @@
     var days = Object.keys(state.existing).map(Number).sort(function(a, b) { return a - b; });
     if (!days.length) {
       box.innerHTML = '<div class="empty-note">' +
-        (state.name ? 'この月の登録はまだありません。' : '名前をえらぶと表示されます。') + '</div>';
+        (state.name ? 'この月の登録はまだありません。上のカレンダーで日にちを選んで送ると、ここに並びます。' : '右上で名前をえらぶと表示されます。') + '</div>';
       return;
     }
     box.innerHTML = '';
@@ -1025,13 +1012,18 @@
         if (!del) countPlace(state.place);
         var extra = '';
         if (data.skipped && data.skipped.length) {
-          extra += '<br>この月に無い日は飛ばしました：' + data.skipped.join('・') + '日';
+          extra += '\nこの月に無い日は飛ばしました：' + data.skipped.join('・') + '日';
         }
-        if (data.logError) extra += '<br>（送信ログへの記録だけ失敗：' + escapeHtml(data.logError) + '）';
-        showMsg('ok', (del ? '取り消しました' : '送信しました') + '（' + data.days + '日分）' + extra);
+        if (data.logError) extra += '\n（送信ログへの記録だけ失敗：' + data.logError + '）';
         loadExisting();
         renderCal();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 送ったあとは、どのツールも同じ形で知らせる（次にやることを並べる）
+        SiegNav.done({
+          title: del ? '取り消しました' : '送信しました',
+          sub: state.year + '年' + state.month + '月　' + data.days + '日分' + extra,
+          next: [{ label: del ? '続けて直す' : '続けて入力する' }, { label: 'ポータルへ戻る', href: SiegNav.portalUrl }]
+        });
       })
       .catch(function(err) {
         showMsg('err', '<b>送信できませんでした。</b><br>' + escapeHtml(err.message) +

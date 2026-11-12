@@ -395,6 +395,12 @@ details.tgroup[open] > summary{margin-bottom:6px}
   .roster .slot{flex:0 0 76px;aspect-ratio:3/4;scroll-snap-align:start}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  /* 読み込めなかったとき（ほかのツールと同じ形。このページは暗い配色なので色だけ別） */
+  .sg-err { max-width: 420px; margin: 10px auto; padding: 14px 16px; border-radius: 12px; background: rgba(240,123,111,.12); border: 1px solid rgba(240,123,111,.35);
+    color: #D5DDE8; font-size: 14px; line-height: 1.6; text-align: left; }
+  .sg-err > b { display: block; color: #FF9A8F; font-weight: 900; font-size: 15px; margin-bottom: 2px; }
+  .sg-err details { margin-top: 8px; font-size: 12px; color: #9AA6B5; }
+  .sg-err button { display: block; margin-top: 12px; min-height: 42px; padding: 0 20px; border: 0; border-radius: 10px; background: #E9EEF4; color: #0C1015; font: 800 14px/1 inherit; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -1208,7 +1214,8 @@ details.tgroup[open] > summary{margin-bottom:6px}
     if (P.length) { $('stale').textContent = '前回の表示です（更新できませんでした：' + err.message + '）'; return; }
     $('skel').hidden = true;
     $('state').hidden = false;
-    $('state').textContent = '読み込めませんでした：' + err.message;
+    $('state').innerHTML = GasClient.errorHtml(err, '読み込めませんでした', 'もう一度読み込む');
+    $('state').querySelector('[data-sg-retry]').onclick = function(){ location.reload(); };
   });
 })();
 </script>

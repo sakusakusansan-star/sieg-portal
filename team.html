@@ -317,10 +317,10 @@
     .reload, .mcard .mt::after { transition: none; }
   }
   /* ───────── 入口の合言葉 ───────── */
-  .app.locked > :not(.head):not(.gate):not([data-sieg-back]) { display: none !important; }
+  .app.locked > :not(.head):not(.gate):not([data-sieg-back]):not(.sieg-back) { display: none !important; }
   .app.locked .headr { visibility: hidden; }
   .gate { max-width: 400px; margin: 28px auto 0; background: var(--t-card); border: 1px solid var(--t-hair); border-radius: var(--t-r);
-    box-shadow: var(--t-lift); padding: 22px 20px 20px; }
+    box-shadow: var(--t-lift); padding: 22px 20px 20px; box-sizing: border-box; width: 100%; }
   .gate[hidden] { display: none; }
   .gate h2 { margin: 0 0 6px; font-size: 17px; font-weight: 900; color: var(--t-ink); }
   .gate p { margin: 0 0 14px; font-size: 13px; line-height: 1.7; color: var(--t-ink2); }

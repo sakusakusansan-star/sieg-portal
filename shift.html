@@ -9,6 +9,9 @@
 <meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
+<!-- Google（GAS）への接続を先に始めておく（最初の読み込みが少し早くなる） -->
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="stylesheet" href="sieg-theme.css">
 <link rel="stylesheet" href="docs/docs.css">
 <style>
@@ -528,12 +531,17 @@
    */
   function initMonths() {
     if (!apiReady()) return buildMonths(defaultMonths());
+    // 前回の月の一覧があれば、すぐカレンダーを出す（裏で読み直して、変わっていたときだけ作り直す）
+    var cached = SiegNav.cacheGet('shift:months'), shown = '';
+    if (cached && cached.length) { var c = upcoming(cached); shown = JSON.stringify(c); buildMonths(c); }
     GasClient.get(SHIFT_API, { action: 'months' })
       .then(function(data) {
         if (!data || !data.ok || !data.months || !data.months.length) throw new Error('月が取れません');
-        buildMonths(upcoming(data.months));
+        SiegNav.cacheSet('shift:months', data.months);
+        var list = upcoming(data.months);
+        if (JSON.stringify(list) !== shown) buildMonths(list);
       })
-      .catch(function() { buildMonths(defaultMonths()); });
+      .catch(function() { if (!shown) buildMonths(defaultMonths()); });
   }
 
   function defaultMonths() {
@@ -832,16 +840,24 @@
   /* ═══ 登録済みの読み込み ═══ */
   function loadExisting() {
     if (!apiReady() || !state.name || !state.year) return;
-    $('day-list').innerHTML = '<div class="sg-skel-wrap" aria-busy="true" aria-label="読み込み中"><div class="sg-skel card"></div><div class="sg-skel card"></div></div>';
+    // 前回の内容があれば、すぐ出す（裏で読み直して置き換える）
+    var who = state.name, y = state.year, mo = state.month, ckey = 'shift:list:' + who + ':' + y + '-' + mo;
+    var cachedDays = SiegNav.cacheGet(ckey);
+    if (cachedDays) { state.existing = cachedDays; renderCal(); renderDayList(); renderChoices(); }
+    else $('day-list').innerHTML = '<div class="sg-skel-wrap" aria-busy="true" aria-label="読み込み中"><div class="sg-skel card"></div><div class="sg-skel card"></div></div>';
     GasClient.get(SHIFT_API, { action: 'list', name: state.name, year: state.year, month: state.month })
       .then(function(data) {
         if (!data || !data.ok) throw new Error((data && data.error) || '読み込みに失敗しました');
+        SiegNav.cacheSet(ckey, data.days || {});
+        if (who !== state.name || y !== state.year || mo !== state.month) return;   // 読んでいるあいだに月・名前を替えた
         state.existing = data.days || {};
         renderCal();
         renderDayList();
         renderChoices();
       })
       .catch(function(err) {
+        if (who !== state.name || y !== state.year || mo !== state.month) return;
+        if (cachedDays) return;   // 前回の内容を出したままにする（送信はできる）
         state.existing = {};
         renderCal();
         $('day-list').innerHTML = '<div class="empty-note">登録済みの表示を取得できませんでした（' +

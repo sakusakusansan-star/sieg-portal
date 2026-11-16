@@ -863,7 +863,7 @@ function scoreHtml(me){
   var people = R.forTool('power').length;
   var cell = function(k, v, unit, sub){ return '<div><div class="k">' + k + '</div><div class="v' + (String(v).length >= 5 ? ' long' : '') + '">' + v + (unit ? '<small>' + unit + '</small>' : '') + '</div><div class="s">' + (sub || '&nbsp;') + '</div></div>'; };
   var cells = g
-    ? cell('今月の獲得', g.total, '件', '全員 ' + g.all + '件')
+    ? cell('今月の獲得', g.total, '件', '')
       + (g.inPower ? cell('戦闘力', fmtN(g.power), '', 'ランク ' + esc(g.rank)) + cell('順位', g.power ? g.pos : '-', g.power ? '位' : '', people + '人中') : '')
     : cell('今月の獲得', '-', '', '') + cell('戦闘力', '-', '', '') + cell('順位', '-', '', '');
   var href = pw && usable(pw, me) ? pw.url : '#';

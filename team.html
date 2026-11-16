@@ -136,13 +136,15 @@
   .app[data-view="flow"] #shift-wrap, .app[data-view="flow"] #money-wrap,
   .app[data-view="money"] #shift-wrap, .app[data-view="money"] #shouryu-wrap,
   .app:not([data-view="close"]) #close-wrap,
-  .app[data-view="close"] #shift-wrap, .app[data-view="close"] #shouryu-wrap, .app[data-view="close"] #money-wrap { display: none !important; }
+  .app[data-view="close"] #shift-wrap, .app[data-view="close"] #shouryu-wrap, .app[data-view="close"] #money-wrap,
+  .app:not([data-view="member"]) #member-wrap,
+  .app[data-view="member"] #shift-wrap, .app[data-view="member"] #shouryu-wrap, .app[data-view="member"] #money-wrap { display: none !important; }
   /* 広い画面では、商流の1人ずつのカードを3列に（中身の少ないカードは縦に伸ばさない） */
   #shouryu.srep { align-items: start; }
   @media (min-width: 1100px) { #shouryu.srep { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   #shouryu-all .brow { grid-template-columns: 7.6em 1fr 6.2em; }
   .scard .brow.fw { grid-template-columns: 6.6em 1fr 6.2em; }
-  .vtabs { display: grid; max-width: 560px; grid-template-columns: repeat(5, 1fr); gap: 3px; padding: 3px; position: sticky; top: 6px; z-index: 6;
+  .vtabs { display: grid; max-width: 560px; grid-template-columns: repeat(6, 1fr); gap: 3px; padding: 3px; position: sticky; top: 6px; z-index: 6;
     background: color-mix(in srgb, var(--t-sunk) 92%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
     border: 1px solid var(--t-hair); border-radius: var(--t-r-sm); box-shadow: var(--t-lift); }
   .vtabs button { border: 0; background: none; min-height: 38px; border-radius: 9px; font-size: 13px; font-weight: 800; color: var(--t-mute); }
@@ -356,6 +358,53 @@
   .pd-h small { font-size: 11.5px; font-weight: 800; color: var(--t-mute); letter-spacing: .04em; }
   .pd-h .x { margin-left: auto; width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-ink); font-size: 20px; font-weight: 900; cursor: pointer; }
   .pd .scard { padding-bottom: 12px; }
+
+  /* ───────── メンバー（名簿を直す） ───────── */
+  .mem-group { font-size: 12px; font-weight: 900; color: var(--t-mute); letter-spacing: .04em; margin: 14px 4px 6px; }
+  .mem-list { background: var(--t-card); border: 1px solid var(--t-hair); border-radius: var(--t-r); box-shadow: var(--t-lift); }
+  .mem-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 64px; }
+  .mem-row + .mem-row { border-top: 1px solid var(--t-hair2); }
+  .mem-row .av { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-weight: 900; color: #fff; background: var(--t-navy2); flex: none; }
+  .mem-row .av.partner { background: var(--t-green); }
+  .mem-row.off .av { background: var(--t-faint); }
+  .mem-main { flex: 1; min-width: 0; }
+  .mem-main b { font-size: 16px; font-weight: 900; }
+  .mem-main b small { font-size: 12px; font-weight: 700; color: var(--t-mute); margin-left: 6px; }
+  .mem-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .mem-tags span { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--t-sunk); color: var(--t-ink2); }
+  .mem-tags .c-docomo { background: var(--sg-docomo); color: #fff; } .mem-tags .c-au { background: var(--sg-au); color: #fff; } .mem-tags .c-Softbank { background: var(--sg-softbank); color: #fff; }
+  .mem-tags .none { background: none; color: var(--t-faint); padding-left: 0; }
+  .mem-edit { flex: none; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-accent); font-weight: 800; font-size: 13.5px; cursor: pointer; }
+  .mem-add { min-height: 40px !important; padding: 0 14px !important; border-radius: 10px; background: var(--t-navy2) !important; color: #fff !important; }
+  .mem-hid { margin-top: 14px; }
+  .mem-hid summary { cursor: pointer; font-size: 13px; font-weight: 800; color: var(--t-mute); padding: 8px 4px; }
+  .mem-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--t-cc-tint); color: var(--t-ink); font-size: 13px; font-weight: 700; }
+  .mem-banner button { flex: none; min-height: 36px; padding: 0 12px; border-radius: 9px; border: 0; background: var(--t-navy2); color: #fff; font-weight: 800; }
+  .mf { display: flex; flex-direction: column; gap: 14px; padding-bottom: 8px; }
+  .mf label, .mf .lb { display: block; font-size: 12.5px; font-weight: 800; color: var(--t-mute); margin: 0 2px 6px; }
+  .mf input[type="text"] { width: 100%; min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-ink); font-size: 16px; font-family: inherit; }
+  .mf input[disabled] { background: var(--t-sunk); color: var(--t-mute); }
+  .mf .help { font-size: 12px; color: var(--t-mute); margin: 5px 2px 0; font-weight: 600; }
+  .mf .seg2 { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mf .seg2 button { min-height: 42px; padding: 0 14px; border-radius: 11px; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-ink); font-weight: 800; font-size: 14px; cursor: pointer; }
+  .mf .seg2 button[aria-pressed="true"] { background: var(--t-navy2); border-color: var(--t-navy2); color: #fff; }
+  .mf .seg2 button[aria-pressed="true"][data-v="docomo"] { background: var(--sg-docomo); border-color: var(--sg-docomo); }
+  .mf .seg2 button[aria-pressed="true"][data-v="au"] { background: var(--sg-au); border-color: var(--sg-au); }
+  .mf .seg2 button[aria-pressed="true"][data-v="Softbank"] { background: var(--sg-softbank); border-color: var(--sg-softbank); }
+  .mf .chk { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--t-hair); background: var(--t-card); font-size: 15px; font-weight: 800; color: var(--t-ink); margin: 0 0 6px; cursor: pointer; }
+  .mf .chk input { width: 20px; height: 20px; accent-color: var(--t-navy2); }
+  .mf .chk small { margin-left: auto; font-size: 11.5px; color: var(--t-mute); font-weight: 700; }
+  .mf .acts { display: flex; gap: 8px; }
+  .mf .acts button { flex: 1; min-height: 48px; border-radius: 12px; font-weight: 900; font-size: 15px; cursor: pointer; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-ink); }
+  .mf .acts .go { background: var(--t-navy2); border-color: var(--t-navy2); color: #fff; }
+  .mf .acts .go:disabled { opacity: .6; }
+  .mf .off-btn { min-height: 44px; border-radius: 12px; border: 1px solid var(--t-hair); background: none; color: var(--t-red); font-weight: 800; font-size: 14px; cursor: pointer; }
+  .mf .msg { font-size: 13px; font-weight: 800; color: var(--t-red); min-height: 1em; }
+  .todo { background: var(--t-card); border: 1px solid var(--t-hair); border-radius: 14px; padding: 12px 14px; }
+  .todo h4 { margin: 0 0 8px; font-size: 14px; font-weight: 900; }
+  .todo ol { margin: 0; padding-left: 1.3em; font-size: 13.5px; line-height: 1.6; }
+  .todo li + li { margin-top: 6px; }
+  .todo code { font-size: 12.5px; background: var(--t-sunk); padding: 1px 5px; border-radius: 5px; }
   .pd-kp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .pd-kp div { background: var(--t-card); border: 1px solid var(--t-hair); border-radius: 14px; padding: 10px 12px; }
   .pd-kp small { display: block; font-size: 10.5px; font-weight: 800; color: var(--t-mute); }
@@ -514,6 +563,7 @@
     <button type="button" role="tab" data-view="flow" aria-selected="false">商流</button>
     <button type="button" role="tab" data-view="money" aria-selected="false">経費</button>
     <button type="button" role="tab" data-view="close" aria-selected="false">締め</button>
+    <button type="button" role="tab" data-view="member" aria-selected="false">名簿</button>
   </nav>
 
   <section class="kpis" id="kpis" hidden></section>
@@ -583,7 +633,21 @@
     <div class="money" id="money" style="margin-top:10px"></div>
   </div>
 
+  <div id="member-wrap">
+    <div class="sec"><span>名簿（メンバー）</span><button type="button" class="mem-add" id="mem-add">＋ 人を追加</button></div>
+    <div class="snote" id="mem-src" aria-live="polite"></div>
+    <div class="mem-banner" id="mem-banner" hidden><span>名簿を直しました。上の一覧などに出すには開き直してください。</span><button type="button" id="mem-reload">開き直す</button></div>
+    <div id="mem-list"></div>
+    <details class="mem-hid" id="mem-hid-box" hidden><summary id="mem-hid-sum">外した人</summary><div class="mem-list" id="mem-hid"></div></details>
+    <p class="snote" style="margin-top:12px">ここで直すと、ポータルと各ツールの名前の一覧が変わります（各自が次に開いたときから。遅くても10分ほど）。<br>
+      外しても、これまでの日報・獲得・稼働費・経費の記録は消えません。名前はあとから変えられないので、変えたいときは外して新しく追加してください。<br>
+      シフト表・稼働費・経費精算の Google 側は、追加したあとに出る「Google 側でやること」のとおりに直してください。</p>
+  </div>
+
   <div id="print-area" aria-hidden="true"></div>
+  <div class="pd-bg" id="mem-bg" hidden>
+    <section class="pd" id="mem-pd" role="dialog" aria-modal="true" aria-labelledby="mem-title"></section>
+  </div>
   <div class="pd-bg" id="pd-bg" hidden>
     <section class="pd" id="pd" role="dialog" aria-modal="true" aria-labelledby="pd-name"></section>
   </div>
@@ -1661,8 +1725,9 @@
   // 上のタブ（一覧・シフト・商流・経費）。スマホもパソコンも。最後に見たタブを覚える
   var VIEW_KEY = 'siegTeamView';
   function setView(v) {
-    if (['list', 'shift', 'flow', 'money', 'close'].indexOf(v) < 0) v = 'list';
+    if (['list', 'shift', 'flow', 'money', 'close', 'member'].indexOf(v) < 0) v = 'list';
     if (v === 'close') loadErrors();   // 不具合の一覧は、締めのタブを開いたときだけ読む
+    if (v === 'member') setTimeout(loadMembers, 0);   // 名簿は、メンバーのタブを開いたときだけ読み直す（開いた直後は下の準備のあと）
     document.querySelector('.app').setAttribute('data-view', v);
     document.querySelectorAll('#vtabs [data-view]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.view === v)); });
     try { localStorage.setItem(VIEW_KEY, v); } catch (e) {}
@@ -1674,6 +1739,161 @@
 
   $('m-prev').addEventListener('click', function () { goMonth(-1); });
   $('m-next').addEventListener('click', function () { goMonth(1); });
+
+  // ── メンバー（名簿を直す） ──
+  // 名簿は日報の GAS の「名簿」シート。読むのは sieg-roster.js（SiegRoster.refresh）、直すのは rosterSave（通行証が要る）
+  var TOOL_LABEL = { commute: '稼働費', keihi: '経費精算', team: 'みんなの状況' };
+  var CARRIER_LABEL = { docomo: 'docomo', au: 'au', Softbank: 'SoftBank' };
+  var mem = { list: R.all ? R.all() : [], ready: !!R.fromSheet, loading: false, changed: false };
+  function memRow(x) {
+    var tags = (x.carrier ? '<span class="c-' + esc(x.carrier) + '">' + esc(CARRIER_LABEL[x.carrier] || x.carrier) + '</span>' : '')
+      + (x.tools || []).map(function (t) { return '<span>' + esc(TOOL_LABEL[t] || t) + '</span>'; }).join('');
+    return '<div class="mem-row' + (x.hidden ? ' off' : '') + '" data-mem="' + esc(x.name) + '">'
+      + '<span class="av' + (x.group === 'partner' ? ' partner' : '') + '" aria-hidden="true">' + esc(x.name.slice(0, 1)) + '</span>'
+      + '<div class="mem-main"><b>' + esc(x.name) + '<small>' + (x.group === 'partner' ? 'パートナー' : '社員') + (x.full ? '・' + esc(x.full) : '') + '</small></b>'
+      + '<div class="mem-tags">' + (tags || '<span class="none">キャリア・ツールなし</span>') + (x.hidden ? '<span class="none">' + esc(x.hidden) + ' に外した</span>' : '') + '</div></div>'
+      + '<button type="button" class="mem-edit" data-mem-edit="' + esc(x.name) + '">' + (x.hidden ? '戻す' : '直す') + '</button></div>';
+  }
+  function renderMembers() {
+    var on = mem.list.filter(function (x) { return !x.hidden; }), off = mem.list.filter(function (x) { return x.hidden; });
+    var h = '';
+    [['staff', '社員'], ['partner', 'パートナー']].forEach(function (g) {
+      var xs = on.filter(function (x) { return x.group === g[0]; });
+      if (xs.length) h += '<div class="mem-group">' + g[1] + '（' + xs.length + '人）</div><div class="mem-list">' + xs.map(memRow).join('') + '</div>';
+    });
+    $('mem-list').innerHTML = h || '<div class="snote">名簿が空です</div>';
+    $('mem-hid-box').hidden = !off.length;
+    $('mem-hid-sum').textContent = '外した人（' + off.length + '人）';
+    $('mem-hid').innerHTML = off.map(memRow).join('');
+    $('mem-src').textContent = mem.loading ? '名簿を読んでいます…'
+      : mem.ready ? '' : 'いまは前の名簿（画面に書いてある分）です。日報の GAS を新しい版に入れ替えると、ここから直せるようになります。';
+    $('mem-add').disabled = !mem.ready;
+    document.querySelectorAll('[data-mem-edit]').forEach(function (b) { b.disabled = !mem.ready; });
+    $('mem-banner').hidden = !mem.changed;
+  }
+  function loadMembers() {
+    mem.loading = true; renderMembers();
+    (R.refresh ? R.refresh(true) : Promise.resolve(null)).then(function (r) {
+      mem.loading = false;
+      if (r && r.people) { mem.list = r.people.map(function (x) { var o = {}; for (var k in x) o[k] = x[k]; return o; }); mem.ready = true; }
+      renderMembers();
+    });
+  }
+  function memOpen(name) {
+    var cur = mem.list.filter(function (x) { return x.name === name; })[0] || null;
+    var f = cur ? { name: cur.name, group: cur.group, full: cur.full || '', carrier: cur.carrier || '', tools: (cur.tools || []).slice(), hidden: cur.hidden || '' }
+      : { name: '', group: 'partner', full: '', carrier: '', tools: ['commute'], hidden: '' };
+    var isNew = !cur;
+    var seg = function (id, items, val) {
+      return '<div class="seg2" id="' + id + '">' + items.map(function (it) { return '<button type="button" data-v="' + it[0] + '" aria-pressed="' + (it[0] === val) + '">' + it[1] + '</button>'; }).join('') + '</div>';
+    };
+    var h = '<div class="pd-h"><span class="av' + (f.group === 'partner' ? ' partner' : '') + '" id="mem-av" aria-hidden="true">' + esc(f.name.slice(0, 1) || '＋') + '</span>'
+      + '<div><b id="mem-title">' + (isNew ? '人を追加' : esc(f.name) + (f.hidden ? '（外した人）' : '')) + '</b><small>' + (isNew ? '名簿に足す' : '名簿を直す') + '</small></div>'
+      + '<button type="button" class="x" id="mem-x" aria-label="閉じる">×</button></div>'
+      + '<form class="mf" id="mem-form" novalidate>'
+      + '<div><label for="mem-name">名前（画面に出る呼び名）</label><input type="text" id="mem-name" maxlength="10" autocomplete="off" value="' + esc(f.name) + '"' + (isNew ? '' : ' disabled') + ' placeholder="例：田中">'
+      + '<p class="help">' + (isNew ? 'あとから変えられません。名字だけなど、いまの名簿と同じ書き方で。' : '名前はあとから変えられません。') + '</p></div>'
+      + '<div><span class="lb">区分</span>' + seg('mem-group', [['staff', '社員'], ['partner', 'パートナー']], f.group) + '</div>'
+      + '<div><label for="mem-full">フルネーム（なくてもよい）</label><input type="text" id="mem-full" maxlength="20" autocomplete="off" value="' + esc(f.full) + '" placeholder="例：田中一郎">'
+      + '<p class="help">社員の稼働費のシート名に使います。</p></div>'
+      + '<div><span class="lb">キャリア（獲得報告を開いたときに最初から選んでおく）</span>' + seg('mem-carrier', [['', 'なし'], ['docomo', 'docomo'], ['au', 'au'], ['Softbank', 'SoftBank']], f.carrier) + '</div>'
+      + '<div><span class="lb">使うもの</span>'
+      + ['commute', 'keihi', 'team'].map(function (t) {
+          return '<label class="chk"><input type="checkbox" data-tool="' + t + '"' + (f.tools.indexOf(t) >= 0 ? ' checked' : '') + '>' + TOOL_LABEL[t]
+            + '<small>' + { commute: '稼働費入力', keihi: '領収書・経費', team: 'このページ' }[t] + '</small></label>';
+        }).join('')
+      + '<p class="help">日報・シフト入力・掲示板は区分で決まります（日報はパートナー、掲示板は社員）。獲得報告と戦闘力は全員です。</p></div>'
+      + '<p class="msg" id="mem-msg" role="alert"></p>'
+      + '<div class="acts"><button type="button" id="mem-cancel">やめる</button><button type="submit" class="go" id="mem-go">' + (isNew ? '追加する' : f.hidden ? '戻す' : '保存する') + '</button></div>'
+      + (!isNew && !f.hidden ? '<button type="button" class="off-btn" id="mem-off">名簿から外す</button>' : '')
+      + '</form>';
+    $('mem-pd').innerHTML = h;
+    $('mem-bg').hidden = false; document.body.style.overflow = 'hidden'; $('mem-pd').scrollTop = 0;
+    var pick = function (id, key) {
+      $(id).addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return;
+        f[key] = b.dataset.v;
+        $(id).querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+        if (key === 'group') {
+          $('mem-av').classList.toggle('partner', f.group === 'partner');
+          // 追加のときは、区分に合わせて使うものの初めの印を変える（社員：稼働費・経費精算／パートナー：稼働費）
+          if (isNew) $('mem-form').querySelectorAll('[data-tool]').forEach(function (c) { c.checked = c.dataset.tool === 'commute' || (f.group === 'staff' && c.dataset.tool === 'keihi'); });
+        }
+      });
+    };
+    pick('mem-group', 'group'); pick('mem-carrier', 'carrier');
+    // 外した人は、まず「戻す」だけ（戻してから直す）
+    if (f.hidden) $('mem-form').querySelectorAll('input, .seg2 button').forEach(function (el) { el.disabled = true; });
+    if (isNew) $('mem-name').addEventListener('input', function () { $('mem-av').textContent = this.value.trim().slice(0, 1) || '＋'; });
+    $('mem-x').onclick = memClose; $('mem-cancel').onclick = memClose;
+    var before = cur ? (cur.tools || []).slice() : [];
+    var send = function (op) {
+      var person = {
+        name: isNew ? $('mem-name').value.replace(/[\s　]+/g, '') : f.name, group: f.group, full: $('mem-full').value.trim(), carrier: f.carrier,
+        tools: Array.prototype.filter.call($('mem-form').querySelectorAll('[data-tool]'), function (c) { return c.checked; }).map(function (c) { return c.dataset.tool; })
+      };
+      if (!person.name) { $('mem-msg').textContent = '名前を入れてください'; $('mem-name').focus(); return; }
+      if (op === 'add' && mem.list.some(function (x) { return x.name === person.name; })) {
+        $('mem-msg').textContent = '「' + person.name + '」はもう名簿にいます' + (mem.list.some(function (x) { return x.name === person.name && x.hidden; }) ? '（外した人の中）。外した人から「戻す」を押してください' : ''); return;
+      }
+      $('mem-go').disabled = true; $('mem-msg').textContent = '';
+      var busy = $('mem-go').textContent; $('mem-go').textContent = '送っています…';
+      GasClient.post(P.API, { action: 'rosterSave', token: getToken(), op: op, person: person }, { retry: false }).then(function (r) {
+        if (r && r.expired) { setToken(''); memClose(); showGate('合言葉を確かめられませんでした。入れ直してください。'); return; }
+        if (gasNotReady(r)) { $('mem-msg').textContent = 'まだ準備中です（日報の GAS の入れ替えがまだのようです）'; return; }
+        if (!r || !r.ok || !r.people) { $('mem-msg').textContent = (r && r.error) || '保存できませんでした'; return; }
+        mem.list = r.people; mem.ready = true; mem.changed = true;
+        if (R.save) R.save(r.people);
+        renderMembers();
+        var after = op === 'hide' ? [] : person.tools;
+        memDone(op, person, op === 'add' ? after : after.filter(function (t) { return before.indexOf(t) < 0; }), cur && cur.group !== person.group);
+      }).catch(function () {
+        $('mem-msg').textContent = 'つながりませんでした。電波のよいところでもう一度押してください（2回押しても二重にはなりません）。';
+      }).then(function () { if ($('mem-go')) { $('mem-go').disabled = false; $('mem-go').textContent = busy; } });
+    };
+    $('mem-form').addEventListener('submit', function (e) { e.preventDefault(); send(isNew ? 'add' : f.hidden ? 'show' : 'update'); });
+    if ($('mem-off')) $('mem-off').onclick = function () {
+      SiegNav.confirm('ポータルと各ツールの名前の一覧に出なくなります。これまでの記録は消えません。あとで「外した人」から戻せます。', { title: '「' + f.name + '」を名簿から外しますか？', ok: '外す', danger: true }).then(function (ok) { if (ok) send('hide'); });
+    };
+    setTimeout(function () { (isNew ? $('mem-name') : $('mem-x')).focus(); }, 30);
+  }
+  // 保存できたあと：Google 側でやること（追加した人・新しく付けたツールの分だけ）
+  function memDone(op, x, newTools, groupChanged) {
+    var items = [], nm = '<code>' + esc(x.name) + '</code>';
+    if (op === 'add' || op === 'show' || groupChanged) {
+      if (x.group === 'staff') items.push('<b>シフト入力（社員）</b>：シフトの表に ' + nm + ' の行を足し、社員シフトの GAS（shift-api.gs）の <code>ALLOW_STAFF</code> に ' + nm + ' を足して入れ替える');
+      else items.push('<b>シフト入力（パートナー）</b>：パートナーのシフト表に ' + nm + ' の4行（A列に名前）を足す');
+    }
+    if (newTools.indexOf('commute') >= 0) {
+      if (x.group === 'staff') items.push('<b>稼働費</b>：稼働費の GAS の <code>STAFF_HOME</code> に ' + nm + ' と自宅を足して入れ替え、稼働費のブックに <code>' + esc(x.full || x.name) + '</code> のシートを作る');
+      else items.push('<b>稼働費</b>：パートナー交通費の GAS の <code>PARTNERS</code> に ' + nm + ' を足して入れ替える（自宅や現場は本人が画面で登録）');
+    }
+    if (newTools.indexOf('keihi') >= 0) items.push('<b>経費精算</b>：経費精算の GAS の <code>STAFF_SHEETS</code> に ' + nm + ' を足して入れ替え、経費精算のブックに ' + nm + ' のシートを作る');
+    var title = { add: '追加しました', update: '保存しました', hide: '外しました', show: '戻しました' }[op];
+    var h = '<div class="pd-h"><span class="av' + (x.group === 'partner' ? ' partner' : '') + '" aria-hidden="true">' + esc(x.name.slice(0, 1)) + '</span>'
+      + '<div><b id="mem-title">' + esc(x.name) + ' を' + title + '</b><small>名簿</small></div>'
+      + '<button type="button" class="x" id="mem-x" aria-label="閉じる">×</button></div><div class="mf">'
+      + '<p class="snote">ポータルと各ツールの名前の一覧は、各自が次に開いたときから変わります（遅くても10分ほど）。'
+      + (op === 'hide' ? 'Google 側（シフト表・稼働費・経費精算）はそのままで大丈夫です。' : '') + '</p>'
+      + (items.length ? '<div class="todo"><h4>Google 側でやること（' + items.length + 'つ）</h4><ol>' + items.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol>'
+        + '<p class="snote" style="padding-bottom:0">ここが済むまでは、その画面で名前を選んでも記録できません。わからなければ、この画面を写真に撮って Claude に送ってください。</p></div>' : '')
+      + '<div class="acts"><button type="button" class="go" id="mem-ok">閉じる</button></div></div>';
+    $('mem-pd').innerHTML = h; $('mem-pd').scrollTop = 0;
+    $('mem-x').onclick = memClose; $('mem-ok').onclick = memClose;
+    $('mem-ok').focus();
+  }
+  function memClose() {
+    if ($('mem-bg').hidden) return;
+    $('mem-bg').hidden = true; document.body.style.overflow = '';
+  }
+  $('mem-bg').addEventListener('click', function (e) { if (e.target === this) memClose(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') memClose(); });
+  $('mem-add').addEventListener('click', function () { memOpen(''); });
+  $('mem-reload').addEventListener('click', function () { location.reload(); });
+  ['mem-list', 'mem-hid'].forEach(function (id) {
+    $(id).addEventListener('click', function (e) { var b = e.target.closest('[data-mem-edit]'); if (b) memOpen(b.getAttribute('data-mem-edit')); });
+  });
+  renderMembers();
 
   // ── 入口の合言葉 ──
   // 合言葉そのものは GAS（日報）のスクリプト プロパティ TEAM_PASS にだけあり、このページには書かない。

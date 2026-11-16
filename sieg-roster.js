@@ -1,13 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════
-   sieg-roster.js — Sieg 業務ツールの名簿（ここ1か所だけ直せばよい）
+   sieg-roster.js — Sieg 業務ツールの名簿
+
+   ★ 人の追加・直す・外すは、みんなの状況（team.html）の「メンバー」でする。
+     名簿は日報のスプレッドシートの「名簿」シートにあり、各画面はそれを読む
+     （この端末に残しておき、すぐ開く。裏で10分に1回まで読み直す）。
+     下の PEOPLE と TOOLS は、名簿シートを一度も読めていない端末が使う、前の名簿。
 
    ポータルと各ツール（日報・シフト入力・掲示板・交通費など）は、
    すべて https://sakusakusansan-star.github.io/ から配信されているので、
    このファイルを /sieg-portal/sieg-roster.js として読み込んで同じ名簿を使う。
      <script src="/sieg-portal/sieg-roster.js"></script>
 
-   人が増えた・辞めたときは、下の PEOPLE と TOOLS を直す。
-   ※ 画面に出す名前はここで全部そろうが、Google 側（GAS・スプレッドシート）は
+   ※ 画面に出す名前は名簿でそろうが、Google 側（GAS・スプレッドシート）は
      別に持っているので、そちらも直すこと。
        ・シフト入力（Sieg社員）  … sieg-portal/gas/shift-api.gs の ALLOW_STAFF と、シフト表の行
        ・シフト入力（パートナー様）… シフト表の行
@@ -47,12 +51,84 @@
     team:         ['福岡', '福山']                  // みんなの状況（全員の獲得・日報・稼働費）
   };
 
+  // ─── 名簿シート（日報の GAS の ?action=roster）───
+  var ROSTER_API = 'https://script.google.com/macros/s/AKfycbwEclDIdJiNgdXOmveRvT-BJOVWc6FwyrpxWNrqHs1DB9xgx9Ijuix0qqQ5KyG-XlkF7w/exec';
+  var CACHE_KEY = 'siegRosterV1', REFRESH_MS = 10 * 60 * 1000;
+  var ALL = PEOPLE.slice(), fromSheet = false;   // ALL は外した人も入れた全員（記録の名前を引くとき用）
+  function lsGet(k) { try { return global.localStorage ? global.localStorage.getItem(k) : null; } catch (e) { return null; } }
+  function lsSet(k, v) { try { global.localStorage.setItem(k, v); } catch (e) {} }
+  function valid(list) {
+    return Object.prototype.toString.call(list) === '[object Array]' && list.length > 0 &&
+      list.every(function (p) { return p && typeof p.name === 'string' && p.name; });
+  }
+  // 名簿シートの形 → この画面で使う形（PEOPLE と、人ごとに決まるツール）
+  function useSheet(list) {
+    ALL = list.map(function (p) {
+      return { name: p.name, group: p.group === 'partner' ? 'partner' : 'staff', full: p.full || '', carrier: p.carrier || '',
+        tools: (p.tools || []).slice(), hidden: p.hidden || '' };
+    });
+    PEOPLE = ALL.filter(function (p) { return !p.hidden; });
+    ['commute', 'keihi', 'team'].forEach(function (t) {
+      TOOLS[t] = PEOPLE.filter(function (p) { return p.tools.indexOf(t) >= 0; }).map(function (p) { return p.name; });
+    });
+    fromSheet = true;
+  }
+  var cached = null;
+  try { cached = JSON.parse(lsGet(CACHE_KEY) || 'null'); } catch (e) { cached = null; }
+  if (cached && valid(cached.people)) useSheet(cached.people);
+  var firstTime = !fromSheet;
+  function sig(list) {
+    return JSON.stringify((list || []).map(function (p) { return [p.name, p.group, p.full || '', p.carrier || '', (p.tools || []).join(), p.hidden || '']; }));
+  }
+  // 新しい名簿を端末に残す（みんなの状況で直したときも使う）。いま使っている名簿と、名前の顔ぶれが違えば true
+  function save(list) {
+    if (!valid(list)) return false;
+    var before = PEOPLE.map(function (p) { return p.name; }).join();
+    cached = { t: Date.now(), people: list };
+    lsSet(CACHE_KEY, JSON.stringify(cached));
+    return before !== list.filter(function (p) { return !p.hidden; }).map(function (p) { return p.name; }).join();
+  }
+  var pending = null;
+  // 名簿シートを読み直す。force でなければ、前に読んでから10分たっていないときは読まない
+  function refresh(force) {
+    if (pending) return pending;
+    if (!global.fetch) return Promise.resolve(null);
+    if (!force && cached && cached.t && Date.now() - cached.t < REFRESH_MS) return Promise.resolve(null);
+    // 読めなかったとき（古い GAS・電波）も、10分は試さない
+    var tried = Number(lsGet('siegRosterTry') || 0);
+    if (!force && Date.now() - tried < REFRESH_MS) return Promise.resolve(null);
+    lsSet('siegRosterTry', String(Date.now()));
+    var ctl = global.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : null;
+    var before = sig(cached && cached.people);
+    pending = fetch(ROSTER_API + '?action=roster', { redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok || !valid(j.people)) return null;   // 古い GAS（名簿に未対応）は、いまの名簿のまま
+        var namesChanged = save(j.people);
+        return { people: j.people, changed: sig(j.people) !== before, namesChanged: namesChanged };
+      })
+      .catch(function () { return null; })
+      .then(function (r) { if (timer) clearTimeout(timer); pending = null; return r; });
+    return pending;
+  }
+  // 名簿シートをまだ一度も読めていない端末で、人の顔ぶれが違ったら、1回だけ開き直す
+  // （新しく入った人が、はじめて開いたときに自分の名前を選べるように）。ほかは次に開いたときから
+  refresh(false).then(function (r) {
+    if (!r || !r.namesChanged || !firstTime || !global.location || !global.sessionStorage) return;
+    try {
+      if (global.sessionStorage.getItem('siegRosterReloaded')) return;
+      global.sessionStorage.setItem('siegRosterReloaded', '1');
+    } catch (e) { return; }
+    global.location.reload();
+  });
+
   function names(group) {
     return PEOPLE.filter(function (p) { return !group || p.group === group; })
       .map(function (p) { return p.name; });
   }
   function find(name) {
-    for (var i = 0; i < PEOPLE.length; i++) if (PEOPLE[i].name === name) return PEOPLE[i];
+    for (var i = 0; i < ALL.length; i++) if (ALL[i].name === name) return ALL[i];
     return null;
   }
 
@@ -67,6 +143,14 @@
   global.SiegRoster = {
     commutePartnerApi: COMMUTE_PARTNER_API,
     shiftPartnerApi: SHIFT_PARTNER_API,
+    /** 名簿シートを読んで使っているか（false なら、このファイルに書いた前の名簿） */
+    fromSheet: fromSheet,
+    /** 外した人も入れた全員（みんなの状況の「メンバー」用） */
+    all: function () { return ALL.map(function (p) { return { name: p.name, group: p.group, full: p.full || '', carrier: p.carrier || '', tools: (p.tools || []).slice(), hidden: p.hidden || '' }; }); },
+    /** 名簿シートを読み直す（force で10分待たずに）。{ people, changed, namesChanged } か null */
+    refresh: refresh,
+    /** みんなの状況で直したあと、返ってきた名簿を端末に残す。顔ぶれが変わったら true */
+    save: save,
     staff: names('staff'),
     partners: names('partner'),
     everyone: names(),

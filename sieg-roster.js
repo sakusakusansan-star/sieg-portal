@@ -11,13 +11,9 @@
    このファイルを /sieg-portal/sieg-roster.js として読み込んで同じ名簿を使う。
      <script src="/sieg-portal/sieg-roster.js"></script>
 
-   ※ 画面に出す名前は名簿でそろうが、Google 側（GAS・スプレッドシート）は
-     別に持っているので、そちらも直すこと。
-       ・シフト入力（Sieg社員）  … sieg-portal/gas/shift-api.gs の ALLOW_STAFF と、シフト表の行
-       ・シフト入力（パートナー様）… シフト表の行
-       ・交通費計算（社員）      … 稼働費の GAS の STAFF_HOME（フルネーム）と、人ごとのシート
-       ・交通費計算（パートナー様）… パートナー交通費の GAS の PARTNERS（自宅・場所は本人が画面で登録）
-       ・経費精算                … 経費精算のスプレッドシート
+   ※ Google 側（GAS・スプレッドシート）も名簿シートを読む（2分ごと）。シフト表の行・稼働費や経費精算の
+     シートは、その人がはじめて使うときに自動で作る。社員の稼働費の自宅だけは、本人が稼働費の画面で登録する。
+     名簿シートが読めないときは、各 GAS に書いた前の一覧（ALL_STAFF・ALLOW_STAFF・STAFF_HOME・PARTNERS・STAFF_SHEETS）で動く。
    ═══════════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';

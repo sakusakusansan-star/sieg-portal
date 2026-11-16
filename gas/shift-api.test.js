@@ -107,6 +107,35 @@ test('同じ月に「（保存）」の控えと本番があれば、本番に�
   assert.ok(sheets[0]._grid.every(r => r.indexOf('ダル') < 0));
 });
 
+test('来月のシフト表ができたら：今月（保存）も来月も選べて、来月に先に入力できる', () => {
+  // シフト表のメニュー「翌月へ切り替え」のあとの形（11月は「（保存）」のタブ、12月が今のシフト表）
+  const { sheets } = setup([
+    makeShiftSheet('シフト表　12月', '2026', '12月', 31),
+    makeShiftSheet('2026-11（保存）', '2026', '11月', 30),
+    { name: '送信ログ', grid: [['日時', '操作', '名前']] }
+  ]);
+  assert.deepStrictEqual(listMonths().months.map(m => [m.month, m.sheet]), [[11, '2026-11（保存）'], [12, 'シフト表　12月']]);
+  const dec = post({ name: '清田', year: 2026, month: 12, entries: [{ start: 5, end: 5, client: 'ダル', carrier: 'docomo', place: '下通', hotel: '' }] });
+  assert.strictEqual(dec.ok, true);
+  assert.strictEqual(dec.sheet, 'シフト表　12月');
+  // 今月の残り（11月）も直せる。書き込み先は「（保存）」のタブ
+  const nov = post({ name: '清田', year: 2026, month: 11, entries: [{ start: 28, end: 28, client: 'NOON', carrier: 'au', place: '近見', hotel: '' }] });
+  assert.strictEqual(nov.ok, true);
+  assert.strictEqual(nov.sheet, '2026-11（保存）');
+  assert.ok(sheets[0]._grid.some(r => r.indexOf('ダル') >= 0) && sheets[0]._grid.every(r => r.indexOf('NOON') < 0));
+  assert.ok(sheets[1]._grid.some(r => r.indexOf('NOON') >= 0));
+});
+
+test('来月のタブを手で足したとき（今月のタブも残っている）：両方選べる', () => {
+  setup([
+    makeShiftSheet('シフト表　11月', '2026', '11月', 30),
+    makeShiftSheet('シフト表　12月', '2026', '12月', 31)
+  ]);
+  assert.deepStrictEqual(listMonths().months.map(m => m.month), [11, 12]);
+  assert.strictEqual(findMonthSheet(SpreadsheetApp.openById(), 2026, 12).getName(), 'シフト表　12月');
+  assert.strictEqual(findMonthSheet(SpreadsheetApp.openById(), 2026, 11).getName(), 'シフト表　11月');
+});
+
 test('控えしか無い月は控えを使う', () => {
   setup([makeShiftSheet('2026-07（保存）', '2026', '7月', 31)]);
   assert.strictEqual(findMonthSheet(SpreadsheetApp.openById(), 2026, 7).getName(), '2026-07（保存）');

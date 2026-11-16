@@ -763,12 +763,12 @@ function tileState(id){
     if (sh && sh.known && !sh.today) return '<span class="st off">きょうは休み</span>';
     return '<span class="st ' + (new Date().getHours() >= 17 ? 'bad' : 'warn') + '"><i></i>未提出</span>';
   }
-  if (id === 'gain' || id === 'power' || id === 'team') {
+  if (id === 'gain' || id === 'power') {
     if (HOME.loading) return wait;
     var g = myGain(); if (!g) return '';
     if (id === 'gain') return '<span class="st' + (g.total ? '' : ' off') + '">今月 ' + g.total + '件</span>';
     if (id === 'power') return '<span class="st">' + fmtN(g.power) + 'pt・' + g.rank + (g.power ? '・' + g.pos + '位' : '') + '</span>';
-    return '<span class="st">全員 ' + g.all + '件</span>';
+    return '';
   }
   if (id === 'shift') {
     if (HOME.loading) return wait;
@@ -883,7 +883,6 @@ function rowState(id){
   }
   if (id === 'commute') return monthEnd ? '<span class="r alert">月末 ' + (left ? 'あと<span class="n">' + left + '</span>日' : 'きょうまで') + '</span>' : '';
   if (id === 'keihi') return monthEnd ? '<span class="r alert">月末に確認</span>' : '';
-  if (id === 'team') { if (HOME.loading) return '<span class="r">…</span>'; var g = myGain(); return g ? '<span class="r">全員 <span class="n">' + g.all + '</span>件</span>' : ''; }
   return '';
 }
 function rowsHtml(me){

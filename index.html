@@ -20,6 +20,8 @@
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <!-- 字（丸ゴシック）は待たずに画面を出す。届いたら字だけ入れ替わる -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@700;900&display=swap"></noscript>
+<!-- 数字だけの書体（今月の数字のスコアボード）。数字と記号だけ取り寄せるので小さい -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&text=0123456789%2C.%2B-%2F&display=swap" media="print" onload="this.media='all'">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -39,6 +41,9 @@
   --lift:0 1px 1px rgba(14,26,44,.035), 0 5px 16px rgba(14,26,44,.05);
   --r:18px;
   --inset:69px; /* アイコン幅ぶん、区切り線を内側から始める */
+  --navy:#1F3A5F;   /* ロゴの紺：主ボタン・今月の数字 */
+  --docomo:#CC0033; --au:#EB5505; --softbank:#5F6670;   /* キャリア色（見分けにだけ使う） */
+  --num:"Barlow Condensed","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){
   :root{
@@ -52,6 +57,7 @@
     --green:#5FC48C; --green-tint:#152621;
     --slate:#98A3B2; --slate-tint:#1C222B;
     --lift:none;
+    --navy:#24446E;
   }
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -129,6 +135,49 @@ button{font-family:inherit;border:none;background:none;color:inherit;cursor:poin
 }
 /* 見出しは丸みのある書体（読めないときは端末の書体） */
 .brand b,#v-home .head h2,.tiles .tx b{font-family:"Zen Maru Gothic","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif}
+
+/* ═════ ホーム：今日の現場（いちばん上） ═════
+   シフトから、今日の店・キャリア・取引先。上の帯はその日のキャリアの色 */
+.tcard{background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);border:1px solid var(--hair2);overflow:hidden;margin:0 0 12px}
+.tcard .cbar{height:6px;background:var(--navy)}
+.tcard .cbar.docomo{background:var(--docomo)}.tcard .cbar.au{background:var(--au)}.tcard .cbar.softbank{background:var(--softbank)}
+.tcard .in{padding:14px 16px 16px}
+.tcard .d{font-size:12.5px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
+.tcard .site{font-size:25px;font-weight:900;line-height:1.3;margin-top:3px;letter-spacing:.02em;word-break:keep-all;overflow-wrap:anywhere}
+.tcard .site.off{font-size:19px;color:var(--ink2)}
+.tcard .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 9px;margin-top:7px;font-size:13.5px;font-weight:700;color:var(--ink2)}
+.tcard .meta:empty{display:none}
+.ctag{display:inline-flex;align-items:center;height:23px;padding:0 8px;border-radius:6px;color:#fff;font-size:12px;font-weight:800;letter-spacing:.02em;background:var(--navy)}
+.ctag.docomo{background:var(--docomo)}.ctag.au{background:var(--au)}.ctag.softbank{background:var(--softbank)}
+.tgo{display:flex;gap:8px;margin-top:14px}
+.tgo:empty{display:none}
+.tbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-height:50px;padding:0 10px;border-radius:14px;font-size:15.5px;font-weight:900;letter-spacing:.03em;background:var(--navy);color:#fff}
+.tbtn.sub{flex:none;padding:0 14px;background:var(--sunk);color:var(--ink);font-size:13.5px;font-weight:800}
+.tbtn.done{background:var(--green-tint);color:var(--green)}
+.tbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tbtn:active{transform:scale(.985)}
+/* 今月の数字：スコアボード。押すと戦闘力のページ */
+.score{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--navy);color:#fff;border-radius:var(--r);margin:0 0 12px}
+.score > div{padding:12px 12px 14px;min-width:0}
+.score > div + div{border-left:1px solid rgba(255,255,255,.14)}
+.score .k{font-size:11.5px;font-weight:700;color:rgba(255,255,255,.72);white-space:nowrap}
+.score .v{margin-top:5px;font-family:var(--num);font-weight:700;font-size:40px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.score .v small{font-family:"Hiragino Kaku Gothic ProN",system-ui,sans-serif;font-size:12.5px;font-weight:800;margin-left:2px;color:rgba(255,255,255,.8)}
+.score .s{margin-top:5px;font-size:11.5px;font-weight:800;color:#A9D7BC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score .v.long{font-size:32px}
+.score .v{overflow:hidden;text-overflow:clip}
+.score.wait .v{opacity:.35}
+/* 月に1回のもの・見るもの：カードにせず、行で並べる */
+.hrows{background:var(--surface);border-radius:var(--r);box-shadow:var(--lift);border:1px solid var(--hair2)}
+.hrow{display:flex;align-items:center;gap:12px;padding:0 14px;min-height:56px}
+.hrow + .hrow{border-top:1px solid var(--hair2)}
+.hrow svg{width:20px;height:20px;stroke:var(--ink2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hrow .l{flex:1;min-width:0;font-size:15px;font-weight:800}
+.hrow .r{font-size:13.5px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.hrow .r .n{font-family:var(--num);font-weight:700;font-size:19px;margin:0 1px;font-variant-numeric:tabular-nums}
+.hrow .r.alert{color:var(--red)}
+.hrow .chev{color:var(--faint);font-size:18px;line-height:1}
+.hrow:active{background:var(--sunk)}
 
 /* ホームのツール：使う回数でまとめる。「毎日」は大きいタイル、「月に1回」「見る」は小さいタイル（1画面に収める） */
 #homeTools{background:none;box-shadow:none;overflow:visible;margin-bottom:6px}
@@ -377,14 +426,17 @@ h3.sec{font-size:11.5px;font-weight:800;color:var(--mute);padding:0 7px 8px;lett
     <div class="off" id="offline"><span></span>オフラインです。お知らせは最新でない場合があります</div>
     <div class="hgrid">
       <div class="hmain">
-        <div class="head">
-          <div class="d" id="today"></div>
-          <h2 id="greet">おつかれさまです</h2>
-          <span class="sub" id="greetSub"></span>
-          <a class="talk" id="talk" href="chat.html" hidden>ぼのぼのと話す<span aria-hidden="true">›</span></a>
-        </div>
+        <!-- 今日の現場（シフトから）。いちばん上に、今日の店・キャリア・取引先と、毎日使うボタン -->
+        <section class="tcard" id="tcard" aria-label="今日">
+          <div class="cbar" id="tBar"></div>
+          <div class="in">
+            <div class="d" id="today"></div>
+            <div class="site" id="tSite"></div>
+            <div class="meta" id="tMeta"></div>
+            <div class="tgo" id="tGo"></div>
+          </div>
+        </section>
         <a class="wrapped" id="wrapped" href="wrapped.html" hidden><span class="w-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M3 7h18v4H3zM12 7v14M12 7c-1.5-3-5-3.5-5-1.2C7 7 9.5 7 12 7zm0 0c1.5-3 5-3.5 5-1.2C17 7 14.5 7 12 7z"/></svg></span><span class="w-tx"><b id="wrapped-title">あなたの1年</b><small>ぼのぼのと ことしを ふりかえろう</small></span><span class="w-go" aria-hidden="true">›</span></a>
-        <div class="todo" id="todo" hidden></div>
         <div class="notice" id="homeNotice" hidden></div>
         <div id="homeTools"></div>
         <button class="install" id="install" type="button">
@@ -534,7 +586,7 @@ function initial(s){ return Array.from(String(s))[0] || '?'; }
 var W = ['日','月','火','水','木','金','土'];
 (function(){
   var n = new Date();
-  $('#today').textContent = n.getFullYear() + '年' + (n.getMonth() + 1) + '月' + n.getDate() + '日（' + W[n.getDay()] + '）';
+  $('#today').textContent = '今日　' + (n.getMonth() + 1) + '月' + n.getDate() + '日（' + W[n.getDay()] + '）';
 })();
 
 /* ═══ 端末に覚えておくこと（名前） ═══ */
@@ -640,7 +692,7 @@ function loadHome(){
 }
 /* ぼのぼの（sieg-buddy.js）がここで読んだものを使う */
 window.siegHomeData = function(){ return homePromise; };
-function paintHome(){ paintTools(); paintTodo(); paintWrapped(); }
+function paintHome(){ paintToday(); paintTools(); paintWrapped(); }
 /* 12月・1月は「あなたの○年」（1月は前の年）。名前を選んでいる人だけ */
 function paintWrapped(){
   var n = new Date(), m = n.getMonth() + 1, el = $('#wrapped');
@@ -667,12 +719,12 @@ function myShift(){
       var day = isCur ? Math.max(x.startDay, d + 1) : x.startDay;
       nxt = { label: lbl(x.year, x.month, day), what: [x.torihiki, x.place].filter(Boolean).join('・') };
     });
-    return { known: sheetIsNow, today: tday ? { what: [tday.torihiki, tday.place].filter(Boolean).join('・') } : null, next: nxt };
+    return { known: sheetIsNow, today: tday ? { what: [tday.torihiki, tday.place].filter(Boolean).join('・'), place: tday.place || '', client: tday.torihiki || '', carrier: tday.carrier || '', hotel: tday.hotel || '' } : null, next: nxt };
   }
   if (HOME.staffShift && HOME.staffShift.ok) {   // 社員：今月と来月
     var days = HOME.staffShift.days || {}, out = { known:true, today:null, next:null };
     var what = function(e){ return [e.place, e.client].filter(Boolean).join('・'); };
-    if (days[d]) out.today = { what: what(days[d]) };
+    if (days[d]) out.today = { what: what(days[d]), place: days[d].place || '', client: days[d].client || '', carrier: days[d].carrier || '', hotel: days[d].hotel || '' };
     Object.keys(days).map(Number).sort(function(a, b){ return a - b; }).forEach(function(k){ if (!out.next && k > d) out.next = { label: lbl(y, m, k), what: what(days[k]) }; });
     if (!out.next && HOME.staffNext && HOME.staffNext.ok) {
       var nd = HOME.staffNext.days || {}, ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
@@ -732,17 +784,7 @@ function usable(t, me){ return !me || !t.for || t.for.indexOf(me) >= 0; }
 function paintTools(){
   var me = getStaff();
   var mine = TOOLS.filter(function(t){ return usable(t, me); });
-  var home = mine.filter(function(t){ return t.home; }), used = {};
-  $('#homeTools').innerHTML = HOME_GROUPS.map(function(g){
-    var ts = g.ids.map(findTool).filter(function(t){ return t && home.indexOf(t) >= 0; });
-    ts.forEach(function(t){ used[t.id] = true; });
-    if (!ts.length) return '';
-    return '<h3 class="sec">' + esc(g.name) + '</h3><div class="tiles ' + g.size + (ts.length === 1 ? ' one' : '')
-      + '" style="--n:' + (g.size === 'big' ? Math.min(ts.length, 2) : ts.length) + '">' + ts.map(function(t){ return toolRow(t, true); }).join('') + '</div>';
-  }).join('') + (function(){   // どのまとまりにも入っていないツール（増えたとき用）
-    var rest = home.filter(function(t){ return !used[t.id]; });
-    return rest.length ? '<h3 class="sec">そのほか</h3><div class="tiles small" style="--n:' + Math.min(rest.length, 3) + '">' + rest.map(function(t){ return toolRow(t, true); }).join('') + '</div>' : '';
-  })();
+  $('#homeTools').innerHTML = me ? scoreHtml(me) + rowsHtml(me) : '';
   /* ツール一覧も、ホームと同じまとまり（毎日／月に1回／見る）で並べる */
   var listed = {};
   $('#toolList').innerHTML = HOME_GROUPS.map(function(g, i){
@@ -755,50 +797,107 @@ function paintTools(){
   })();
   var firstSec = $('#toolList .sec'); if (firstSec) firstSec.style.marginTop = '0';
 
-  Array.prototype.forEach.call(document.querySelectorAll('[data-tool]'), function(a){
+  bindTools($('#homeTools')); bindTools($('#toolList'));
+}
+/* ═══ 今日の現場（いちばん上） ═══
+   シフトから、今日の店・キャリア・取引先。下に、毎日使うボタン（日報・獲得報告）。
+   日報を出した日は「提出済み」。ボタンが1つだけの人は、となりに「ぼのぼのと話す」 */
+function carrierKey(s){
+  var t = String(s || '').toLowerCase().replace(/\s/g, '');
+  if (/docomo|ドコモ/.test(t)) return 'docomo';
+  if (/softbank|ソフトバンク|^sb$|ymobile|ワイモバイル/.test(t)) return 'softbank';
+  if (/^au|エーユー|uq/.test(t)) return 'au';
+  return '';
+}
+var CARRIER_LABEL = { docomo:'docomo', au:'au', softbank:'SoftBank' };
+function dailyTools(me){ return ['nippou', 'gain'].map(findTool).filter(function(t){ return t && usable(t, me) && t.home; }); }
+function paintToday(){
+  var me = getStaff(), site = $('#tSite'), meta = $('#tMeta'), go = $('#tGo'), bar = $('#tBar');
+  bar.className = 'cbar'; site.className = 'site'; meta.innerHTML = '';
+  if (!me) {
+    site.textContent = '名前を選んでください';
+    site.className = 'site off';
+    go.innerHTML = '<button class="tbtn" type="button" id="tPick">名前を選ぶ</button>';
+    $('#tPick').addEventListener('click', function(){ pickPerson(); });
+    return;
+  }
+  var sh = myShift(), t = sh && sh.today;
+  if (!sh && HOME.loading) {
+    site.innerHTML = '<span class="sk" style="display:inline-block;width:9em;height:1em;border-radius:8px;background:var(--sunk)"></span>';
+  } else if (t && (t.client || !t.place)) {   // シフトの日（取引先のない「希望休」などは休み）
+    var ck = carrierKey(t.carrier);
+    if (ck) bar.className = 'cbar ' + ck;
+    site.textContent = t.place || t.client || 'シフトの日';
+    meta.innerHTML = (t.carrier ? '<span class="ctag' + (ck ? ' ' + ck : '') + '">' + esc(CARRIER_LABEL[ck] || t.carrier) + '</span>' : '')
+      + (t.client && t.client !== site.textContent ? '<span>' + esc(t.client) + '</span>' : '')
+      + (t.hotel ? '<span>ホテル泊</span>' : '');
+  } else {
+    site.className = 'site off';
+    site.textContent = t ? t.place : sh ? 'きょうはシフトなし' : 'シフトを読み込めませんでした';
+    if (sh && sh.next) meta.innerHTML = '<span>次 ' + esc(sh.next.label) + (sh.next.what ? '　' + esc(sh.next.what) : '') + '</span>';
+  }
+  // 毎日使うボタン（日報は出した日なら「提出済み」）
+  var ds = dailyTools(me), sent = nippouSent(), html = '';
+  var ICO = { nippou:'<path d="M4 4h13l3 3v13H4z"/><path d="M8 10h8M8 14h6"/>', gain:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>' };
+  ds.forEach(function(x){
+    var done = x.id === 'nippou' && sent;
+    var label = x.id === 'nippou' ? (done ? '日報 提出済み' : '日報を出す') : '獲得を報告';
+    html += '<a class="tbtn' + (done ? ' done' : '') + '" href="' + esc(x.url) + '" data-tool="' + x.id + '"><svg viewBox="0 0 24 24">' + (done ? '<path d="M5 12.5l4.5 4.5L19 7.5"/>' : ICO[x.id]) + '</svg>' + label + '</a>';
+  });
+  if (ds.length < 2) html += '<a class="tbtn sub" href="chat.html">ぼのぼのと話す</a>';
+  go.innerHTML = html;
+  bindTools(go);
+}
+/* 名前が要るツールは、選んだ人で開く */
+function bindTools(root){
+  Array.prototype.forEach.call(root.querySelectorAll('[data-tool]'), function(a){
     var t = findTool(a.getAttribute('data-tool'));
     if (!t || !t.withName) return; // 名前の要らないツールはそのまま開く
     a.addEventListener('click', function(e){ e.preventDefault(); openTool(t); });
   });
 }
-/* ═══ きょうやること ═══
-   ・パートナー様：きょうシフトの日なら日報（出したらチェック）
-   ・社員：20日を過ぎて来月のシフトが空なら「来月のシフト」
-   ・稼働費・経費を使う人：月末の3日間は「今月分を入れ終える」
-   やることが無い日は出さない。全部済んだら「終わりです」 */
-function paintTodo(){
-  var me = getStaff(), box = $('#todo'), items = [];
-  if (!me || HOME.loading) { box.hidden = true; return; }
-  var now = new Date(), d = now.getDate(), last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  var sh = myShift();
-  if (isPartner(me) && usable(findTool('nippou'), me) && sh && sh.today) {
-    var sent = nippouSent();
-    items.push({ tool:'nippou', done:sent, text: sent ? 'きょうの日報 提出済み' : 'きょうの日報を出す', sub: sent ? '' : 'きょうは ' + (sh.today.what || 'シフトの日') });
-  }
-  if (!isPartner(me) && d >= 20 && HOME.staffNext && HOME.staffNext.ok && !Object.keys(HOME.staffNext.days || {}).length) {
-    items.push({ tool:'shift', done:false, text:'来月のシフトを入れる', sub:'まだ1日も入っていません' });
-  }
-  if (d > last - 3) {
-    if (usable(findTool('commute'), me)) items.push({ tool:'commute', info:true, text:'今月の稼働費を入れ終える', sub:'月末です（' + (last - d ? 'あと' + (last - d) + '日' : 'きょうまで') + '）' });
-    if (usable(findTool('keihi'), me)) items.push({ tool:'keihi', info:true, text:'今月の経費精算を確認する', sub:'領収書の出し忘れがないか' });
-  }
-  if (!items.length) { box.hidden = true; box.innerHTML = ''; return; }
-  box.hidden = false;
-  if (items.every(function(x){ return x.done; })) {
-    box.className = 'todo alldone';
-    box.innerHTML = '<span class="ck"></span>きょうやることは終わりです。おつかれさまでした';
-    return;
-  }
-  box.className = 'todo';
-  var left = items.filter(function(x){ return !x.done && !x.info; }).length;
-  box.innerHTML = '<h3>きょうやること' + (left ? '<em>あと' + left + 'つ</em>' : '') + '</h3>' + items.map(function(x){
-    return '<a href="#" data-todo="' + esc(x.tool) + '"' + (x.done ? ' class="done"' : '') + '><span class="ck' + (x.info ? ' info' : '') + '"></span>'
-      + '<span>' + esc(x.text) + (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</span><span class="go">›</span></a>';
-  }).join('');
-  Array.prototype.forEach.call(box.querySelectorAll('[data-todo]'), function(a){
-    a.addEventListener('click', function(e){ e.preventDefault(); var t = findTool(a.getAttribute('data-todo')); if (t) openTool(t); });
-  });
+/* 今月の数字（スコアボード） */
+function scoreHtml(me){
+  var g = myGain(), pw = findTool('power');
+  if (!g && !HOME.loading) return '';
+  var people = R.forTool('power').length;
+  var cell = function(k, v, unit, sub){ return '<div><div class="k">' + k + '</div><div class="v' + (String(v).length >= 5 ? ' long' : '') + '">' + v + (unit ? '<small>' + unit + '</small>' : '') + '</div><div class="s">' + (sub || '&nbsp;') + '</div></div>'; };
+  var cells = g
+    ? cell('今月の獲得', g.total, '件', '全員 ' + g.all + '件')
+      + (g.inPower ? cell('戦闘力', fmtN(g.power), '', 'ランク ' + esc(g.rank)) + cell('順位', g.power ? g.pos : '-', g.power ? '位' : '', people + '人中') : '')
+    : cell('今月の獲得', '-', '', '') + cell('戦闘力', '-', '', '') + cell('順位', '-', '', '');
+  var href = pw && usable(pw, me) ? pw.url : '#';
+  return '<a class="score' + (g ? '' : ' wait') + '" href="' + esc(href) + '"' + (pw && usable(pw, me) ? ' data-tool="power"' : '') + ' aria-label="今月の数字">' + cells + '</a>';
 }
+/* 行の右に出す、ひとこと */
+function rowState(id){
+  var now = new Date(), d = now.getDate(), last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), me = getStaff();
+  var monthEnd = d > last - 3, left = last - d;
+  if (!me) return '';
+  if (id === 'shift') {
+    if (HOME.loading) return '<span class="r">…</span>';
+    if (!isPartner(me) && d >= 20 && HOME.staffNext && HOME.staffNext.ok && !Object.keys(HOME.staffNext.days || {}).length) return '<span class="r alert">来月がまだです</span>';
+    var s2 = myShift(); if (!s2) return '';
+    if (s2.next) return '<span class="r">次 ' + esc(s2.next.label) + '</span>';
+    return '<span class="r">予定なし</span>';
+  }
+  if (id === 'commute') return monthEnd ? '<span class="r alert">月末 ' + (left ? 'あと<span class="n">' + left + '</span>日' : 'きょうまで') + '</span>' : '';
+  if (id === 'keihi') return monthEnd ? '<span class="r alert">月末に確認</span>' : '';
+  if (id === 'team') { if (HOME.loading) return '<span class="r">…</span>'; var g = myGain(); return g ? '<span class="r">全員 <span class="n">' + g.all + '</span>件</span>' : ''; }
+  return '';
+}
+function rowsHtml(me){
+  var used = {}, ds = dailyTools(me);
+  ds.forEach(function(t){ used[t.id] = true; });
+  used.power = true;   // 戦闘力は上の数字から
+  var rows = TOOLS.filter(function(t){ return t.home && usable(t, me) && !used[t.id]; });
+  var html = rows.map(function(t){
+    return '<a class="hrow" href="' + esc(t.url || '#') + '" data-tool="' + esc(t.id) + '">' + svg(t.ic) + '<span class="l">' + esc(t.name) + '</span>' + rowState(t.id) + '<span class="chev" aria-hidden="true">›</span></a>';
+  }).join('');
+  if (ds.length >= 2) html += '<a class="hrow" href="chat.html"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="l">ぼのぼのと話す</span><span class="chev" aria-hidden="true">›</span></a>';
+  return html ? '<div class="hrows">' + html + '</div>' : '';
+}
+
 function findTool(id){
   for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].id === id) return TOOLS[i];
   return null;
@@ -1096,19 +1195,14 @@ function paintWho(){
   var nm = getStaff(), b = $('#whoBtn');
   var tod = timeOfDay();
   document.documentElement.setAttribute('data-tod', tod);
-  $('#greetSub').textContent = { morning:'今日もよろしくお願いします', day:'午後もいい調子でいきましょう', night:'今日もおつかれさまでした' }[tod];
-  $('#talk').hidden = !nm;   // 名前を選んでいれば、ぼのぼのと話せる（あいさつの下の一言の代わりに出す＝高さを増やさない）
-  $('#greetSub').hidden = !!nm;
   if (nm) {
     b.classList.remove('unset');
     $('#whoIni').textContent = initial(nm);
     $('#whoName').textContent = nm;
-    $('#greet').textContent = nm + 'さん、' + word();
   } else {
     b.classList.add('unset');
     $('#whoIni').textContent = '?';
     $('#whoName').textContent = '名前を選ぶ';
-    $('#greet').textContent = word();
   }
 }
 $('#whoBtn').addEventListener('click', function(){ pickPerson(); });

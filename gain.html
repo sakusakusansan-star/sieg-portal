@@ -13,6 +13,9 @@
 <link rel="preconnect" href="https://script.google.com" crossorigin>
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="stylesheet" href="sieg-theme.css">
+<!-- 数字だけの書体（件数）。数字と記号だけ取り寄せるので小さい -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&text=0123456789%2C.%2B-%2F&display=swap" media="print" onload="this.media='all'">
 <style>
   /* 区分ごとの色（sieg-products.js の cat と対応） */
   :root {
@@ -32,6 +35,8 @@
     display: flex; flex-direction: column; gap: 14px;
   }
   .num { font-variant-numeric: tabular-nums; }
+  :root { --navy: #1F3A5F; --docomo: #CC0033; --au: #EB5505; --softbank: #5F6670; --num: "Barlow Condensed", var(--sg-font); }
+  @media (prefers-color-scheme: dark) { :root { --navy: #24446E; } }
 
   .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-top: 8px; }
   .eyebrow { font-size: 11px; letter-spacing: .14em; color: var(--sg-mute); font-weight: 700; }
@@ -65,58 +70,38 @@
   .chip[aria-pressed="true"] { background: var(--sg-primary); color: var(--sg-on-primary); border-color: var(--sg-primary); }
 
   /* キャリア */
-  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--sg-sunk); border-radius: 14px; border: 1px solid var(--sg-hair); }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; border-radius: 14px; }
   .seg button {
-    min-height: 46px; border: 0; border-radius: 11px; background: none; font-size: 16px; font-weight: 900; color: var(--sg-mute);
+    min-height: 46px; border: 1px solid var(--sg-hair); border-radius: 12px; background: var(--sg-surface); font-size: 15px; font-weight: 800; color: var(--sg-mute);
   }
-  .seg button[aria-pressed="true"] { background: var(--sg-surface); color: var(--sg-ink); box-shadow: 0 1px 4px rgba(14,26,44,.12); }
-  .seg.invalid { border-color: var(--sg-red); animation: shake .35s ease; }
+  /* 選んだキャリアは、そのキャリアの色で塗る（色はキャリアの見分けにだけ使う） */
+  .seg button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .seg button[aria-pressed="true"][data-v="docomo"] { background: var(--docomo); border-color: var(--docomo); }
+  .seg button[aria-pressed="true"][data-v="au"] { background: var(--au); border-color: var(--au); }
+  .seg button[aria-pressed="true"][data-v="Softbank"] { background: var(--softbank); border-color: var(--softbank); }
+  .seg.invalid button { border-color: var(--sg-red); }
+  .seg.invalid { animation: shake .35s ease; }
   @keyframes shake { 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
   .pick-carrier { text-align: center; color: var(--sg-mute); font-size: 14px; padding: 26px 0; }
 
-  /* 商品 */
-  .cat-head { display: flex; align-items: center; gap: 8px; margin: 6px 2px -4px; font-size: 13px; font-weight: 900; color: var(--c); }
-  .cat-head::before { content: ''; width: 8px; height: 8px; border-radius: 3px; background: var(--c); }
+  /* 商品：カードにせず行で並べる。件数は数字の書体で大きく、0件は薄く */
+  .cat-head { display: flex; align-items: center; gap: 8px; margin: 10px 4px 6px; font-size: 13px; font-weight: 800; color: var(--sg-ink2); }
   .cat-head .sum { margin-left: auto; color: var(--sg-mute); font-weight: 700; font-size: 12px; }
-  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .tile { position: relative; }
-  .tile-hit {
-    width: 100%; min-height: 92px; padding: 11px 12px; text-align: left; position: relative;
-    display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
-    background: var(--sg-surface); border: 1px solid var(--sg-hair); border-radius: 16px;
-    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
-    transition: transform .08s ease, background .15s ease, border-color .15s ease;
-  }
-  .tile-hit:active { transform: scale(.97); }
-  .t-label { font-size: 14px; font-weight: 800; line-height: 1.25; padding-right: 30px; word-break: break-all; }
-  .t-pt { font-size: 11px; font-weight: 700; color: var(--sg-mute); }
-  .t-num { font-size: 32px; font-weight: 800; line-height: 1; }
-  .tile-plus {
-    position: absolute; right: 9px; bottom: 9px; width: 42px; height: 42px; border-radius: 12px;
-    display: grid; place-items: center; font-size: 24px; font-weight: 700;
-    background: var(--c-t); color: var(--c);
-  }
-  .tile.zero .t-num { color: var(--sg-faint); }
-  .tile:not(.zero) .tile-hit { background: var(--c-t); border-color: transparent; }
-  .tile:not(.zero) .t-num, .tile:not(.zero) .t-label { color: var(--c); }
-  .tile:not(.zero) .tile-plus { background: var(--c); color: var(--sg-surface); }
-  .tile-minus {
-    position: absolute; top: 7px; right: 7px; width: 32px; height: 32px; border-radius: 10px;
-    background: var(--sg-surface); border: 1px solid var(--sg-hair); color: var(--sg-mute);
-    font-size: 18px; font-weight: 700; display: grid; place-items: center;
-  }
-  .tile.zero .tile-minus { visibility: hidden; }
-  /* 1つしかない区分・奇数の最後は横長1行（半分が空いて長くならないように） */
-  .tiles.one { grid-template-columns: 1fr; }
-  .tiles.one .tile-hit, .tile.wide .tile-hit { min-height: 62px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; padding-right: 108px; }
-  .tile.wide { grid-column: 1 / -1; }
-  .tiles.one .t-label, .tile.wide .t-label { flex: 1; padding-right: 0; font-size: 15px; }
-  .tiles.one .tile-plus, .tile.wide .tile-plus { top: 50%; bottom: auto; transform: translateY(-50%); }
-  .tiles.one .tile-minus, .tile.wide .tile-minus { top: 50%; right: 58px; transform: translateY(-50%); }
-  .tiles.one .t-num, .tile.wide .t-num { font-size: 28px; }
-  /* よく使う（その人がよく報告する商品） */
-  .fav .cat-head { color: var(--sg-amber); }
-  .fav .cat-head::before { content: '★'; width: auto; height: auto; background: none; font-size: 12px; }
+  .plist { background: var(--sg-surface); border: 1px solid var(--sg-hair); border-radius: 16px; }
+  .prow { position: relative; display: flex; align-items: center; min-height: 62px; }
+  .prow + .prow { border-top: 1px solid var(--sg-hair2); }
+  .tile-hit { flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: 10px; padding: 0 0 0 16px; text-align: left; border: 0; background: none;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; border-radius: 16px; }
+  .t-name { flex: 1; min-width: 0; }
+  .t-label { display: block; font-size: 16px; font-weight: 800; line-height: 1.3; word-break: break-all; }
+  .t-pt { font-size: 12px; font-weight: 700; color: var(--sg-mute); }
+  .t-num { width: 44px; flex: none; text-align: center; font-family: var(--num); font-size: 34px; font-weight: 700; line-height: 1; color: var(--sg-ink); }
+  .prow.zero .t-num { color: var(--sg-faint); }
+  .tile-plus { flex: none; width: 44px; height: 44px; margin: 0 10px 0 4px; border-radius: 12px; display: grid; place-items: center; background: var(--navy); color: #fff; }
+  .tile-minus { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--sg-surface); border: 1px solid var(--sg-hair); color: var(--sg-ink2); }
+  .tile-plus svg, .tile-minus svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; }
+  .prow.zero .tile-minus { visibility: hidden; }
+  .tile-hit:active { background: var(--sg-sunk); }
   .fav .cat-head small { margin-left: 6px; font-weight: 700; color: var(--sg-faint); font-size: 11px; }
   .t-num.bump { animation: bump .22s ease; }
   @keyframes bump { 40% { transform: scale(1.25); } }
@@ -166,7 +151,8 @@
   }
   .bar-inner { max-width: 528px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
   .bar .tot { flex: none; line-height: 1.2; }
-  .bar .tot b { font-size: 22px; font-weight: 900; }
+  .bar .tot b { font-family: var(--num); font-size: 36px; font-weight: 700; line-height: 1; }
+  .bar .primary:not(:disabled), #send:not(:disabled) { background: var(--navy); }
   .bar .tot small { display: block; font-size: 12px; color: var(--sg-mute); font-weight: 700; }
   .primary {
     flex: 1; min-height: 52px; border: 0; border-radius: 14px; background: var(--sg-primary); color: var(--sg-on-primary);
@@ -234,7 +220,6 @@
 
   <header class="head sg-head">
     <div>
-      <div class="sg-eyebrow">Sieg 業務ポータル</div>
       <h1 class="sg-title">獲得報告</h1>
       <label class="date-pill" id="date-pill" for="date">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
@@ -442,56 +427,47 @@
     store(FREQ_KEY, all);
   }
 
-  // ─── 商品のタイル ───
+  // ─── 商品の行 ───
   var tiles = {};   // 商品 → [{ wrap, num }]（「よく使う」と区分の両方に同じ商品が出る）
+  function group(title, sumCat, list, cls) {
+    var sec = document.createElement('section');
+    if (cls) sec.className = cls;
+    sec.innerHTML = '<div class="cat-head">' + title + (sumCat ? '<span class="sum num" data-cat="' + esc(sumCat) + '"></span>' : '') + '</div>';
+    var box = document.createElement('div'); box.className = 'plist';
+    list.forEach(function (it) { box.appendChild(tile(it)); });
+    sec.appendChild(box);
+    return sec;
+  }
   function renderProducts() {
     var box = $('products'); box.innerHTML = ''; tiles = {};
     Array.prototype.forEach.call($('carriers').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state.carrier)); });
     if (!state.carrier) { box.innerHTML = '<div class="pick-carrier">キャリアを選んでください</div>'; return; }
     var fav = favorites(state.name, state.carrier);
-    if (fav.length >= 2) {
-      var fs = document.createElement('section'); fs.className = 'fav';
-      fs.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-bottom:8px';
-      fs.innerHTML = '<div class="cat-head">よく使う<small>よく報告する順</small></div>';
-      var fg = document.createElement('div'); fg.className = 'tiles';
-      fav.forEach(function (it, i) {
-        var v = CAT_CSS[it.cat] || 'new', t = tile(it);
-        t.style.cssText = '--c:var(--c-' + v + ');--c-t:var(--c-' + v + '-t)';
-        if (fav.length % 2 && i === fav.length - 1) t.classList.add('wide');
-        fg.appendChild(t);
-      });
-      fs.appendChild(fg); box.appendChild(fs);
-    }
+    if (fav.length >= 2) box.appendChild(group('よく使う<small>よく報告する順</small>', '', fav, 'fav'));
     P.CATS.forEach(function (cat) {
       var list = P.items(state.carrier).filter(function (it) { return it.cat === cat; });
-      if (!list.length) return;
-      var v = CAT_CSS[cat] || 'new';
-      var sec = document.createElement('section');
-      sec.style.cssText = '--c:var(--c-' + v + ');--c-t:var(--c-' + v + '-t);display:flex;flex-direction:column;gap:10px;margin-bottom:8px';
-      sec.innerHTML = '<div class="cat-head">' + esc(cat) + '<span class="sum num" data-cat="' + esc(cat) + '"></span></div>';
-      var grid = document.createElement('div'); grid.className = 'tiles' + (list.length === 1 ? ' one' : '');
-      list.forEach(function (it, i) {
-        var t = tile(it);
-        if (list.length > 1 && list.length % 2 && i === list.length - 1) t.classList.add('wide');   // 奇数の最後は横長
-        grid.appendChild(t);
-      });
-      sec.appendChild(grid); box.appendChild(sec);
+      if (list.length) box.appendChild(group(esc(cat), cat, list));
     });
     renderCounts();
   }
 
+  var PLUS = '<svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg>', MINUS = '<svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg>';
   function tile(it) {
-    var wrap = document.createElement('div'); wrap.className = 'tile';
+    var wrap = document.createElement('div'); wrap.className = 'prow';
     var hit = document.createElement('button'); hit.type = 'button'; hit.className = 'tile-hit';
     hit.setAttribute('aria-label', it.label + 'を1増やす');
-    hit.innerHTML = '<span class="t-label">' + esc(it.label) + '</span><span><span class="t-num num"></span> <span class="t-pt">' + it.pt + 'pt</span></span><span class="tile-plus" aria-hidden="true">＋</span>';
-    var minus = document.createElement('button'); minus.type = 'button'; minus.className = 'tile-minus'; minus.textContent = '−';
+    hit.innerHTML = '<span class="t-name"><span class="t-label">' + esc(it.label) + '</span><span class="t-pt">' + it.pt + 'pt</span></span>';
+    var minus = document.createElement('button'); minus.type = 'button'; minus.className = 'tile-minus'; minus.innerHTML = MINUS;
     minus.setAttribute('aria-label', it.label + 'を1減らす');
+    var num = document.createElement('span'); num.className = 't-num num';
+    var plus = document.createElement('span'); plus.className = 'tile-plus'; plus.setAttribute('aria-hidden', 'true'); plus.innerHTML = PLUS;
     hit.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    // 行のどこを押しても1増える（＋の印も行の中）
     hit.addEventListener('click', function () { change(it.label, 1); });
+    plus.addEventListener('click', function () { change(it.label, 1); });
     minus.addEventListener('click', function () { change(it.label, -1); });
-    wrap.appendChild(hit); wrap.appendChild(minus);
-    (tiles[it.label] = tiles[it.label] || []).push({ wrap: wrap, num: hit.querySelector('.t-num') });
+    wrap.appendChild(hit); wrap.appendChild(minus); wrap.appendChild(num); wrap.appendChild(plus);
+    (tiles[it.label] = tiles[it.label] || []).push({ wrap: wrap, num: num });
     return wrap;
   }
 

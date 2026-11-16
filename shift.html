@@ -649,6 +649,7 @@
       b.type = 'button';
       b.textContent = v;
       b.classList.toggle('on', state[key] === v);
+      if (boxId === 'carriers') { b.setAttribute('data-carrier', SiegNav.carrierKey(v)); b.classList.toggle('sg-carrier-on', state[key] === v); }
       b.addEventListener('click', function() {
         state[key] = (state[key] === v) ? '' : v;
         if (freeInputId) $(freeInputId).value = state[key];

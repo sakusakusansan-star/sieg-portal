@@ -318,6 +318,8 @@
   .btn, .pick button, .input, .cal-cell { border-radius: var(--sg-r-sm); }
   .day-row .d { color: var(--sg-ink); }
   .ov-item b { color: var(--sg-ink); }
+  .cal-note { text-align: center; font-size: 12px; font-weight: 700; color: var(--sg-mute); margin: -2px 0 10px; }
+  .cal-note[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -351,6 +353,8 @@
       <div class="cal-title"><b id="cal-title"></b><span id="cal-sub"></span></div>
       <button class="btn small cal-nav" type="button" id="m-next" aria-label="次の月">›</button>
     </div>
+    <!-- 来月がまだ選べないとき、その理由（来月のシフト表ができると選べる） -->
+    <div class="cal-note" id="cal-note" hidden></div>
     <div class="cal-tools">
       <button class="btn small" type="button" data-sel="all">全部</button>
       <button class="btn small" type="button" data-sel="weekday">平日</button>
@@ -533,13 +537,14 @@
     if (!apiReady()) return buildMonths(defaultMonths());
     // 前回の月の一覧があれば、すぐカレンダーを出す（裏で読み直して、変わっていたときだけ作り直す）
     var cached = SiegNav.cacheGet('shift:months'), shown = '';
-    if (cached && cached.length) { var c = upcoming(cached); shown = JSON.stringify(c); buildMonths(c); }
+    if (cached && cached.length) { var c = upcoming(cached); shown = JSON.stringify(c); monthsFromSheet = true; buildMonths(c); }
     GasClient.get(SHIFT_API, { action: 'months' })
       .then(function(data) {
         if (!data || !data.ok || !data.months || !data.months.length) throw new Error('月が取れません');
         SiegNav.cacheSet('shift:months', data.months);
         var list = upcoming(data.months);
-        if (JSON.stringify(list) !== shown) buildMonths(list);
+        monthsFromSheet = true;
+        if (JSON.stringify(list) !== shown) buildMonths(list); else renderMonthNav();
       })
       .catch(function() { if (!shown) buildMonths(defaultMonths()); });
   }
@@ -561,6 +566,7 @@
   }
 
   var monthList = [];   // 入力できる月（古い順）
+  var monthsFromSheet = false;   // 月の一覧をシフト表から読めたか（読めないときの「今月と来月」ではない）
 
   function buildMonths(months) {
     monthList = months;
@@ -585,6 +591,14 @@
     var i = monthIndex();
     $('m-prev').hidden = !(i > 0);
     $('m-next').hidden = !(i >= 0 && i < monthList.length - 1);
+    // 来月のシフト表がまだ無いときは、矢印が出ない理由を書いておく（シフト表ができると自動で選べる）
+    var last = monthList[monthList.length - 1], note = $('cal-note');
+    var lastDiff = last ? (last.year * 12 + last.month - 1) - (now.getFullYear() * 12 + now.getMonth()) : 1;
+    if (monthsFromSheet && lastDiff <= 0) {
+      var nm = new Date(now.getFullYear(), now.getMonth() + 1, 1).getMonth() + 1;
+      note.textContent = nm + '月は、シフト表ができるとここで選べます';
+      note.hidden = false;
+    } else note.hidden = true;
   }
 
   function stepMonth(delta) {

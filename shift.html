@@ -570,9 +570,13 @@
 
   function buildMonths(months) {
     monthList = months;
-    // 用意されている一番新しい月＝いま集めている月。それを開いておく。
-    var last = months[months.length - 1];
-    setMonth(last.year, last.month);
+    // 開いている月が一覧に残っていれば、そのまま（前回の内容から最新に置き換えたときに、選びかけを消さない）
+    if (state.year && monthIndex() >= 0) { renderMonthNav(); return; }
+    // 今月があれば今月で開く（11月は11月、12月は12月）。無ければ、いちばん近い先の月
+    var t = new Date(), pick = null;
+    months.forEach(function(m) { if (!pick && m.year === t.getFullYear() && m.month === t.getMonth() + 1) pick = m; });
+    pick = pick || months[0];
+    setMonth(pick.year, pick.month);
   }
 
   function monthIndex() {

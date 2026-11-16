@@ -633,7 +633,7 @@
     <details class="mem-hid" id="mem-hid-box" hidden><summary id="mem-hid-sum">外した人</summary><div class="mem-list" id="mem-hid"></div></details>
     <p class="snote" style="margin-top:12px">ここで直すと、ポータルと各ツールの名前の一覧が変わります（各自が次に開いたときから。遅くても10分ほど）。<br>
       外しても、これまでの日報・獲得・稼働費・経費の記録は消えません。名前はあとから変えられないので、変えたいときは外して新しく追加してください。<br>
-      シフト表・稼働費・経費精算の Google 側は、追加したあとに出る「Google 側でやること」のとおりに直してください。</p>
+      シフト表の行・稼働費や経費精算のシートは、その人がはじめて使うときに Google 側で自動で作ります。社員で稼働費を使う人だけ、本人が稼働費の画面で自宅を登録してください。</p>
   </div>
 
   <div class="pd-bg" id="mem-bg" hidden>
@@ -1769,7 +1769,7 @@
       + '<p class="help">' + (isNew ? 'あとから変えられません。名字だけなど、いまの名簿と同じ書き方で。' : '名前はあとから変えられません。') + '</p></div>'
       + '<div><span class="lb">区分</span>' + seg('mem-group', [['staff', '社員'], ['partner', 'パートナー']], f.group) + '</div>'
       + '<div><label for="mem-full">フルネーム（なくてもよい）</label><input type="text" id="mem-full" maxlength="20" autocomplete="off" value="' + esc(f.full) + '" placeholder="例：田中一郎">'
-      + '<p class="help">社員の稼働費のシート名に使います。</p></div>'
+      + '<p class="help">社員の稼働費のシート名に使います（社員で稼働費を使う人は必ず）。</p></div>'
       + '<div><span class="lb">キャリア（獲得報告を開いたときに最初から選んでおく）</span>' + seg('mem-carrier', [['', 'なし'], ['docomo', 'docomo'], ['au', 'au'], ['Softbank', 'SoftBank']], f.carrier) + '</div>'
       + '<div><span class="lb">使うもの</span>'
       + ['commute', 'keihi', 'team'].map(function (t) {
@@ -1807,6 +1807,9 @@
         tools: Array.prototype.filter.call($('mem-form').querySelectorAll('[data-tool]'), function (c) { return c.checked; }).map(function (c) { return c.dataset.tool; })
       };
       if (!person.name) { $('mem-msg').textContent = '名前を入れてください'; $('mem-name').focus(); return; }
+      if ((op === 'add' || op === 'update') && person.group === 'staff' && person.tools.indexOf('commute') >= 0 && !person.full) {
+        $('mem-msg').textContent = '社員で稼働費を使う人は、フルネームを入れてください（稼働費のシート名になります）'; $('mem-full').focus(); return;
+      }
       if (op === 'add' && mem.list.some(function (x) { return x.name === person.name; })) {
         $('mem-msg').textContent = '「' + person.name + '」はもう名簿にいます' + (mem.list.some(function (x) { return x.name === person.name && x.hidden; }) ? '（外した人の中）。外した人から「戻す」を押してください' : ''); return;
       }
@@ -1833,24 +1836,21 @@
   }
   // 保存できたあと：Google 側でやること（追加した人・新しく付けたツールの分だけ）
   function memDone(op, x, newTools, groupChanged) {
-    var items = [], nm = '<code>' + esc(x.name) + '</code>';
-    if (op === 'add' || op === 'show' || groupChanged) {
-      if (x.group === 'staff') items.push('<b>シフト入力（社員）</b>：シフトの表に ' + nm + ' の行を足し、社員シフトの GAS（shift-api.gs）の <code>ALLOW_STAFF</code> に ' + nm + ' を足して入れ替える');
-      else items.push('<b>シフト入力（パートナー）</b>：パートナーのシフト表に ' + nm + ' の4行（A列に名前）を足す');
+    // シフト表の行・経費精算のシート・社員の稼働費のシートは、Google 側（各 GAS）が名簿を読んで自動で作る。
+    // 人の手でやるのは、社員の稼働費の自宅（距離を出すもと）を、本人が稼働費の画面で登録することだけ
+    var items = [];
+    if (x.group === 'staff' && newTools.indexOf('commute') >= 0 && (op === 'add' || op === 'update' || op === 'show')) {
+      items.push('<b>稼働費</b>：' + esc(x.name) + ' さん本人が、稼働費の画面の「場所」で <code>' + esc(x.name) + '自宅</code> を住所で登録する（自宅からの距離を出すため）');
     }
-    if (newTools.indexOf('commute') >= 0) {
-      if (x.group === 'staff') items.push('<b>稼働費</b>：稼働費の GAS の <code>STAFF_HOME</code> に ' + nm + ' と自宅を足して入れ替え、稼働費のブックに <code>' + esc(x.full || x.name) + '</code> のシートを作る');
-      else items.push('<b>稼働費</b>：パートナー交通費の GAS の <code>PARTNERS</code> に ' + nm + ' を足して入れ替える（自宅や現場は本人が画面で登録）');
-    }
-    if (newTools.indexOf('keihi') >= 0) items.push('<b>経費精算</b>：経費精算の GAS の <code>STAFF_SHEETS</code> に ' + nm + ' を足して入れ替え、経費精算のブックに ' + nm + ' のシートを作る');
     var title = { add: '追加しました', update: '保存しました', hide: '外しました', show: '戻しました' }[op];
     var h = '<div class="pd-h"><span class="av' + (x.group === 'partner' ? ' partner' : '') + '" aria-hidden="true">' + esc(x.name.slice(0, 1)) + '</span>'
       + '<div><b id="mem-title">' + esc(x.name) + ' を' + title + '</b><small>名簿</small></div>'
       + '<button type="button" class="x" id="mem-x" aria-label="閉じる">×</button></div><div class="mf">'
       + '<p class="snote">ポータルと各ツールの名前の一覧は、各自が次に開いたときから変わります（遅くても10分ほど）。'
-      + (op === 'hide' ? 'Google 側（シフト表・稼働費・経費精算）はそのままで大丈夫です。' : '') + '</p>'
-      + (items.length ? '<div class="todo"><h4>Google 側でやること（' + items.length + 'つ）</h4><ol>' + items.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol>'
-        + '<p class="snote" style="padding-bottom:0">ここが済むまでは、その画面で名前を選んでも記録できません。わからなければ、この画面を写真に撮って Claude に送ってください。</p></div>' : '')
+      + (op === 'hide' ? 'Google 側（シフト表・稼働費・経費精算）はそのままで大丈夫です。これまでの記録も残ります。'
+        : 'シフト表の行・稼働費や経費精算のシートは、その人がはじめて使うときに Google 側で自動で作ります（遅くても数分で使えます）。') + '</p>'
+      + (items.length ? '<div class="todo"><h4>あと1つだけ</h4><ol>' + items.map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol>'
+        + '<p class="snote" style="padding-bottom:0">登録するまでは、稼働費の距離が出ません（ほかの入力はできます）。</p></div>' : '')
       + '<div class="acts"><button type="button" class="go" id="mem-ok">閉じる</button></div></div>';
     $('mem-pd').innerHTML = h; $('mem-pd').scrollTop = 0;
     $('mem-x').onclick = memClose; $('mem-ok').onclick = memClose;

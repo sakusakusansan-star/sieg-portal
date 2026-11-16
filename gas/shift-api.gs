@@ -26,14 +26,17 @@ var TOKEN = '';
 // 見つからなければ「送信ログ」を新しく作る。
 var LOG_SHEET_NAME = '';
 
-// このスタッフ以外は書き込ませない。空配列 [] にすると全員を許可。
+// 書き込めるのは、名簿（日報のスプレッドシートの「名簿」シート）の社員（外した人をのぞく）。
+// 名簿シートがまだ無い・読めないときだけ、この ALLOW_STAFF を使う（空配列 [] なら全員を許可）。
+// 名簿に足した社員でシフト表に行が無ければ、送ったときに行を作る（「▼ 取引先担当者」の行の上）。
 var ALLOW_STAFF = ['福岡', '清田', '福山', '古川'];
+var ROSTER_BOOK_ID = '1ffkmHDt_sz1ZQ3ZB_fXIaJeFhuW0wSI7bqwMpC9Z33g';   // 日報のスプレッドシート
 
 // シフト表の各スタッフの見出し（B列）と、送るデータの対応
 var LABEL_KEYS = ['client', 'carrier', 'place', 'hotel'];
 
 // コードの版。?action=ping で表示されるので、再デプロイが反映されたかの確認に使う。
-var CODE_VERSION = '2026-10-20';
+var CODE_VERSION = '2026-11-17';
 
 // ═══ 入口 ═══
 
@@ -74,7 +77,7 @@ function doPost(e) {
     var entries = body.entries || [];
 
     if (!name) return json({ ok: false, error: '名前がありません' });
-    if (ALLOW_STAFF.length && ALLOW_STAFF.indexOf(name) < 0) {
+    if (!staffAllowed(name)) {
       return json({ ok: false, error: name + ' さんはこのフォームの対象外です' });
     }
     if (!year || !month) return json({ ok: false, error: '年月がありません' });
@@ -114,6 +117,7 @@ function writeShift(action, name, year, month, entries) {
   if (!header) return { ok: false, error: sheet.getName() + ' に「日付」の行が見つかりません' };
 
   var rows = findStaffRows(sheet, name, header.row);
+  if (!rows && !isArchive(sheet) && addStaffRows(sheet, name, header.row)) rows = findStaffRows(sheet, name, header.row);
   if (!rows) return { ok: false, error: sheet.getName() + ' に「' + name + '」の行が見つかりません' };
 
   var del = (action === 'delete');
@@ -365,6 +369,63 @@ function findStaffRows(sheet, name, fromRow) {
   return null;
 }
 
+// ═══ 名簿 ═══
+
+// 名簿の人（外した人も入れる）。名簿シートがまだ無い・読めないときは null。2分覚えておく
+function roster() {
+  var cache = null;
+  try { cache = CacheService.getScriptCache(); } catch (e) {}
+  var hit = cache && cache.get('roster:v1');
+  if (hit) { try { return JSON.parse(hit); } catch (e) {} }
+  var list = null;
+  try {
+    var sh = SpreadsheetApp.openById(ROSTER_BOOK_ID).getSheetByName('名簿');
+    if (sh && sh.getLastRow() >= 2) {
+      list = sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues().filter(function(r) { return norm(r[0]); }).map(function(r) {
+        return { name: norm(r[0]), group: String(r[1]).indexOf('パートナー') >= 0 ? 'partner' : 'staff', hidden: norm(r[7]) !== '' };
+      });
+    }
+  } catch (e) { list = null; }
+  try { if (cache) cache.put('roster:v1', JSON.stringify(list), 120); } catch (e) {}
+  return list;
+}
+
+/** 書き込んでよい人か：名簿の社員（外した人をのぞく）。名簿が読めなければ ALLOW_STAFF */
+function staffAllowed(name) {
+  var r = roster();
+  if (r) return r.some(function(p) { return p.name === name && p.group === 'staff' && !p.hidden; });
+  return !ALLOW_STAFF.length || ALLOW_STAFF.indexOf(name) >= 0;
+}
+
+/**
+ * 名簿に足した社員の行（名前＋取引先・キャリア／店舗・開催場所・ホテルの4行）を作る。
+ * 「▼ 取引先担当者」の行があればその上に、無ければいちばん下の人の下に、ほかの人の行と同じ書式で足す。
+ * パートナー用シフトの GAS も同じ形で作る（どちらかが先に作れば、もう片方は作らない）。
+ */
+function addStaffRows(sheet, name, dayRow) {
+  if (!roster() || !staffAllowed(name)) return false;
+  var lastRow = sheet.getLastRow();
+  var values = sheet.getRange(1, 1, lastRow, 2).getValues();
+  var blocks = [], mark = -1, KEYS = ['client', 'carrier', 'place', 'hotel'];
+  for (var r = dayRow; r < values.length; r++) {   // dayRow は「日付」行（1始まり）なので、その次の行から
+    var a = norm(values[r][0]);
+    if (!a) continue;
+    if (a.indexOf('▼') === 0) { if (mark < 0) mark = r + 1; continue; }
+    if (r + 4 >= values.length) continue;
+    var ok = KEYS.every(function(key, k) { return labelKey(values[r + 1 + k][1]) === key; });
+    if (ok) blocks.push(r + 1);
+  }
+  if (!blocks.length) return false;
+  var sample = blocks[blocks.length - 1];
+  var at = mark > 0 ? mark : sample + 5;
+  if (at <= sheet.getMaxRows()) sheet.insertRowsBefore(at, 5); else sheet.insertRowsAfter(sheet.getMaxRows(), 5);
+  if (sample >= at) sample += 5;
+  var width = sheet.getLastColumn();
+  sheet.getRange(sample, 1, 5, width).copyTo(sheet.getRange(at, 1, 5, width), SpreadsheetApp.CopyPasteType.PASTE_FORMAT, false);
+  sheet.getRange(at, 1, 5, 2).setValues([[name, ''], ['', '取引先'], ['', 'キャリア／店舗'], ['', '開催場所'], ['', 'ホテル']]);
+  return true;
+}
+
 /** B列の見出しを、送るデータのキーに読み替える */
 function labelKey(label) {
   var s = norm(label);
@@ -443,7 +504,8 @@ function testFindRows() {
   var header = findDayHeader(sheet);
   Logger.log('日付の行: %s / 日数: %s', header ? header.row : '?', header ? Object.keys(header.days).length : 0);
   if (!header) return;
-  ALLOW_STAFF.forEach(function(name) {
+  var r = roster();
+  (r ? r.filter(function(p) { return p.group === 'staff' && !p.hidden; }).map(function(p) { return p.name; }) : ALLOW_STAFF).forEach(function(name) {
     Logger.log('%s: %s', name, JSON.stringify(findStaffRows(sheet, name, header.row)));
   });
   Logger.log('送信ログ: %s', findLogSheet(ss).getName());

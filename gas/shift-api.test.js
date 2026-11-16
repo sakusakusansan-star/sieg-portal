@@ -39,6 +39,9 @@ function Sheet(def) {
     getLastRow: () => g.length,
     getLastColumn: () => (g[0] ? g[0].length : 0),
     appendRow: (vals) => g.push(vals.slice()),
+    getMaxRows: () => g.length,
+    insertRowsBefore: (at, n) => { g.splice(at - 1, 0, ...Array.from({ length: n }, () => new Array((g[0] || []).length).fill(''))); },
+    insertRowsAfter: (after, n) => { g.splice(after, 0, ...Array.from({ length: n }, () => new Array((g[0] || []).length).fill(''))); },
     _grid: g,
     _writes: 0,
     getRange(r, c, nr, nc) {
@@ -48,6 +51,7 @@ function Sheet(def) {
         getValues: () => block(r, c, nr, nc),
         getDisplayValues: () => block(r, c, nr, nc).map(l => l.map(v => String(v))),
         setValue: (v) => { self._writes++; g[r - 1][c - 1] = v; },
+        copyTo: (dest, type) => { self._copies = (self._copies || 0) + 1; },
         setValues: (vals) => {
           self._writes++;
           for (let i = 0; i < vals.length; i++)
@@ -67,7 +71,7 @@ function setup(defs) {
     insertSheet: (n) => { const s = Sheet({ name: n, grid: [] }); sheets.push(s); return s; }
   };
   const cache = {};
-  global.SpreadsheetApp = { openById: () => ss, getActiveSpreadsheet: () => ss, flush: () => {} };
+  global.SpreadsheetApp = { openById: () => ss, getActiveSpreadsheet: () => ss, flush: () => {}, CopyPasteType: { PASTE_FORMAT: 'format' } };
   global.LockService = { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) };
   global.CacheService = { getScriptCache: () => ({ get: (k) => cache[k] || null, put: (k, v) => { cache[k] = v; } }) };
   global.ContentService = {
@@ -207,6 +211,47 @@ test('合言葉なしで読み書きできる（合言葉は使わない）', ()
   const got = JSON.parse(doGet({ parameter: { action: 'list', name: '清田', year: '2026', month: '10' } }).text);
   assert.strictEqual(got.ok, true, JSON.stringify(got));
   assert.strictEqual(got.days['1'].client, 'ダル');
+});
+
+// ── 名簿B：書き込める人は名簿の社員。名簿に足した社員は、送ったときに行を作る ──
+const ROSTER = (rows) => ({ name: '名簿', grid: [['名前', '区分', 'フルネーム', 'キャリア', '稼働費', '経費精算', 'みんなの状況', '外した日', '直した日時']].concat(rows.map(r => [r[0], r[1], '', '', '', '', '', r[2] || '', ''])) });
+function withMark(def) {   // 実シートと同じく、社員の下に「▼ 取引先担当者」とパートナーの行
+  const g = def.grid, w = g[0].length, row = () => new Array(w).fill('');
+  const m = row(); m[0] = '▼ 取引先担当者（フォーム入力）'; g.push(m);
+  ['鈴木'].forEach(n => { const a = row(); a[0] = n; g.push(a); LABELS.forEach(l => { const x = row(); x[1] = l; g.push(x); }); });
+  return def;
+}
+test('名簿に足した社員（佐藤）は、送ると ▼ の上に行を作ってから書く', () => {
+  const { sheets } = setup([withMark(makeShiftSheet('シフト表 12月', '2026', '12月', 31)),
+    ROSTER([['福岡', '社員'], ['清田', '社員'], ['福山', '社員'], ['古川', '社員'], ['佐藤', '社員'], ['鈴木', 'パートナー'], ['古川2', '社員', '2026-11-01']])]);
+  const sh = sheets[0];
+  const res = post({ name: '佐藤', year: 2026, month: 12, entries: [{ start: 3, end: 4, client: 'ダル', carrier: 'docomo', place: '下通', hotel: '' }] });
+  assert.strictEqual(res.ok, true, JSON.stringify(res));
+  const colA = sh._grid.slice(3).map(r => r[0]).filter(Boolean);
+  assert.deepStrictEqual(colA, ['福岡', '清田', '福山', '古川', '佐藤', '▼ 取引先担当者（フォーム入力）', '鈴木']);
+  assert.strictEqual(sh._copies, 1, '書式はほかの人の行から');
+  assert.deepStrictEqual(Object.keys(listShift('佐藤', 2026, 12).days).map(Number), [3, 4]);
+  assert.deepStrictEqual(Object.keys(listShift('鈴木', 2026, 12).days), [], 'パートナーの行はずれない');
+  // 2回目は行を作らない
+  post({ name: '佐藤', year: 2026, month: 12, entries: [{ start: 6, end: 6, client: 'ダル', carrier: 'docomo', place: '下通', hotel: '' }] });
+  assert.strictEqual(sh._grid.slice(3).map(r => r[0]).filter(Boolean).length, 7);
+});
+test('名簿があるとき：パートナー・外した人・名簿に無い人は書けない', () => {
+  setup([withMark(makeShiftSheet('シフト表 12月', '2026', '12月', 31)), ROSTER([['福山', '社員'], ['鈴木', 'パートナー'], ['古川', '社員', '2026-11-01']])]);
+  const e = [{ start: 1, end: 1, client: 'ダル', carrier: 'docomo', place: '下通', hotel: '' }];
+  ['鈴木', '古川', '清田'].forEach(n => {
+    const res = post({ name: n, year: 2026, month: 12, entries: e });
+    assert.strictEqual(res.ok, false, n);
+    assert.ok(res.error.includes('対象外'), n + ' ' + res.error);
+  });
+  assert.strictEqual(post({ name: '福山', year: 2026, month: 12, entries: e }).ok, true);
+});
+test('名簿が無いときは、今までどおり ALLOW_STAFF（行は作らない）', () => {
+  const { sheets } = setup([withMark(makeShiftSheet('シフト表 12月', '2026', '12月', 31))]);
+  const e = [{ start: 1, end: 1, client: 'ダル', carrier: 'docomo', place: '下通', hotel: '' }];
+  assert.strictEqual(post({ name: '佐藤', year: 2026, month: 12, entries: e }).ok, false);
+  assert.strictEqual(post({ name: '清田', year: 2026, month: 12, entries: e }).ok, true);
+  assert.strictEqual(sheets[0]._copies, undefined);
 });
 
 console.log('\n' + passed + '件すべて成功');

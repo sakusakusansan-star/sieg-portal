@@ -618,11 +618,11 @@
   </div>
 
   <div id="money-wrap" hidden>
-    <div class="sec"><span id="money-title">経費精算</span><button type="button" id="open-all">すべて開く</button></div>
+    <div class="sec"><span id="money-title">経費</span><button type="button" id="open-all">すべて開く</button></div>
     <div class="kpis" id="money-kpis" style="margin-top:12px"></div>
     <div class="srep" id="money-sum"></div>
     <div class="money" id="money" style="margin-top:10px"></div>
-    <div class="snote" id="money-note">商流は、経費精算で1件ずつ選んだものです（選んでいない分は「商流未選択」。経費精算の履歴から、前の月の分もあとから選べます）。稼働費は「商流」タブで見られます。</div>
+    <div class="snote" id="money-note">経費は、交通費（稼働費）と経費精算を足したものです。交通費の商流はその日のその人のシフトの取引先、経費精算の商流は1件ずつ選んだものです（選んでいない分は「商流未選択」。経費精算の履歴から、前の月の分もあとから選べます）。</div>
   </div>
 
   <div id="member-wrap">
@@ -1179,6 +1179,7 @@
     data.shiftSum = s && !s.error && s.found ? s : null;
     data.shiftReady = true;
     renderShouryu();
+    if (data.stats) renderMoney();   // 交通費の商流は、シフトが届いてから決まる
     $('shift-wrap').hidden = false;
     $('shift-title').textContent = Number(viewYm.slice(5, 7)) + '月のシフト集計';
     var note = $('shift-note');
@@ -1596,66 +1597,91 @@
   $('err-reload').addEventListener('click', function () { loadErrors(true); });
 
   function renderMoney() {
-    var people = PEOPLE.filter(function (n) { return KEIHI.indexOf(n) >= 0; }).map(function (n, i) {
-      var k = data.keihi[n], ok = k && !k.error && !k.none;
-      return { name: n, i: i, k: k, ka: ok ? k.amount : 0, unset: ok ? k.lines.filter(function (l) { return !l.flow; }) : [] };
-    }).sort(function (a, b) { return b.ka - a.ka || a.i - b.i; });
-    var sk = 0, nk = 0, cnt = 0, un = 0, unA = 0, byFlow = {}, byItem = {};
+    // 経費＝交通費（稼働費）＋経費精算。交通費を使う人（パートナーも）・経費精算を使う人が全員出る
+    var okC = function (c) { return c && !c.error && !c.pending && !c.none; }, okK = function (k) { return k && !k.error && !k.none; };
+    var people = PEOPLE.filter(function (n) { return COMMUTE.indexOf(n) >= 0 || KEIHI.indexOf(n) >= 0; }).map(function (n, i) {
+      var c = COMMUTE.indexOf(n) >= 0 ? data.commute[n] : undefined, k = KEIHI.indexOf(n) >= 0 ? data.keihi[n] : undefined;
+      var ca = okC(c) ? c.amount : 0, ka = okK(k) ? k.amount : 0;
+      return { name: n, i: i, c: c, k: k, ca: ca, ka: ka, total: ca + ka, unset: okK(k) ? k.lines.filter(function (l) { return !l.flow; }) : [] };
+    }).sort(function (a, b) { return b.total - a.total || a.i - b.i; });
+    var sc = 0, sk = 0, nAll = 0, days = 0, cnt = 0, un = 0, unA = 0, byFlow = {}, byItem = {};
     people.forEach(function (x) {
-      var k = x.k;
-      if (!k || k.error || k.none) return;
-      sk += x.ka; cnt += k.count; if (x.ka) nk++;
+      sc += x.ca; sk += x.ka; if (x.total) nAll++;
+      if (okC(x.c)) days += x.c.days || 0;
+      if (okK(x.k)) { cnt += x.k.count; x.k.items.forEach(function (it) { byItem[it[0]] = (byItem[it[0]] || 0) + it[1]; }); }
       x.unset.forEach(function (l) { un++; unA += Number(l.a) || 0; });
       var fl = splitByFlow(x.name);
       Object.keys(fl).forEach(function (f) {
-        if (!fl[f].k) return;
-        var y = byFlow[f] = byFlow[f] || { a: 0, n: 0 }; y.a += fl[f].k;
+        if (!fl[f].c && !fl[f].k) return;
+        var y = byFlow[f] = byFlow[f] || { c: 0, k: 0 }; y.c += fl[f].c; y.k += fl[f].k;
       });
-      k.lines.forEach(function (l) { var f = keihiFlow(l); (byFlow[f] = byFlow[f] || { a: 0, n: 0 }).n++; });
-      k.items.forEach(function (it) { byItem[it[0]] = (byItem[it[0]] || 0) + it[1]; });
     });
-    $('money-title').textContent = mWord() + 'の経費精算';
+    $('money-title').textContent = mWord() + 'の経費（交通費＋経費精算）';
     $('money-kpis').innerHTML =
-      '<div class="kpi kk"><div class="k">経費の合計（全員）</div><div class="v num">¥' + fmt(sk) + '</div><div class="s">' + nk + '人分</div></div>'
-      + '<div class="kpi"><div class="k">件数</div><div class="v num">' + fmt(cnt) + '<small>件</small></div><div class="s">' + (cnt ? '1件あたり ¥' + fmt(Math.round(sk / cnt)) : '—') + '</div></div>'
-      + '<div class="kpi' + (un ? ' warn' : '') + '"><div class="k">商流を選んでいない</div><div class="v num">' + un + '<small>件</small></div><div class="s">' + (un ? '¥' + fmt(Math.round(unA)) + '・経費精算の履歴から選べます' : 'すべて選んであります') + '</div></div>';
-    var fk = Object.keys(byFlow).sort(function (a, b) { return isOther(a) - isOther(b) || byFlow[b].a - byFlow[a].a; });
-    var fTop = Math.max.apply(null, fk.map(function (f) { return byFlow[f].a; }).concat([1]));
-    var ik = Object.keys(byItem).sort(function (a, b) { return byItem[b] - byItem[a]; });
-    var iTop = Math.max.apply(null, ik.map(function (t) { return byItem[t]; }).concat([1]));
+      '<div class="kpi"><div class="k">経費の合計（全員）</div><div class="v num">¥' + fmt(sc + sk) + '</div><div class="s">' + nAll + '人分</div></div>'
+      + '<div class="kpi kc"><div class="k">交通費（稼働費）</div><div class="v num">¥' + fmt(sc) + '</div><div class="s">のべ ' + fmt(days) + '日</div></div>'
+      + '<div class="kpi kk"><div class="k">経費精算</div><div class="v num">¥' + fmt(sk) + '</div><div class="s">' + fmt(cnt) + '件' + (un ? '・<b style="color:var(--t-gold)">商流を選んでいない ' + un + '件（¥' + fmt(Math.round(unA)) + '）</b>' : '') + '</div></div>';
+    var fk = Object.keys(byFlow).sort(function (a, b) { return isOther(a) - isOther(b) || (byFlow[b].c + byFlow[b].k) - (byFlow[a].c + byFlow[a].k); });
+    var fTop = Math.max.apply(null, fk.map(function (f) { return byFlow[f].c + byFlow[f].k; }).concat([1]));
+    // 項目ごと：交通費（ひとまとめ）＋経費精算の項目
+    var items = [['交通費', sc, 'c']].filter(function (it) { return it[1]; }).concat(Object.keys(byItem).map(function (t) { return [t, byItem[t], 'k']; }))
+      .sort(function (a, b) { return b[1] - a[1]; });
+    var iTop = Math.max.apply(null, items.map(function (it) { return it[1]; }).concat([1]));
     $('money-sum').innerHTML =
       '<div class="scard"><h3>商流ごと<span>全員の合計</span></h3>' + (fk.length ? '<div class="bars">' + fk.map(function (f) {
-        return '<div class="brow' + (isOther(f) ? ' zero' : '') + '"><span class="bl">' + flowDot(f) + esc(f) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(byFlow[f].a / fTop * 100)) + '%;background:' + (FLOW_COLORS[f] || 'var(--t-faint)') + '"></i></span>'
-          + '<span class="bv num">¥' + fmt(byFlow[f].a) + '<small>' + byFlow[f].n + '件</small></span></div>';
+        var v = byFlow[f].c + byFlow[f].k;
+        return '<div class="brow' + (isOther(f) ? ' zero' : '') + '"><span class="bl">' + flowDot(f) + esc(f) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(v / fTop * 100)) + '%;background:' + (FLOW_COLORS[f] || 'var(--t-faint)') + '"></i></span>'
+          + '<span class="bv num">¥' + fmt(v) + '</span></div><div class="sub-all" style="margin:-4px 0 4px 8.2em"><span class="cc">交通費 ¥' + fmt(byFlow[f].c) + '</span>・<span class="ck">経費精算 ¥' + fmt(byFlow[f].k) + '</span></div>';
       }).join('') + '</div>' : '<div class="snote">まだありません。</div>') + '</div>'
-      + '<div class="scard"><h3>項目ごと<span>全員の合計</span></h3>' + (ik.length ? '<div class="bars ck">' + ik.map(function (t) {
-        return '<div class="brow"><span class="bl">' + esc(t) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(byItem[t] / iTop * 100)) + '%"></i></span><span class="bv num">¥' + fmt(Math.round(byItem[t])) + '</span></div>';
+      + '<div class="scard"><h3>項目ごと<span>全員の合計</span></h3>' + (items.length ? '<div class="bars">' + items.map(function (it) {
+        return '<div class="brow"><span class="bl">' + esc(it[0]) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(it[1] / iTop * 100)) + '%;background:var(--t-' + (it[2] === 'c' ? 'cc' : 'ck') + ')"></i></span><span class="bv num">¥' + fmt(Math.round(it[1])) + '</span></div>';
       }).join('') + '</div>' : '<div class="snote">まだありません。</div>') + '</div>';
+    var lineRow = function (l, f) {
+      return '<div class="lrow"><span class="d">' + esc(l.d) + '</span><span class="t">' + esc(l.t) + flowTag(f) + (l.sub ? '<small>' + esc(l.sub) + '</small>' : '') + '</span><span class="a">¥' + fmt(Math.round(l.a)) + '</span></div>';
+    };
     $('money').innerHTML = people.map(function (x) {
-      var k = x.k, chips = '', kb = '<div class="mblock bk"><h3>経費精算<span>' + (k && !k.error && !k.none ? '¥' + fmt(k.amount) + '・' + k.count + '件' + (k.ym ? '・' + esc(k.ym) : '') : '') + '</span></h3>';
-      chips = !k ? '<span class="chip">経費 <b>…</b></span>' : k.error ? '<span class="chip warn">経費 読めません</span>'
-        : k.none ? '<span class="chip">経費 記録なし（シートは' + esc(k.sheet) + '）</span>'
-        : '<span class="chip k">経費 <b>¥' + fmt(k.amount) + '</b>' + k.count + '件</span>' + (x.unset.length ? '<span class="chip warn">商流 未選択 <b>' + x.unset.length + '件</b></span>' : '') + (k.fromHistory && k.count ? '<span class="chip">履歴から</span>' : '');
-      if (!k) kb += '<div class="mempty">読み込み中…</div>';
-      else if (k.error) kb += '<div class="mempty">読めませんでした：' + esc(k.error) + '</div>';
-      else if (k.none) kb += '<div class="mempty">' + mWord() + 'の記録がありません（今のシートは' + esc(k.sheet) + '）。シートの月を切り替えていない時は、‹ › でシートの月を見てください。</div>';
-      else {
-        var fl = splitByFlow(x.name), myF = Object.keys(fl).filter(function (f) { return fl[f].k; }).sort(function (a, b) { return isOther(a) - isOther(b) || fl[b].k - fl[a].k; });
-        if (myF.length) kb += '<div class="parts" style="margin-bottom:8px">' + myF.map(function (f) { return '<span class="chip">' + flowDot(f) + esc(f) + ' <b>¥' + fmt(fl[f].k) + '</b></span>'; }).join('') + '</div>';
-        var top = k.items.length ? k.items[0][1] : 1;
-        kb += k.items.length ? '<div class="bars ck">' + k.items.map(function (it) {
-          return '<div class="brow"><span class="bl">' + esc(it[0]) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(it[1] / top * 100)) + '%"></i></span><span class="bv">¥' + fmt(Math.round(it[1])) + '</span></div>';
-        }).join('') + '</div>' : '';
-        kb += !k.lines.length ? '<div class="mempty">まだ入力がありません。</div>' : '<div class="lines">' + k.lines.map(function (l) {
-          return '<div class="lrow"><span class="d">' + esc(l.d) + '</span><span class="t">' + esc(l.t) + flowTag(keihiFlow(l)) + (l.sub ? '<small>' + esc(l.sub) + '</small>' : '') + '</span><span class="a">¥' + fmt(Math.round(l.a)) + '</span></div>';
-        }).join('') + '</div>';
+      var c = x.c, k = x.k, chips = '', cb = '', kb = '';
+      if (c !== undefined) {
+        chips += !c ? '<span class="chip">交通費 <b>…</b></span>' : c.pending ? '<span class="chip">交通費 準備中</span>' : c.error ? '<span class="chip warn">交通費 読めません</span>'
+          : c.none ? '<span class="chip">交通費 ' + (c.oldGas ? '前の月は準備中' : '記録なし') + '</span>'
+          : '<span class="chip c">交通費 <b>¥' + fmt(c.amount) + '</b>' + c.days + '日</span>';
+        cb = '<div class="mblock bc"><h3>交通費（稼働費）<span>' + (okC(c) ? '¥' + fmt(c.amount) + '・' + c.days + '日' + (c.km ? '・' + c.km + 'km' : '') : '') + '</span></h3>';
+        if (!c) cb += '<div class="mempty">読み込み中…</div>';
+        else if (c.pending) cb += '<div class="mempty">準備中です。</div>';
+        else if (c.error) cb += '<div class="mempty">読めませんでした：' + esc(c.error) + '</div>';
+        else if (c.none) cb += '<div class="mempty">' + (c.oldGas
+          ? mWord() + 'の分は、稼働費の GAS を更新すると見られるようになります（今のシートは' + c.sheetMonth + '月）。'
+          : mWord() + 'の記録がありません（今のシートは' + c.sheetMonth + '月。履歴は月を切り替えたときかPDFを保存したときに残ります）。') + '</div>';
+        else {
+          cb += '<div class="parts" style="margin-bottom:8px">' + (c.parts || []).filter(function (pp) { return pp[1]; }).map(function (pp) { return '<span class="chip c">' + esc(pp[0]) + ' <b>¥' + fmt(pp[1]) + '</b></span>'; }).join('') + '</div>';
+          cb += !c.lines.length ? '<div class="mempty">まだ入力がありません。</div>' : '<div class="lines">' + c.lines.map(function (l) { return lineRow(l, flowOf(x.name, l.day)); }).join('') + '</div>';
+          if (c.files) cb += '<div class="src">添付：領収書 ' + c.files.receipts + '枚・ETCの利用明細 ' + c.files.etc + '件（経費精算/パートナー のフォルダ）</div>';
+        }
+        cb += '</div>';
       }
-      kb += '</div>';
+      if (k !== undefined) {
+        chips += !k ? '<span class="chip">経費精算 <b>…</b></span>' : k.error ? '<span class="chip warn">経費精算 読めません</span>'
+          : k.none ? '<span class="chip">経費精算 記録なし（シートは' + esc(k.sheet) + '）</span>'
+          : '<span class="chip k">経費精算 <b>¥' + fmt(k.amount) + '</b>' + k.count + '件</span>' + (x.unset.length ? '<span class="chip warn">商流 未選択 <b>' + x.unset.length + '件</b></span>' : '');
+        kb = '<div class="mblock bk"><h3>経費精算<span>' + (okK(k) ? '¥' + fmt(k.amount) + '・' + k.count + '件' + (k.ym ? '・' + esc(k.ym) : '') : '') + '</span></h3>';
+        if (!k) kb += '<div class="mempty">読み込み中…</div>';
+        else if (k.error) kb += '<div class="mempty">読めませんでした：' + esc(k.error) + '</div>';
+        else if (k.none) kb += '<div class="mempty">' + mWord() + 'の記録がありません（今のシートは' + esc(k.sheet) + '）。シートの月を切り替えていない時は、‹ › でシートの月を見てください。</div>';
+        else {
+          var top = k.items.length ? k.items[0][1] : 1;
+          kb += k.items.length ? '<div class="bars ck" style="margin-bottom:6px">' + k.items.map(function (it) {
+            return '<div class="brow"><span class="bl">' + esc(it[0]) + '</span><span class="bb"><i style="width:' + Math.max(3, Math.round(it[1] / top * 100)) + '%"></i></span><span class="bv">¥' + fmt(Math.round(it[1])) + '</span></div>';
+          }).join('') + '</div>' : '';
+          kb += !k.lines.length ? '<div class="mempty">まだ入力がありません。</div>' : '<div class="lines">' + k.lines.map(function (l) { return lineRow(l, keihiFlow(l)); }).join('') + '</div>';
+        }
+        kb += '</div>';
+      }
+      if ((c && c.fromHistory) || (k && k.fromHistory && k.count)) chips += '<span class="chip">履歴から</span>';
       return '<details class="mcard" data-name="' + esc(x.name) + '"' + (openNames[x.name] ? ' open' : '') + '><summary>'
         + '<div class="mn"><span class="av ' + (R.isPartner(x.name) ? 'partner' : 'staff') + '" aria-hidden="true">' + esc(x.name.slice(0, 1)) + '</span>'
         + '<span><b>' + esc(x.name) + '</b><small>' + (R.isPartner(x.name) ? 'PARTNER' : 'STAFF') + '</small></span></div>'
-        + '<div class="mt num">¥' + fmt(x.ka) + '</div><div class="mv">' + chips + '</div></summary>'
-        + '<div class="mbody" style="grid-template-columns:1fr">' + kb + '</div></details>';
+        + '<div class="mt num">¥' + fmt(x.total) + '</div><div class="mv">' + chips + '</div></summary>'
+        + '<div class="mbody"' + (c === undefined || k === undefined ? ' style="grid-template-columns:1fr"' : '') + '>' + cb + kb + '</div></details>';
     }).join('');
     $('money-wrap').hidden = !people.length;
   }

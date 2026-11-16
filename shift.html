@@ -209,6 +209,19 @@
   .day-row .t { color: var(--muted); line-height: 1.5; }
   .day-row .t b { color: var(--text); font-weight: 700; }
   .day-row .t b.hold { color: var(--red); }
+  /* 1日ずつ「直す」「消す」 */
+  .day-row { grid-template-columns: 46px 1fr auto; }
+  .day-row .acts { display: flex; gap: 6px; }
+  .day-row .acts button { min-height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--sg-hair); background: var(--sg-surface);
+    color: var(--sg-blue); font: 800 12.5px/1 var(--sg-font); cursor: pointer; }
+  .day-row .acts button.del { color: var(--sg-red); }
+  .day-row.editing { border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+  .edit-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 10px; padding: 10px 12px;
+    border-radius: 10px; background: var(--sg-amber-tint); color: var(--sg-ink); font-size: 13px; font-weight: 800; line-height: 1.5; }
+  .edit-bar[hidden] { display: none; }
+  .edit-bar small { display: block; font-size: 11.5px; font-weight: 700; color: var(--sg-mute); }
+  .edit-bar button { flex: none; min-height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--sg-hair); background: var(--sg-surface);
+    color: var(--sg-ink); font: 800 12.5px/1 var(--sg-font); cursor: pointer; }
   .empty-note { font-size: 12px; color: var(--muted2); }
 
   /* 送信バー */
@@ -346,7 +359,8 @@
   </div>
 
   <!-- カレンダー -->
-  <div class="card">
+  <div class="card" id="cal-card">
+    <div class="edit-bar" id="edit-bar" hidden><span id="edit-text"></span><button type="button" id="edit-cancel">やめる</button></div>
     <div class="card-head"><span id="cal-step">1. 日にちをえらぶ</span><span class="req" id="picked-count">0日</span></div>
     <div class="cal-month">
       <button class="btn small cal-nav" type="button" id="m-prev" aria-label="前の月">‹</button>
@@ -404,7 +418,7 @@
 
   <div class="foot">
     送信するとシフト表に直接書き込まれ、送信ログにも残ります。<br>
-    間違えたときは「取り消す」で消してから入れ直してください。
+    間違えたときは、下の「登録済みのシフト」の「直す」「消す」から直せます。
   </div>
 
 </div>
@@ -464,6 +478,7 @@
     client: '', carrier: '', place: '', hotel: '',
     picked: {},      // 日 → true
     existing: {},    // 日 → {client, carrier, place, hotel}
+    edit: null,      // 直している日 { day, orig }（日付を変えて送ったら、元の日は消す）
     busy: false
   };
 
@@ -614,6 +629,7 @@
     state.year = y;
     state.month = m;
     state.picked = {};
+    state.edit = null; renderEditBar();
     state.existing = {};
     renderMonthNav();
     renderCal();
@@ -914,9 +930,66 @@
       right.innerHTML = parts.join('　') || '—';
       row.appendChild(left);
       row.appendChild(right);
+      var acts = document.createElement('div');
+      acts.className = 'acts';
+      acts.innerHTML = '<button type="button" data-edit="' + d + '">直す</button><button type="button" class="del" data-del="' + d + '">消す</button>';
+      row.appendChild(acts);
+      row.setAttribute('data-day', d);
+      if (state.edit && state.edit.day === d) row.classList.add('editing');
       box.appendChild(row);
     });
   }
+
+  /* ═══ 1日ずつ直す・消す ═══ */
+  // 直す：その日の内容を下の欄に入れ、その日を選んだ状態にする。送ると上書き。
+  // 日付を変えて送ったときは、元の日を消す（同じ日のままなら上書きだけ）
+  function startEdit(d) {
+    var e = state.existing[d];
+    if (!e || state.busy) return;
+    SiegNav.flushUndo();
+    if (state.mode !== 'submit') setMode('submit');
+    state.edit = { day: d, orig: e };
+    state.picked = {}; state.picked[d] = true;
+    state.client = e.client || ''; state.carrier = e.carrier || '';
+    state.place = e.place || ''; state.hotel = e.hotel || '';
+    $('place-input').value = state.place; $('hotel-input').value = state.hotel;
+    renderChoices(); renderCal(); renderDayList(); renderEditBar(); syncSend();
+    $('cal-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function endEdit() {
+    if (!state.edit) return;
+    state.edit = null;
+    renderEditBar(); renderDayList(); syncSend();
+  }
+  function renderEditBar() {
+    var bar = $('edit-bar');
+    if (!state.edit) { bar.hidden = true; return; }
+    $('edit-text').innerHTML = state.month + '月' + state.edit.day + '日を直しています'
+      + '<small>内容を変えて送ると上書きします。日付を変えると、' + state.edit.day + '日は消えます</small>';
+    bar.hidden = false;
+  }
+  // 消す：行をすぐ隠して「元に戻す」を出す。押されなければ5秒後に消す
+  function deleteDay(d, rowEl) {
+    if (state.busy) return;
+    if (state.edit && state.edit.day === d) { state.picked = {}; endEdit(); renderCal(); }
+    var who = state.name, y = state.year, m = state.month;
+    SiegNav.undoable({
+      text: m + '月' + d + '日を消しました', rows: rowEl,
+      commit: function() {
+        return GasClient.post(SHIFT_API, { requestId: GasClient.newId(), action: 'delete', name: who, year: y, month: m,
+          entries: [{ start: d, end: d, client: '', carrier: '', place: '', hotel: '' }] }, { retry: true })
+          .then(function(data) { if (!data || !data.ok) throw new Error((data && data.error) || '消せませんでした'); });
+      },
+      onDone: function() { if (who === state.name && y === state.year && m === state.month) loadExisting(); },
+      onFail: function() { if (who === state.name && y === state.year && m === state.month) loadExisting(); }
+    });
+  }
+  document.getElementById('day-list').addEventListener('click', function(ev) {
+    var ed = ev.target.closest('[data-edit]'), dl = ev.target.closest('[data-del]');
+    if (ed) startEdit(Number(ed.getAttribute('data-edit')));
+    else if (dl) deleteDay(Number(dl.getAttribute('data-del')), dl.closest('.day-row'));
+  });
+  document.getElementById('edit-cancel').addEventListener('click', function() { state.picked = {}; endEdit(); renderCal(); });
 
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
@@ -943,12 +1016,15 @@
       ok = true;
       why = state.mode === 'delete'
         ? days.length + '日分を取り消します'
-        : days.length + '日分（' + toRanges(days).length + '件）を送信します';
+        : state.edit
+          ? (state.picked[state.edit.day] ? state.edit.day + '日を直します' : state.edit.day + '日を消して、' + days.join('・') + '日に入れます')
+            + (days.length > 1 && state.picked[state.edit.day] ? '（ほか' + (days.length - 1) + '日にも入れます）' : '')
+          : days.length + '日分（' + toRanges(days).length + '件）を送信します';
     }
 
     var btn = $('send');
     btn.disabled = !ok || state.busy;
-    btn.textContent = state.busy ? '送信中…' : (state.mode === 'delete' ? '取り消す' : '送信する');
+    btn.textContent = state.busy ? '送信中…' : (state.mode === 'delete' ? '取り消す' : state.edit ? '直す' : '送信する');
     btn.classList.toggle('del', state.mode === 'delete');
     $('send-sub').textContent = why;
   }
@@ -956,6 +1032,7 @@
   /* ═══ モード切替 ═══ */
   function setMode(mode) {
     state.mode = mode;
+    if (mode !== 'submit' && state.edit) { state.edit = null; state.picked = {}; renderEditBar(); renderDayList(); }
     Array.prototype.forEach.call(document.querySelectorAll('.modes button'), function(b) {
       var on = b.getAttribute('data-mode') === mode;
       b.classList.toggle('on', on);
@@ -975,7 +1052,8 @@
     var ranges = toRanges(days);
     var del = state.mode === 'delete';
 
-    $('ov-title').textContent = del ? '取り消しの確認' : '送信内容の確認';
+    var moveFrom = !del && state.edit && !state.picked[state.edit.day] ? state.edit.day : 0;   // 日付を変えたときの元の日
+    $('ov-title').textContent = del ? '取り消しの確認' : state.edit ? '修正の確認' : '送信内容の確認';
     $('ov-lede').textContent = state.name + 'さん／' + state.year + '年' + state.month + '月';
     $('ov-names').style.display = 'none';
     $('ov-acts').style.display = 'flex';
@@ -1005,8 +1083,14 @@
         (state.hotel ? '<br>ホテル：' + escapeHtml(state.hotel) : ''));
       list.appendChild(item);
     });
+    if (moveFrom) {
+      var mv = document.createElement('div');
+      mv.className = 'ov-item';
+      mv.innerHTML = '<b>' + moveFrom + '日</b>　は消します（日付を変えたため）';
+      list.appendChild(mv);
+    }
     var go = $('ov-go');
-    go.textContent = del ? '取り消す' : '送信する';
+    go.textContent = del ? '取り消す' : state.edit ? '直す' : '送信する';
     go.classList.toggle('del', del);
     openOv();
   }
@@ -1033,14 +1117,31 @@
       })
     };
 
+    var edit = !del && state.edit ? state.edit : null;
+    var moveFrom = edit && !state.picked[edit.day] ? edit.day : 0;   // 日付を変えたら、元の日を消す
+
     state.busy = true;
     syncSend();
     hideMsg();
 
     // その日のセルを上書き／空にするだけなので、Google側の一時的な失敗は自動でやり直す
-    GasClient.post(SHIFT_API, payload, { retry: true })
+    // （「元に戻す」を待っている削除があれば、先に済ませる）
+    SiegNav.flushUndo().then(function() { return GasClient.post(SHIFT_API, payload, { retry: true }); })
       .then(function(data) {
         if (!data || !data.ok) throw new Error((data && data.error) || '送信できませんでした');
+        if (!moveFrom) return data;
+        return GasClient.post(SHIFT_API, { requestId: GasClient.newId(), action: 'delete', name: payload.name, year: payload.year, month: payload.month,
+          entries: [{ start: moveFrom, end: moveFrom, client: '', carrier: '', place: '', hotel: '' }] }, { retry: true })
+          .then(function(d2) {
+            if (!d2 || !d2.ok) throw new Error((d2 && d2.error) || '消せませんでした');
+            return data;
+          }).catch(function(err) {
+            // 新しい日には入ったが、元の日が消せなかった
+            throw new Error(payload.month + '月' + days.join('・') + '日には入れましたが、' + moveFrom + '日を消せませんでした（' + err.message + '）。下の一覧の「消す」で消してください');
+          });
+      })
+      .then(function(data) {
+        state.edit = null; renderEditBar();
         state.picked = {};
         lsSet(LAST_KEY, JSON.stringify({ client: state.client, carrier: state.carrier, place: state.place }));
         if (!del) countPlace(state.place);
@@ -1054,12 +1155,13 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
         // 送ったあとは、どのツールも同じ形で知らせる（次にやることを並べる）
         SiegNav.done({
-          title: del ? '取り消しました' : '送信しました',
+          title: del ? '取り消しました' : edit ? '直しました' : '送信しました',
           sub: state.year + '年' + state.month + '月　' + data.days + '日分' + extra,
           next: [{ label: del ? '続けて直す' : '続けて入力する' }, { label: 'ポータルへ戻る', href: SiegNav.portalUrl }]
         });
       })
       .catch(function(err) {
+        if (moveFrom && /には入れましたが/.test(err.message)) { state.edit = null; state.picked = {}; renderEditBar(); loadExisting(); renderCal(); }
         showMsg('err', '<b>送信できませんでした。</b><br>' + escapeHtml(err.message) +
           '<br>電波の良いところでもう一度お試しください。');
         window.scrollTo({ top: 0, behavior: 'smooth' });

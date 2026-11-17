@@ -253,5 +253,16 @@ test('名簿が無いときは、今までどおり ALLOW_STAFF（行は作ら�
   assert.strictEqual(post({ name: '清田', year: 2026, month: 12, entries: e }).ok, true);
   assert.strictEqual(sheets[0]._copies, undefined);
 });
+test('checkRoster：名簿をログに出すだけ（無いときは読めませんと出す）', () => {
+  const logs = [];
+  setup([withMark(makeShiftSheet('シフト表 12月', '2026', '12月', 31))]);
+  global.Logger = { log: m => logs.push(String(m)) };
+  checkRoster();
+  setup([withMark(makeShiftSheet('シフト表 12月', '2026', '12月', 31)), ROSTER([['福山', '社員'], ['古川', '社員', '2026-11-01']])]);
+  global.Logger = { log: m => logs.push(String(m)) };
+  checkRoster();
+  global.Logger = { log() {} };
+  assert.deepStrictEqual(logs, ['名簿シートが読めません（まだ無いか、権限がありません）', '名簿 2人：福山・古川（外した）']);
+});
 
 console.log('\n' + passed + '件すべて成功');

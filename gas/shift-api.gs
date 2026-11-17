@@ -397,6 +397,12 @@ function staffAllowed(name) {
   return !ALLOW_STAFF.length || ALLOW_STAFF.indexOf(name) >= 0;
 }
 
+// 最初に一度エディタで実行して、日報のスプレッドシート（名簿）を読む権限を許可する。何も書き換えない
+function checkRoster() {
+  var r = roster();
+  Logger.log(r ? '名簿 ' + r.length + '人：' + r.map(function(p) { return p.name + (p.hidden ? '（外した）' : ''); }).join('・') : '名簿シートが読めません（まだ無いか、権限がありません）');
+}
+
 /**
  * 名簿に足した社員の行（名前＋取引先・キャリア／店舗・開催場所・ホテルの4行）を作る。
  * 「▼ 取引先担当者」の行があればその上に、無ければいちばん下の人の下に、ほかの人の行と同じ書式で足す。

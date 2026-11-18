@@ -5,15 +5,18 @@
      12/18 店舗稼働(八代中央)
    ・同じ開催場所が続く日は「12/12-15」にまとめる（休みをはさんだら別の行）
    ・取引先の無い日（希望休など）は入れない
-   ・場所のあとの（ ）は担当店舗。場所ごとに入れた店舗名・「カッコなし」はこの端末に覚えておく
+   ・場所のあとの（ ）は担当店舗。場所ごとに「店舗名を付ける／カッコなし／店舗稼働」を選び、この端末に覚えておく
    ・店舗名がまだ無い場所は「(　)」（埋め忘れに気づけるように）
+   ・店舗稼働の場所（開催場所に店舗の名前だけを書いた日。例：健軍）は「店舗稼働(健軍)」
    使い方：SiegShiftPost.open({ name: '福山', year: 2026, month: 12, days: { 1: { client, place }, … } })
              SiegShiftPost.text(…) は文だけ返す（テスト用）
    ═══════════════════════════════════════════════════════════ */
 (function (global) {
   'use strict';
-  var KEY = 'siegShiftPostStores';          // { 開催場所: { s: 店舗名, n: true=カッコなし } }
+  var KEY = 'siegShiftPostStores';          // { 開催場所: { m: 'store'|'none'|'shop', s: 店舗名 } }（前の形 { s, n } も読む）
   var NO_PAREN = ['下通', 'ゆめタウン大牟田'];  // 古川さんの投稿でカッコを付けていない場所（覚えていなければこれを初めの値に）
+  var SHOPS = ['健軍'];                       // 店舗稼働の場所（覚えていなければこれを初めの値に）
+  var MODES = [['store', '店舗名を付ける'], ['none', 'カッコなし'], ['shop', '店舗稼働']];
   var STORE_WORK = '店舗稼働';
 
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -33,12 +36,14 @@
   // 場所ごとの設定（覚えている値 → なければ初めの値）
   function setting(place, mem) {
     var m = mem[place], sp = split(place);
-    if (m) return { s: m.s || '', n: !!m.n };
-    return { s: sp.store, n: !sp.store && NO_PAREN.indexOf(sp.label) >= 0 };
+    if (m) return { s: m.s || '', m: m.m || (m.n ? 'none' : 'store') };
+    if (sp.label === STORE_WORK) return { s: sp.store, m: 'store' };
+    return { s: sp.store, m: SHOPS.indexOf(sp.label) >= 0 ? 'shop' : !sp.store && NO_PAREN.indexOf(sp.label) >= 0 ? 'none' : 'store' };
   }
   function shown(place, mem) {
     var sp = split(place), st = setting(place, mem);
-    if (st.n) return sp.label;
+    if (st.m === 'shop') return STORE_WORK + '(' + sp.label + ')';
+    if (st.m === 'none') return sp.label;
     return sp.label + '(' + (st.s || '　') + ')';
   }
 
@@ -71,12 +76,12 @@
     '@media (min-width:700px){.ssp-bg{align-items:center}.ssp{border-radius:20px}}' +
     '.ssp h2{margin:0 0 2px;font-size:17px;font-weight:900}.ssp .ssp-sub{margin:0 0 12px;color:var(--sg-mute,#5B6675);font-size:12.5px}' +
     '.ssp h3{margin:14px 0 6px;font-size:13px;font-weight:800;color:var(--sg-mute,#5B6675)}' +
-    '.ssp-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--sg-hair,#E3E6EA)}' +
+    '.ssp-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;align-items:center;padding:8px 0;border-top:1px solid var(--sg-hair,#E3E6EA)}' +
+    '.ssp-row input[type=text]{grid-column:1 / -1}.ssp-row input[type=text][hidden]{display:none}' +
+    '.ssp-row select{min-height:40px;padding:0 8px;border:1px solid var(--sg-hair,#E3E6EA);border-radius:10px;background:var(--sg-surface,#fff);color:inherit;font:700 14px/1 var(--sg-font,inherit)}' +
     '.ssp-row:first-of-type{border-top:0}.ssp-row b{font-weight:800;overflow-wrap:anywhere}' +
     '.ssp-row input[type=text]{width:100%;box-sizing:border-box;min-height:40px;padding:0 10px;border:1px solid var(--sg-hair,#E3E6EA);border-radius:10px;background:var(--sg-sunk,#F4F6F8);color:inherit;font:inherit;font-size:16px}' +
-    '.ssp-row input[type=text]:disabled{opacity:.45}' +
-    '.ssp-row label{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--sg-mute,#5B6675);white-space:nowrap}' +
-    '.ssp-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--sg-primary,#0E1A2C)}' +
+
     '.ssp textarea{width:100%;box-sizing:border-box;min-height:180px;padding:10px 12px;border:1px solid var(--sg-hair,#E3E6EA);border-radius:12px;background:var(--sg-sunk,#F4F6F8);color:inherit;' +
     'font:600 15px/1.7 var(--sg-font,inherit);resize:vertical}' +
     '.ssp-btns{display:flex;gap:8px;margin-top:12px}.ssp-btns button{flex:1;min-height:48px;border:0;border-radius:12px;font:800 15px/1 var(--sg-font,inherit);cursor:pointer;background:var(--sg-sunk,#F4F6F8);color:var(--sg-ink,#0E1A2C)}' +
@@ -107,12 +112,12 @@
     bg.className = 'ssp-bg'; box.className = 'ssp';
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'ssp-title');
     box.innerHTML = '<h2 id="ssp-title">Discord用の文（' + esc(o.month) + '月・' + esc(o.name) + '）</h2>'
-      + '<p class="ssp-sub">登録済みのシフトから作りました。場所のあとの（ ）に入れる店舗名は、この端末に覚えておきます。</p>'
-      + (rs.length ? '<h3>店舗名</h3><div id="ssp-places">' + places.map(function (p, i) {
+      + '<p class="ssp-sub">登録済みのシフトから作りました。場所ごとの書き方（店舗名・カッコなし・店舗稼働）は、この端末に覚えておきます。</p>'
+      + (rs.length ? '<h3>場所ごとの書き方</h3><div id="ssp-places">' + places.map(function (p, i) {
           var s = setting(p, mem);
-          return '<div class="ssp-row" data-i="' + i + '"><b>' + esc(split(p).label === p ? p : p) + '</b>'
-            + '<input type="text" maxlength="20" placeholder="例：八代中央" aria-label="' + esc(p) + 'の店舗名" value="' + esc(s.s) + '"' + (s.n ? ' disabled' : '') + '>'
-            + '<label><input type="checkbox"' + (s.n ? ' checked' : '') + '>カッコなし</label></div>';
+          return '<div class="ssp-row" data-i="' + i + '"><b>' + esc(p) + '</b>'
+            + '<select aria-label="' + esc(p) + 'の書き方">' + MODES.map(function (md) { return '<option value="' + md[0] + '"' + (md[0] === s.m ? ' selected' : '') + '>' + md[1] + '</option>'; }).join('') + '</select>'
+            + '<input type="text" maxlength="20" placeholder="店舗名（例：八代中央）" aria-label="' + esc(p) + 'の店舗名" value="' + esc(s.s) + '"' + (s.m === 'store' ? '' : ' hidden') + '></div>';
         }).join('') + '</div>'
         + '<h3>文（直してからコピーもできます）</h3><textarea id="ssp-text" aria-label="Discord用の文" spellcheck="false"></textarea>'
         : '<div class="ssp-empty">この月は、まだ取引先の入ったシフトがありません。</div>')
@@ -122,16 +127,16 @@
     var ta = box.querySelector('#ssp-text'), edited = false;
     function redraw() { if (ta && !edited) ta.value = text(o, mem); }
     function read(row) {
-      var p = places[Number(row.getAttribute('data-i'))], inp = row.querySelector('input[type=text]'), cb = row.querySelector('input[type=checkbox]');
-      inp.disabled = cb.checked;
-      mem[p] = { s: norm(inp.value).replace(/^[（(]|[）)]$/g, ''), n: cb.checked };
+      var p = places[Number(row.getAttribute('data-i'))], inp = row.querySelector('input[type=text]'), sel = row.querySelector('select');
+      inp.hidden = sel.value !== 'store';
+      mem[p] = { m: sel.value, s: norm(inp.value).replace(/^[（(]|[）)]$/g, '') };
       save(mem);
       edited = false;   // 店舗名を変えたら、文は作り直す
       redraw();
     }
     Array.prototype.forEach.call(box.querySelectorAll('.ssp-row'), function (row) {
       row.querySelector('input[type=text]').addEventListener('input', function () { read(row); });
-      row.querySelector('input[type=checkbox]').addEventListener('change', function () { read(row); });
+      row.querySelector('select').addEventListener('change', function () { read(row); });
     });
     if (ta) ta.addEventListener('input', function () { edited = true; });
     redraw();

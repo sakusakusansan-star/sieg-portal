@@ -34,6 +34,7 @@
     justify-content: space-between;
     gap: 8px;
   }
+  .card-head .head-btns { display: flex; gap: 6px; }
   .card-head .req {
     font-family: var(--sg-font); font-variant-numeric: tabular-nums;
     font-size: 10px;
@@ -407,7 +408,7 @@
 
   <!-- 登録済み -->
   <div class="card">
-    <div class="card-head"><span>登録済みのシフト</span><button class="btn small ghost" type="button" id="reload">再読込</button></div>
+    <div class="card-head"><span>登録済みのシフト</span><span class="head-btns"><button class="btn small ghost" type="button" id="post-copy" hidden>Discord用</button><button class="btn small ghost" type="button" id="reload">再読込</button></span></div>
     <div class="day-list" id="day-list"></div>
   </div>
 
@@ -441,6 +442,7 @@
 <script src="gas-client.js"></script>
 <script src="sieg-nav.js"></script>
 <script src="sieg-roster.js"></script>
+<script src="shift-post.js"></script>
 <script>
   /* ═══════════════════════════════════════════════════════════
      設定：Google Apps Script のデプロイURLをここに貼る
@@ -904,6 +906,8 @@
   function renderDayList() {
     var box = $('day-list');
     var days = Object.keys(state.existing).map(Number).sort(function(a, b) { return a - b; });
+    // Discord に貼る文（取引先の入った日が1日でもあれば出す）
+    $('post-copy').hidden = !(window.SiegShiftPost && state.name && days.some(function(d) { return state.existing[d] && state.existing[d].client; }));
     if (!days.length) {
       box.innerHTML = '<div class="empty-note">' +
         (state.name ? 'この月の登録はまだありません。上のカレンダーで日にちを選んで送ると、ここに並びます。' : '右上で名前をえらぶと表示されます。') + '</div>';
@@ -1186,6 +1190,9 @@
     $('m-prev').addEventListener('click', function() { stepMonth(-1); });
     $('m-next').addEventListener('click', function() { stepMonth(1); });
     $('reload').addEventListener('click', loadExisting);
+    $('post-copy').addEventListener('click', function() {
+      if (window.SiegShiftPost) SiegShiftPost.open({ name: state.name, year: state.year, month: state.month, days: state.existing });
+    });
     $('ov-cancel').addEventListener('click', closeOv);
     $('ov-go').addEventListener('click', function() { closeOv(); send(); });
     $('ov').addEventListener('click', function(e) { if (e.target === $('ov')) closeOv(); });

@@ -7,7 +7,9 @@
    ・取引先の無い日（希望休など）は入れない
    ・場所のあとの（ ）は担当店舗。場所ごとに「店舗名を付ける／カッコなし／店舗稼働」を選び、この端末に覚えておく
    ・店舗名がまだ無い場所は「(　)」（埋め忘れに気づけるように）
-   ・店舗稼働の場所（開催場所に店舗の名前だけを書いた日。例：健軍）は「店舗稼働(健軍)」
+   ・店舗稼働の場所は「店舗稼働(健軍)」。全員共通で決まる（端末で選び直した場所はそちらが先）
+       - 頭に SB・ソフトバンク・ドコモ などが付いた場所（「sb 玉名」「ソフトバンク松橋」→ 店舗稼働(玉名)・店舗稼働(松橋)）
+       - 店舗の地名の一覧（SHOPS）に当てはまる場所（「健軍」→ 店舗稼働(健軍)）。ほかの言葉が付いた場所（DCM東バイパス）は当てはめない
    使い方：SiegShiftPost.open({ name: '福山', year: 2026, month: 12, days: { 1: { client, place }, … } })
              SiegShiftPost.text(…) は文だけ返す（テスト用）
    ═══════════════════════════════════════════════════════════ */
@@ -15,7 +17,9 @@
   'use strict';
   var KEY = 'siegShiftPostStores';          // { 開催場所: { m: 'store'|'none'|'shop', s: 店舗名 } }（前の形 { s, n } も読む）
   var NO_PAREN = ['下通', 'ゆめタウン大牟田'];  // 古川さんの投稿でカッコを付けていない場所（覚えていなければこれを初めの値に）
-  var SHOPS = ['健軍'];                       // 店舗稼働の場所（覚えていなければこれを初めの値に）
+  // 店舗稼働の場所（稼働費の「稼働場所」シートにある店舗：SB健軍・SB松橋…・ドコモ近見）。増えたらここに足す
+  var SHOPS = ['健軍', '松橋', '光の森', '大津', '麻生田', '八代', '八代中央', '玉名', '玉名中央', '熊本西', '東バイパス', '菊池', '上熊本', '上熊', '近見'];
+  var SHOP_PREFIX = /^(?:ＳＢ|SB|ソフトバンク|ドコモ|docomo|ａｕ|au)[\s　・]*/i;
   var MODES = [['store', '店舗名を付ける'], ['none', 'カッコなし'], ['shop', '店舗稼働']];
   var STORE_WORK = '店舗稼働';
 
@@ -31,14 +35,18 @@
       var rest = norm(p.slice(STORE_WORK.length).replace(/^[（(]|[）)]$/g, ''));
       return { label: STORE_WORK, store: /未定|未確定/.test(rest) ? '' : rest };
     }
-    return { label: p, store: '' };
+    // 頭に会社名の付いた店舗（sb 玉名・ソフトバンク松橋）→ 地名だけにして、店舗稼働
+    var area = p, hit = false;
+    while (SHOP_PREFIX.test(area)) { var a2 = norm(area.replace(SHOP_PREFIX, '')); if (!a2 || a2 === area) break; area = a2; hit = true; }
+    if (hit) return { label: area, store: '', shop: true };
+    return { label: p, store: '', shop: SHOPS.indexOf(p) >= 0 };
   }
   // 場所ごとの設定（覚えている値 → なければ初めの値）
   function setting(place, mem) {
     var m = mem[place], sp = split(place);
     if (m) return { s: m.s || '', m: m.m || (m.n ? 'none' : 'store') };
     if (sp.label === STORE_WORK) return { s: sp.store, m: 'store' };
-    return { s: sp.store, m: SHOPS.indexOf(sp.label) >= 0 ? 'shop' : !sp.store && NO_PAREN.indexOf(sp.label) >= 0 ? 'none' : 'store' };
+    return { s: sp.store, m: sp.shop ? 'shop' : !sp.store && NO_PAREN.indexOf(sp.label) >= 0 ? 'none' : 'store' };
   }
   function shown(place, mem) {
     var sp = split(place), st = setting(place, mem);
@@ -63,9 +71,13 @@
   }
   function text(o, mem) {
     mem = mem || load();
-    return runs(o.days).map(function (r) {
-      return o.month + '/' + r.from + (r.to > r.from ? '-' + r.to : '') + ' ' + shown(r.place, mem);
-    }).join('\n');
+    var out = [];
+    runs(o.days).forEach(function (r) {   // 書き方が同じになる続いた日（「sb 玉名」と「玉名」など）もまとめる
+      var t = shown(r.place, mem), last = out[out.length - 1];
+      if (last && last.t === t && last.to === r.from - 1) last.to = r.to;
+      else out.push({ from: r.from, to: r.to, t: t });
+    });
+    return out.map(function (r) { return o.month + '/' + r.from + (r.to > r.from ? '-' + r.to : '') + ' ' + r.t; }).join('\n');
   }
 
   var CSS =

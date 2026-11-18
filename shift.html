@@ -449,7 +449,7 @@
   var SHIFT_API   = 'https://script.google.com/macros/s/AKfycbz_aHJ4v0Q-s5_m_i7G7gomrJeicz_iRWPF1qcafrG16gQtTV8VA7dU2ViTNgcbtTgYTg/exec';
 
   var STAFF    = window.SiegRoster ? SiegRoster.forTool('shiftStaff') : [];   // 名簿は sieg-roster.js
-  var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル'];
+  var CLIENTS  = ['南国殖産', 'ハイコム', 'サンコミ', 'ダル', 'NOON', '九情'];   // シートのプルダウン・パートナー用シフト入力と同じ6つ
   var CARRIERS = ['docomo', 'au', 'SoftBank'];   // 並びは全ツールで docomo → au → SoftBank
   // 開催場所のボタンは3つだけ。近見・下通は固定で、3つ目はよく選ぶ場所に入れ替わる
   // （この端末で送った回数＋その月にもう登録されている回数で決める）。それ以外は入力欄に書く。
@@ -463,7 +463,8 @@
     '南国殖産': { carrier: 'docomo',   place: '近見' },
     'ハイコム': { carrier: 'SoftBank' },
     'サンコミ': { carrier: 'au' },
-    'ダル':     { carrier: 'docomo' }
+    'ダル':     { carrier: 'docomo' },
+    '九情':     { carrier: 'au' }
   };
   var STAFF_KEY = 'siegStaff';   // ポータル本体と共通（名前を1回選べば使い回せる）
   var LAST_KEY  = 'siegShiftLast';

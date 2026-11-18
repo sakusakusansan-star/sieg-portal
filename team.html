@@ -695,11 +695,12 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
-  // パートナー様の新しい稼働費（commute-form/partner.html）。山口さんは12月分から
+  // 新しい稼働費（commute-form/partner.html）。社員もパートナーも同じ画面・同じ GAS。
+  // 社員と山口さんは12月分から（11月分までは前の稼働費のシートから読む）
   var PARTNER_NEW_FROM = { '山口': '2026-12' };
+  var STAFF_NEW_FROM = '2026-12';
   function usesPartnerCommute(name) {
-    if (!R.isPartner(name)) return false;
-    var from = PARTNER_NEW_FROM[name];
+    var from = R.isPartner(name) ? PARTNER_NEW_FROM[name] : STAFF_NEW_FROM;
     return !from || viewYm >= from;
   }
 

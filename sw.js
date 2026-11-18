@@ -9,7 +9,7 @@
  *  - お知らせAPI（GAS）は一切キャッシュせず、常にネットワークへ通す。
  */
 
-var VERSION = 'v82'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
+var VERSION = 'v83'; // アイコン差し替え・資料追加など、配布物を入れ替えたら上げる
 var SHELL_CACHE = 'sieg-shell-' + VERSION;
 var ASSET_CACHE = 'sieg-asset-' + VERSION;
 // 画像・フォント：版を付けない＝更新しても残す。中身が変わったら裏で入れ替わり、消えたファイルはキャッシュからも消える
@@ -35,6 +35,7 @@ var PRECACHE = [
   './sieg-buddy.js',
   './sieg-roster.js',
   './sieg-products.js',
+  './shift-post.js',
   './buddy/body.png',
   './buddy/hold.png',
   './buddy/leg-l.png',

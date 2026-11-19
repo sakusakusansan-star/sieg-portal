@@ -548,7 +548,10 @@ var TOOLS = [
     for:EVERYONE, url:'docs/' },
 
   { id:'post', name:'掲示板に投稿', desc:'お知らせ・会議予定を全員へ共有', ic:'board', c:'amber', group:'B',
-    for:R.forTool('notice'), url:NOTICE_POST }
+    for:R.forTool('notice'), url:NOTICE_POST },
+
+  { id:'contact', name:'連絡先の登録', desc:'電話番号などを登録（みんなの状況で見られます）', ic:'tel', c:'slate', group:'B',
+    for:R.partners || [], withName:true, url:'contact.html' }
 ];
 
 var CONTACTS = [

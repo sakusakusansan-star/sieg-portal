@@ -437,6 +437,10 @@
   .cal .cd.pick { outline: 2px solid var(--t-ink); outline-offset: 1px; }
   .cal-day { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: var(--t-sunk, rgba(0,0,0,.04)); font-size: 13px; font-weight: 800; color: var(--t-ink); }
   .cal-day small { margin-left: 6px; font-weight: 700; color: var(--t-ink2); }
+  /* 連絡先：押すと電話・メール */
+  .ct-row { text-decoration: none; color: inherit; }
+  .ct-row .t { font-variant-numeric: tabular-nums; }
+  .ct-go { font-size: 12px; font-weight: 800; color: var(--t-accent); border: 1px solid currentColor; border-radius: 999px; padding: 3px 10px; }
   .cal .cd.on { background: var(--fc, #64748B); box-shadow: none; }
   .cal .cd.on .n, .cal .cd.on .f { color: #fff !important; }
   .cal .cd.today { box-shadow: inset 0 0 0 2px var(--t-ink); }
@@ -1377,6 +1381,22 @@
       im.remove();
     });
   }
+  var contacts = null, contactsErr = '';
+  function telHref(t) { return 'tel:' + String(t || '').replace(/[^0-9+]/g, ''); }
+  function contactCard(name) {
+    var c = contacts && contacts[name], partner = R.isPartner(name);
+    if (!c && !partner) return '';   // 社員はポータルの「緊急連絡先」にある
+    var h = '<div class="scard ct"><h3>連絡先<span>' + (c && c.at ? esc(c.at.replace(/^(\d{4})-0?(\d+)-0?(\d+)$/, '$2/$3')) + ' 登録' : '') + '</span></h3>';
+    if (contacts === null) return h + '<div class="pd-empty">読み込み中…</div></div>';
+    if (contactsErr) return h + '<div class="pd-empty">' + esc(contactsErr) + '</div></div>';
+    if (!c) return h + '<div class="pd-empty">まだ登録されていません。本人がポータルの「連絡先の登録」から入れます。</div></div>';
+    h += '<a class="pd-li ct-row" href="' + telHref(c.tel) + '"><span class="d">電話</span><span class="t">' + esc(c.tel) + '</span><span class="a ct-go">発信</span></a>';
+    if (c.mail) h += '<a class="pd-li ct-row" href="mailto:' + esc(c.mail) + '"><span class="d">メール</span><span class="t">' + esc(c.mail) + '</span><span class="a ct-go">送る</span></a>';
+    if (c.emName || c.emTel) h += c.emTel
+      ? '<a class="pd-li ct-row" href="' + telHref(c.emTel) + '"><span class="d">緊急</span><span class="t">' + esc(c.emName || '緊急連絡先') + '<small>' + esc(c.emTel) + '</small></span><span class="a ct-go">発信</span></a>'
+      : '<div class="pd-li"><span class="d">緊急</span><span class="t">' + esc(c.emName) + '</span><span class="a"></span></div>';
+    return h + '</div>';
+  }
   function personHtml(name) {
     var partner = R.isPartner(name), y = Number(viewYm.slice(0, 4)), m = Number(viewYm.slice(5, 7));
     var h = '';
@@ -1405,6 +1425,7 @@
     var ca = c && !c.error && !c.pending && !c.none ? c.amount : 0, ka = k && !k.error && !k.none ? k.amount : 0;
     h += '<div class="pd-kp"><div><small>獲得</small><b>' + tot + '<i>件</i></b></div><div><small>戦闘力</small><b>' + fmt(pw) + '</b><em>' + (nx ? nx[0] + 'まで あと ' + fmt(nx[1] - pw) : '最高ランク') + '</em></div>'
       + '<div><small>稼働費＋経費</small><b>¥' + fmt(ca + ka) + '</b></div></div>';
+    h += contactCard(name);
     h += '<div class="scard"><h3>獲得の内訳<span>' + tot + '件・' + fmt(pw) + 'pt</span></h3>' + (gl.length ? gl.map(function (g) {
       return '<div class="pd-li"><span class="d">' + esc(P.carrierLabel ? P.carrierLabel(g.carrier) : g.carrier) + '</span><span class="t">' + esc(g.label) + '<small>' + g.n + '件 × ' + g.pt + 'pt</small></span><span class="a">' + fmt(g.pt * g.n) + 'pt</span></div>';
     }).join('') : '<div class="pd-empty">この月の獲得報告はありません。</div>') + '</div>';
@@ -1929,7 +1950,17 @@
   var TOKEN_KEY = 'siegTeamToken';
   function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
   function setToken(t) { try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
-  function unlock() { document.querySelector('.app').classList.remove('locked'); $('gate').hidden = true; load(); }
+  function unlock() { document.querySelector('.app').classList.remove('locked'); $('gate').hidden = true; load(); loadContacts(); }
+  // 連絡先（パートナー本人が「連絡先の登録」で入れたもの）。合言葉の通行証で読む。端末には残さない
+  function loadContacts() {
+    contacts = null; contactsErr = '';
+    GasClient.post(P.API, { action: 'contacts', token: getToken() }, { retry: true }).then(function (r) {
+      if (!r || !r.ok) throw new Error((r && r.error) || '読めませんでした');
+      contacts = {};
+      (r.people || []).forEach(function (x) { contacts[x.name] = x; });
+    }).catch(function (e) { contactsErr = /不明|Unknown|action/i.test(e.message) ? 'まだ準備中です（日報の GAS の更新待ち）' : e.message; contacts = {}; })
+      .then(function () { refreshPerson(); });
+  }
   function showGate(msg) {
     document.querySelector('.app').classList.add('locked');
     $('gate').hidden = false; $('gate-msg').textContent = msg || '';

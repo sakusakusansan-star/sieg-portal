@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>連絡先の登録｜Sieg 業務ポータル</title>
+<meta name="description" content="パートナーさんの連絡先（電話・緊急連絡先）を登録するページ。登録した内容は、みんなの状況（合言葉が必要）だけで見られる。">
+<meta name="theme-color" content="#EFF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<link rel="stylesheet" href="sieg-theme.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; -webkit-tap-highlight-color: transparent; }
+  button, input { font: inherit; color: inherit; }
+  .app { max-width: var(--sg-page-w, 560px); margin: 0 auto; padding: 0 16px 24px; }
+  .lead { margin: 4px 2px 14px; font-size: 13.5px; line-height: 1.7; color: var(--sg-mute); }
+  .lead b { color: var(--sg-ink); }
+  .card { background: var(--sg-surface); border-radius: var(--sg-r, 16px); box-shadow: var(--sg-lift); padding: 18px 16px; margin-bottom: 14px; }
+  .st { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; font-size: 14px; line-height: 1.6; font-weight: 700; }
+  .st.ok { background: var(--sg-green-tint); color: var(--sg-green); }
+  .st.no { background: var(--sg-amber-tint); color: var(--sg-amber); }
+  .st small { display: block; font-weight: 600; color: var(--sg-mute); }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .label { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 13px; font-weight: 800; color: var(--sg-ink2, var(--sg-ink)); }
+  .req { font-size: 11px; font-weight: 800; color: var(--sg-red); background: var(--sg-red-tint); border-radius: 6px; padding: 1px 6px; }
+  .opt { font-size: 11px; font-weight: 700; color: var(--sg-mute); }
+  input[type=tel], input[type=email], input[type=text] { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid var(--sg-hair); border-radius: var(--sg-r-sm, 10px); background: var(--sg-sunk); font-size: 16px; }
+  input:focus { outline: 2px solid var(--sg-primary); outline-offset: 1px; }
+  .sub-h { margin: 4px 0 10px; font-size: 13px; font-weight: 800; color: var(--sg-mute); }
+  .msg { min-height: 20px; margin: 10px 2px 0; font-size: 13.5px; font-weight: 700; color: var(--sg-red); }
+  .note { margin: 8px 2px 0; font-size: 12px; line-height: 1.6; color: var(--sg-mute); }
+  body.has-actionbar { padding-bottom: calc(24px + var(--sg-actionbar-h, 76px)); }
+</style>
+</head>
+<body class="has-actionbar">
+<div class="app sg-page">
+  <div data-sieg-back></div>
+  <header class="sg-head">
+    <div><h1 class="sg-title">連絡先の登録</h1></div>
+    <button type="button" class="sg-who" id="who" aria-label="名前を変える"><i id="who-i">?</i><span id="who-n">名前を選ぶ</span></button>
+  </header>
+  <p class="lead">急ぎの連絡用に、電話番号を登録してください。<br>登録した内容は、<b>みんなの状況（合言葉が必要）でだけ</b>見られます。この画面には出ません。</p>
+
+  <div class="st" id="status" hidden></div>
+
+  <form class="card" id="form" autocomplete="on" novalidate>
+    <div class="field">
+      <label class="label" for="tel">電話番号 <span class="req">必須</span></label>
+      <input type="tel" id="tel" name="tel" inputmode="tel" autocomplete="tel" placeholder="例：090-1234-5678">
+    </div>
+    <div class="field">
+      <label class="label" for="mail">メール <span class="opt">任意</span></label>
+      <input type="email" id="mail" name="email" inputmode="email" autocomplete="email" placeholder="例：name@example.com">
+    </div>
+    <div class="sub-h">緊急連絡先（ご家族など・任意）</div>
+    <div class="field">
+      <label class="label" for="em-name">名前・続柄 <span class="opt">任意</span></label>
+      <input type="text" id="em-name" maxlength="30" autocomplete="off" placeholder="例：山田花子（母）">
+    </div>
+    <div class="field">
+      <label class="label" for="em-tel">電話番号 <span class="opt">任意</span></label>
+      <input type="tel" id="em-tel" inputmode="tel" autocomplete="off" placeholder="例：096-123-4567">
+    </div>
+  </form>
+  <div class="msg" id="msg" role="alert"></div>
+  <p class="note">番号が変わったときは、もう一度入れて送ってください（前の内容に上書きします）。</p>
+
+  <div class="sg-actionbar"><button type="button" class="sg-primary" id="send">登録する</button></div>
+</div>
+
+<script src="gas-client.js"></script>
+<script src="sieg-nav.js"></script>
+<script src="sieg-roster.js"></script>
+<script>
+(function () {
+  'use strict';
+  var API = 'https://script.google.com/macros/s/AKfycbwEclDIdJiNgdXOmveRvT-BJOVWc6FwyrpxWNrqHs1DB9xgx9Ijuix0qqQ5KyG-XlkF7w/exec';   // 日報の GAS（連絡先シート）
+  var R = window.SiegRoster || { partners: [] };
+  var NAMES = R.partners || [];   // 登録するのはパートナーさん
+  var $ = function (id) { return document.getElementById(id); };
+  var urlName = new URLSearchParams(location.search).get('staff') || '';
+  var name = NAMES.indexOf(urlName) >= 0 ? urlName : (window.SiegNav ? SiegNav.staff(NAMES) : '');
+
+  function paintWho() {
+    $('who-n').textContent = name || '名前を選ぶ';
+    $('who-i').textContent = name ? name.charAt(0) : '?';
+  }
+  function pickWho() {
+    return SiegNav.pickName(NAMES, name, { title: '名前を選ぶ' }).then(function (n) {
+      if (n) { name = n; SiegNav.setStaff(n); paintWho(); loadStatus(); }
+      return n;
+    });
+  }
+  $('who').onclick = pickWho;
+
+  // 登録したかどうか（番号の下4桁と日付だけ。中身はこの画面には出さない）
+  function paintStatus(st) {
+    var el = $('status');
+    if (!st) { el.hidden = true; return; }
+    el.hidden = false;
+    if (st.registered) {
+      el.className = 'st ok';
+      el.innerHTML = '<span>登録済みです<small></small></span>';
+      el.querySelector('small').textContent = (st.at ? st.at.replace(/^(\d{4})-0?(\d+)-0?(\d+)$/, '$2月$3日') + 'に登録・' : '') + '電話番号の下4桁 ' + (st.tel4 || '—');
+    } else {
+      el.className = 'st no';
+      el.innerHTML = '<span>まだ登録されていません<small>下の欄に入れて「登録する」を押してください</small></span>';
+    }
+  }
+  function loadStatus() {
+    paintStatus(null);
+    if (!name) return;
+    var want = name;
+    GasClient.get(API, { action: 'contactStatus', name: want }).then(function (st) {
+      if (want === name && st && st.ok) paintStatus(st);
+    }).catch(function () {});
+  }
+
+  function send() {
+    var msg = $('msg'), b = $('send');
+    msg.textContent = '';
+    if (!name) { pickWho(); return; }
+    var tel = $('tel').value.trim();
+    if (!tel) { msg.textContent = '電話番号を入れてください'; $('tel').focus(); return; }
+    b.disabled = true; b.textContent = '登録中…';
+    GasClient.post(API, { action: 'contactSave', name: name, tel: tel, mail: $('mail').value.trim(), emName: $('em-name').value.trim(), emTel: $('em-tel').value.trim() }, { retry: true })
+      .then(function (r) {
+        if (!r || !r.ok) throw new Error((r && r.error) || '登録できませんでした');
+        ['tel', 'mail', 'em-name', 'em-tel'].forEach(function (id) { $(id).value = ''; });   // 入れた番号は画面に残さない
+        paintStatus(r.status);
+        SiegNav.done({ title: '登録しました', sub: 'みんなの状況で見られるようになりました', next: [{ label: 'ポータルへ', href: SiegNav.portalUrl, primary: true }, { label: '閉じる' }] });
+      })
+      .catch(function (e) { msg.textContent = e.message || '登録できませんでした。電波のよいところで、もう一度押してください'; })
+      .then(function () { b.disabled = false; b.textContent = '登録する'; });
+  }
+  $('send').onclick = send;
+  $('form').addEventListener('submit', function (e) { e.preventDefault(); send(); });
+
+  paintWho();
+  loadStatus();
+})();
+</script>
+</body>
+</html>

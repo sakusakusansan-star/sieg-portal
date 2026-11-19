@@ -266,7 +266,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
     }
     // 日報へのAIのひとこと（ほめる・のびた・ヒント）
     var ch = d.cheer && d.cheer.ok && d.cheer.text ? d.cheer : null;
-    if (ch) out.push({ html: esc(ch.text) + (ch.grow ? '<small>のびた：' + esc(ch.grow) + '</small>' : '') + (ch.hint ? '<small>ヒント：' + esc(ch.hint) + '</small>' : '') });
+    if (ch) out.push({ html: esc(ch.text) + (ch.grow ? '<small>のびた：' + esc(ch.grow) + '</small>' : '') + (ch.hint ? '<small>アドバイス：' + esc(ch.hint) + '</small>' : '') });
     // 日報
     var needNippou = partner && canUse('nippou') && sh.today && !sent;
     if (partner && canUse('nippou') && sent) out.push({ html: 'にっぽう ありがと！ おつかれさま' });

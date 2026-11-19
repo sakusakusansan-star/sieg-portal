@@ -75,8 +75,8 @@
     { name: 'サンコミ', carrier: 'au', place: '', color: '#6A1B9A' }, { name: 'ダル', carrier: 'docomo', place: '', color: '#00838F' },
     { name: 'NOON', carrier: '', place: '', color: '#AD1457' }, { name: '九情', carrier: 'au', place: '', color: '#1565C0' }];
   var DEFAULT_PLACES = [{ name: '下通', noParen: true }, { name: 'ゆめタウン大牟田', noParen: true }].concat(
-    ['健軍', '松橋', '光の森', '大津', '麻生田', '八代', '八代中央', '玉名', '玉名中央', '熊本西', '東バイパス', '菊池', '上熊本', '近見']
-      .map(function (n) { return { name: n, shop: true, alias: n === '上熊本' ? ['上熊'] : [] }; }));
+    ['健軍', '松橋', '光の森', '大津', '麻生田', '八代', '玉名', '熊本西', '東バイパス', '菊池', '上熊本', '近見']
+      .map(function (n) { return { name: n, shop: true, alias: { 上熊本: ['上熊'], 八代: ['八代中央'], 玉名: ['玉名中央'] }[n] || [] }; }));
   var CLIENTS = DEFAULT_CLIENTS, PLACES = DEFAULT_PLACES;
   function validList(l) { return Object.prototype.toString.call(l) === '[object Array]' && l.every(function (x) { return x && typeof x.name === 'string' && x.name; }); }
   function useMaster(c, pl) {

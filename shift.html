@@ -468,6 +468,14 @@
     'ダル':     { carrier: 'docomo' },
     '九情':     { carrier: 'au' }
   };
+  // 取引先はポータルの「取引先」の一覧（みんなの状況で直す）。読めなければ上のまま
+  if (window.SiegRoster && SiegRoster.clients && SiegRoster.clients().length) {
+    CLIENTS = SiegRoster.clients().map(function(c) { return c.name; });
+    PRESET = {};
+    SiegRoster.clients().forEach(function(c) {
+      if (c.carrier || c.place) PRESET[c.name] = c.place ? { carrier: c.carrier, place: c.place } : { carrier: c.carrier };
+    });
+  }
   var STAFF_KEY = 'siegStaff';   // ポータル本体と共通（名前を1回選べば使い回せる）
   var LAST_KEY  = 'siegShiftLast';
 

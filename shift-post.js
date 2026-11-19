@@ -7,6 +7,7 @@
    ・取引先の無い日（希望休など）は入れない
    ・場所のあとの（ ）は担当店舗。場所ごとに「店舗名を付ける／カッコなし／店舗稼働」を選び、この端末に覚えておく
    ・店舗名がまだ無い場所は「(　)」（埋め忘れに気づけるように）
+   ・場所の書き方は、まず場所の一覧（みんなの状況の「場所」：店舗稼働・カッコなし・担当店舗）で決まる。一覧に無い場所は下の決まり
    ・店舗稼働の場所は「店舗稼働(健軍)」。全員共通で決まる（端末で選び直した場所はそちらが先）
        - 頭に SB・ソフトバンク・ドコモ などが付いた場所（「sb 玉名」「ソフトバンク松橋」→ 店舗稼働(玉名)・店舗稼働(松橋)）
        - 店舗の地名の一覧（SHOPS）に当てはまる場所（「健軍」→ 店舗稼働(健軍)）。ほかの言葉が付いた場所（DCM東バイパス）は当てはめない
@@ -35,6 +36,9 @@
       var rest = norm(p.slice(STORE_WORK.length).replace(/^[（(]|[）)]$/g, ''));
       return { label: STORE_WORK, store: /未定|未確定/.test(rest) ? '' : rest };
     }
+    // 場所の一覧（みんなの状況の「場所」）にあれば、そこで決めた書き方（店舗稼働・カッコなし・担当店舗）
+    var mp = global.SiegRoster && global.SiegRoster.findPlace ? global.SiegRoster.findPlace(p) : null;
+    if (mp) return { label: mp.name, store: mp.store || '', shop: !!mp.shop, noParen: !!mp.noParen, master: true };
     // 頭に会社名の付いた店舗（sb 玉名・ソフトバンク松橋）→ 地名だけにして、店舗稼働
     var area = p, hit = false;
     while (SHOP_PREFIX.test(area)) { var a2 = norm(area.replace(SHOP_PREFIX, '')); if (!a2 || a2 === area) break; area = a2; hit = true; }
@@ -46,6 +50,7 @@
     var m = mem[place], sp = split(place);
     if (m) return { s: m.s || '', m: m.m || (m.n ? 'none' : 'store') };
     if (sp.label === STORE_WORK) return { s: sp.store, m: 'store' };
+    if (sp.master) return { s: sp.store, m: sp.shop ? 'shop' : sp.noParen ? 'none' : 'store' };
     return { s: sp.store, m: sp.shop ? 'shop' : !sp.store && NO_PAREN.indexOf(sp.label) >= 0 ? 'none' : 'store' };
   }
   function shown(place, mem) {

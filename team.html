@@ -377,6 +377,11 @@
   .mem-tags .c-docomo { background: var(--sg-docomo); color: #fff; } .mem-tags .c-au { background: var(--sg-au); color: #fff; } .mem-tags .c-Softbank { background: var(--sg-softbank); color: #fff; }
   .mem-tags .none { background: none; color: var(--t-faint); padding-left: 0; }
   .mem-edit { flex: none; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--t-hair); background: var(--t-card); color: var(--t-accent); font-weight: 800; font-size: 13.5px; cursor: pointer; }
+  .mem-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 8px; }
+  .mem-tools .snote { margin: 0; }
+  .cl-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  .mem-tags .addr { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mem-tags .warn { color: var(--t-gold, #8A5A00); border-color: currentColor; }
   .mem-add { min-height: 40px !important; padding: 0 14px !important; border-radius: 10px; background: var(--t-navy2) !important; color: #fff !important; }
   .mem-hid { margin-top: 14px; }
   .mem-hid summary { cursor: pointer; font-size: 13px; font-weight: 800; color: var(--t-mute); padding: 8px 4px; }
@@ -646,6 +651,18 @@
     <p class="snote" style="margin-top:12px">ここで直すと、ポータルと各ツールの名前の一覧が変わります（各自が次に開いたときから。遅くても10分ほど）。<br>
       外しても、これまでの日報・獲得・稼働費・経費の記録は消えません。名前はあとから変えられないので、変えたいときは外して新しく追加してください。<br>
       シフト表の行・稼働費や経費精算のシートは、その人がはじめて使うときに Google 側で自動で作ります。社員で稼働費を使う人だけ、本人が稼働費の画面で自宅を登録してください。</p>
+
+    <!-- 取引先・場所の一覧（日報の GAS の「取引先」「場所」シート。ポータルと各ツールが使う） -->
+    <div class="sec" style="margin-top:22px"><span>取引先</span><button type="button" class="mem-add" id="cl-add">＋ 取引先を追加</button></div>
+    <div class="snote">シフト入力の取引先のボタン・シフト表の集計・この画面の色に使います。</div>
+    <div class="mem-list" id="cl-list"></div>
+    <details class="mem-hid" id="cl-hid-box" hidden><summary id="cl-hid-sum">外した取引先</summary><div class="mem-list" id="cl-hid"></div></details>
+    <div class="sec" style="margin-top:22px"><span>場所</span><button type="button" class="mem-add" id="pl-add">＋ 場所を追加</button></div>
+    <div class="snote">シフトの開催場所の書き方ごとに、住所・店舗稼働・担当店舗を決めます。稼働費の距離（シフトからまとめて入れる）と Discord用の文に使います。<br>
+      「sb 玉名」「SB玉名」「玉名」のように、頭の会社名と空白はちがっても同じ場所として見つけます。</div>
+    <div class="mem-tools"><button type="button" class="mem-edit" id="pl-import">稼働費の場所から取り込む</button><span class="snote" id="pl-msg" role="status"></span></div>
+    <div class="mem-list" id="pl-list"></div>
+    <details class="mem-hid" id="pl-hid-box" hidden><summary id="pl-hid-sum">外した場所</summary><div class="mem-list" id="pl-hid"></div></details>
   </div>
 
   <div class="pd-bg" id="mem-bg" hidden>
@@ -1241,6 +1258,8 @@
   var NO_FLOW = '商流なし', UNSET_FLOW = '商流未選択', NO_SHIFT = 'シフト未取得';
   // 取引先の色（シフトのグラフ・商流のグラフと表・詳しい画面のカレンダーとタグで同じ）。稼働費の青・経費のオレンジとは別の色にしている
   var FLOW_COLORS = { '南国殖産': '#BE123C', 'ハイコム': '#15803D', 'サンコミ': '#7C3AED', 'ダル': '#4F46E5', 'NOON': '#A16207', '九情': '#0E7490' };
+  // 取引先の一覧（名簿タブの「取引先」）で決めた色があれば、そちらを使う（シフト入力と同じ色になる）
+  if (R.allClients) R.allClients().forEach(function (c) { if (c.color) FLOW_COLORS[c.name] = c.color; });
   function flowColor(f) { return FLOW_COLORS[f] || '#64748B'; }
   function flowDot(f) { return '<i class="fdot" style="--fc:' + (FLOW_COLORS[f] || 'var(--t-faint)') + '"></i>'; }
   // 経費は入力のときに選んだ商流（「なし」＝会社の経費など、空＝まだ選んでいない）。稼働費はその日のシフトの取引先
@@ -1824,7 +1843,8 @@
     (R.refresh ? R.refresh(true) : Promise.resolve(null)).then(function (r) {
       mem.loading = false;
       if (r && r.people) { mem.list = r.people.map(function (x) { var o = {}; for (var k in x) o[k] = x[k]; return o; }); mem.ready = true; }
-      renderMembers();
+      if (R.allClients) { master.clients = R.allClients(); master.places = R.allPlaces(); }
+      renderMembers(); if (typeof renderMaster === 'function') renderMaster();
     });
   }
   function memOpen(name) {
@@ -1894,7 +1914,7 @@
         if (gasNotReady(r)) { $('mem-msg').textContent = 'まだ準備中です（日報の GAS の入れ替えがまだのようです）'; return; }
         if (!r || !r.ok || !r.people) { $('mem-msg').textContent = (r && r.error) || '保存できませんでした'; return; }
         mem.list = r.people; mem.ready = true; mem.changed = true;
-        if (R.save) R.save(r.people);
+        if (R.save) R.save(r.people, r);
         renderMembers();
         var after = op === 'hide' ? [] : person.tools;
         memDone(op, person, op === 'add' ? after : after.filter(function (t) { return before.indexOf(t) < 0; }), cur && cur.group !== person.group);
@@ -1942,6 +1962,125 @@
     $(id).addEventListener('click', function (e) { var b = e.target.closest('[data-mem-edit]'); if (b) memOpen(b.getAttribute('data-mem-edit')); });
   });
   renderMembers();
+
+  // ── 取引先・場所の一覧（直すのは masterSave、取り込みは masterImport。どちらも通行証が要る） ──
+  var CAR_LABEL = { docomo: 'docomo', au: 'au', SoftBank: 'SoftBank' };
+  var master = { clients: R.allClients ? R.allClients() : [], places: R.allPlaces ? R.allPlaces() : [] };
+  function clRow(c) {
+    var tags = (c.color ? '<span><i class="cl-dot" style="background:' + esc(c.color) + '"></i>色</span>' : '')
+      + (c.carrier ? '<span class="c-' + esc(c.carrier === 'SoftBank' ? 'Softbank' : c.carrier) + '">' + esc(CAR_LABEL[c.carrier] || c.carrier) + '</span>' : '')
+      + (c.place ? '<span>いつも ' + esc(c.place) + '</span>' : '');
+    return '<div class="mem-row' + (c.hidden ? ' off' : '') + '"><span class="av" style="background:' + esc(c.color || '#64748B') + '" aria-hidden="true">' + esc(c.name.slice(0, 1)) + '</span>'
+      + '<div class="mem-main"><b>' + esc(c.name) + '</b><div class="mem-tags">' + (tags || '<span class="none">キャリア・いつもの場所なし</span>') + (c.hidden ? '<span class="none">' + esc(c.hidden) + ' に外した</span>' : '') + '</div></div>'
+      + '<button type="button" class="mem-edit" data-ms="client" data-ms-name="' + esc(c.name) + '">' + (c.hidden ? '戻す' : '直す') + '</button></div>';
+  }
+  function plRow(p) {
+    var tags = (p.shop ? '<span>店舗稼働</span>' : p.noParen ? '<span>カッコなし</span>' : p.store ? '<span>（' + esc(p.store) + '）</span>' : '')
+      + (p.address ? '<span class="addr">' + esc(p.address) + '</span>' : '<span class="warn">住所なし</span>')
+      + ((p.alias || []).length ? '<span class="none">別名 ' + esc(p.alias.join('・')) + '</span>' : '');
+    return '<div class="mem-row' + (p.hidden ? ' off' : '') + '"><span class="av" aria-hidden="true">' + esc(p.name.slice(0, 1)) + '</span>'
+      + '<div class="mem-main"><b>' + esc(p.name) + '</b><div class="mem-tags">' + tags + (p.hidden ? '<span class="none">' + esc(p.hidden) + ' に外した</span>' : '') + '</div></div>'
+      + '<button type="button" class="mem-edit" data-ms="place" data-ms-name="' + esc(p.name) + '">' + (p.hidden ? '戻す' : '直す') + '</button></div>';
+  }
+  function renderMaster() {
+    var c = master.clients, pl = master.places.slice().sort(function (a, b) { return (b.shop - a.shop) || a.name.localeCompare(b.name, 'ja'); });
+    $('cl-list').innerHTML = c.filter(function (x) { return !x.hidden; }).map(clRow).join('') || '<div class="snote">まだありません</div>';
+    $('pl-list').innerHTML = pl.filter(function (x) { return !x.hidden; }).map(plRow).join('') || '<div class="snote">まだありません。「稼働費の場所から取り込む」を押すと、住所つきで入ります。</div>';
+    var ch = c.filter(function (x) { return x.hidden; }), ph = pl.filter(function (x) { return x.hidden; });
+    $('cl-hid-box').hidden = !ch.length; $('cl-hid-sum').textContent = '外した取引先（' + ch.length + '）'; $('cl-hid').innerHTML = ch.map(clRow).join('');
+    $('pl-hid-box').hidden = !ph.length; $('pl-hid-sum').textContent = '外した場所（' + ph.length + '）'; $('pl-hid').innerHTML = ph.map(plRow).join('');
+    ['cl-add', 'pl-add', 'pl-import'].forEach(function (id) { $(id).disabled = !mem.ready; });
+    document.querySelectorAll('[data-ms]').forEach(function (b) { b.disabled = !mem.ready; });
+  }
+  function useMasterResp(r) {
+    if (r.clients) master.clients = r.clients;
+    if (r.places) master.places = r.places;
+    if (r.people && R.save) R.save(r.people, r);
+    renderMaster();
+  }
+  function msOpen(kind, name) {
+    var list = kind === 'client' ? master.clients : master.places;
+    var cur = list.filter(function (x) { return x.name === name; })[0] || null, isNew = !cur;
+    var f = cur ? JSON.parse(JSON.stringify(cur)) : (kind === 'client' ? { name: '', carrier: '', place: '', color: '#64748B' } : { name: '', alias: [], address: '', shop: false, store: '', noParen: false });
+    var label = kind === 'client' ? '取引先' : '場所';
+    var h = '<div class="pd-h"><span class="av" aria-hidden="true">' + esc((f.name || '＋').slice(0, 1)) + '</span>'
+      + '<div><b id="mem-title">' + (isNew ? label + 'を追加' : esc(f.name) + (f.hidden ? '（外した' + label + '）' : '')) + '</b><small>' + label + 'の一覧</small></div>'
+      + '<button type="button" class="x" id="mem-x" aria-label="閉じる">×</button></div><form class="mf" id="ms-form" novalidate>'
+      + '<div><label for="ms-name">名前</label><input type="text" id="ms-name" maxlength="20" autocomplete="off" value="' + esc(f.name) + '" placeholder="' + (kind === 'client' ? '例：ハイコム' : '例：DCMダイキ') + '">'
+      + (kind === 'place' ? '<p class="help">シフトの開催場所に書く名前。名前を変えても、これまでのシフトはそのままです。</p>' : '<p class="help">名前を変えると、シフト表のこれまでの記入はそのまま（前の名前）になります。</p>') + '</div>';
+    if (kind === 'client') {
+      h += '<div><span class="lb">キャリア（選んだときに最初から入れる）</span><div class="seg2" id="ms-carrier">'
+        + [['', 'なし'], ['docomo', 'docomo'], ['au', 'au'], ['SoftBank', 'SoftBank']].map(function (it) { return '<button type="button" data-v="' + it[0] + '" aria-pressed="' + (it[0] === (f.carrier || '')) + '">' + it[1] + '</button>'; }).join('') + '</div></div>'
+        + '<div><label for="ms-place">いつもの開催場所（なくてもよい）</label><input type="text" id="ms-place" maxlength="30" autocomplete="off" value="' + esc(f.place || '') + '" placeholder="例：近見"></div>'
+        + '<div><label for="ms-color">色</label><input type="color" id="ms-color" value="' + esc(f.color || '#64748B') + '" style="width:64px;height:40px;padding:0;border:0;background:none"></div>';
+    } else {
+      h += '<div><label for="ms-addr">住所</label><input type="text" id="ms-addr" maxlength="100" autocomplete="off" value="' + esc(f.address || '') + '" placeholder="例：熊本県熊本市東区御領2丁目25-439-4">'
+        + '<p class="help">稼働費の距離を出すのに使います（Googleマップで見つかる書き方で）。</p></div>'
+        + '<div><label for="ms-alias">別名（シフトでの別の書き方。、で区切る）</label><input type="text" id="ms-alias" maxlength="120" autocomplete="off" value="' + esc((f.alias || []).join('、')) + '" placeholder="例：ダイキ、DCMダイキ東"></div>'
+        + '<div><span class="lb">Discord用の文での書き方</span><div class="seg2" id="ms-mode">'
+        + [['store', '店舗名を付ける'], ['none', 'カッコなし'], ['shop', '店舗稼働']].map(function (it) {
+            var v = f.shop ? 'shop' : f.noParen ? 'none' : 'store';
+            return '<button type="button" data-v="' + it[0] + '" aria-pressed="' + (it[0] === v) + '">' + it[1] + '</button>'; }).join('') + '</div>'
+        + '<p class="help">店舗稼働：「店舗稼働(健軍)」／カッコなし：「下通」／店舗名を付ける：「DCMダイキ(上熊本)」</p></div>'
+        + '<div id="ms-store-box"><label for="ms-store">担当店舗（カッコの中）</label><input type="text" id="ms-store" maxlength="20" autocomplete="off" value="' + esc(f.store || '') + '" placeholder="例：上熊本"></div>';
+    }
+    h += '<p class="msg" id="mem-msg" role="alert"></p>'
+      + '<div class="acts"><button type="button" id="mem-cancel">やめる</button><button type="submit" class="go" id="mem-go">' + (isNew ? '追加する' : f.hidden ? '戻す' : '保存する') + '</button></div>'
+      + (!isNew && !f.hidden ? '<button type="button" class="off-btn" id="ms-off">一覧から外す</button>' : '') + '</form>';
+    $('mem-pd').innerHTML = h;
+    $('mem-bg').hidden = false; document.body.style.overflow = 'hidden'; $('mem-pd').scrollTop = 0;
+    var mode = f.shop ? 'shop' : f.noParen ? 'none' : 'store';
+    if ($('ms-carrier')) $('ms-carrier').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; f.carrier = b.dataset.v; $('ms-carrier').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
+    if ($('ms-mode')) {
+      var syncMode = function () { $('ms-store-box').hidden = mode !== 'store'; };
+      $('ms-mode').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; mode = b.dataset.v; $('ms-mode').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); syncMode(); });
+      syncMode();
+    }
+    if (f.hidden) $('ms-form').querySelectorAll('input, .seg2 button').forEach(function (el) { el.disabled = true; });
+    $('mem-x').onclick = memClose; $('mem-cancel').onclick = memClose;
+    var send = function (op) {
+      var item = { name: $('ms-name').value.trim() };
+      if (!item.name) { $('mem-msg').textContent = '名前を入れてください'; $('ms-name').focus(); return; }
+      if (kind === 'client') { item.carrier = f.carrier || ''; item.place = $('ms-place').value.trim(); item.color = $('ms-color').value; }
+      else { item.address = $('ms-addr').value.trim(); item.alias = $('ms-alias').value; item.shop = mode === 'shop'; item.noParen = mode === 'none'; item.store = mode === 'store' ? $('ms-store').value.trim() : ''; }
+      $('mem-go').disabled = true; $('mem-msg').textContent = '';
+      var busy = $('mem-go').textContent; $('mem-go').textContent = '送っています…';
+      GasClient.post(P.API, { action: 'masterSave', token: getToken(), kind: kind, op: op, key: cur ? cur.name : '', item: op === 'hide' || op === 'show' ? { name: cur.name } : item }, { retry: false }).then(function (r) {
+        if (r && r.expired) { setToken(''); memClose(); showGate('合言葉を確かめられませんでした。入れ直してください。'); return; }
+        if (gasNotReady(r)) { $('mem-msg').textContent = 'まだ準備中です（日報の GAS の入れ替えがまだのようです）'; return; }
+        if (!r || !r.ok) { $('mem-msg').textContent = (r && r.error) || '保存できませんでした'; return; }
+        useMasterResp(r); mem.changed = true; renderMembers(); memClose();
+        SiegNav.toast(label + '「' + item.name + '」を' + { add: '追加しました', update: '保存しました', hide: '外しました', show: '戻しました' }[op]);
+      }).catch(function () { $('mem-msg').textContent = 'つながりませんでした。電波のよいところでもう一度押してください。'; })
+        .then(function () { if ($('mem-go')) { $('mem-go').disabled = false; $('mem-go').textContent = busy; } });
+    };
+    $('ms-form').addEventListener('submit', function (e) { e.preventDefault(); send(isNew ? 'add' : f.hidden ? 'show' : 'update'); });
+    if ($('ms-off')) $('ms-off').onclick = function () {
+      SiegNav.confirm('ポータルと各ツールの一覧に出なくなります。あとで「外した' + label + '」から戻せます。', { title: '「' + f.name + '」を外しますか？', ok: '外す', danger: true }).then(function (ok) { if (ok) send('hide'); });
+    };
+    setTimeout(function () { (isNew ? $('ms-name') : $('mem-x')).focus(); }, 30);
+  }
+  $('cl-add').addEventListener('click', function () { msOpen('client', ''); });
+  $('pl-add').addEventListener('click', function () { msOpen('place', ''); });
+  ['cl-list', 'cl-hid', 'pl-list', 'pl-hid'].forEach(function (id) {
+    $(id).addEventListener('click', function (e) { var b = e.target.closest('[data-ms]'); if (b) msOpen(b.getAttribute('data-ms'), b.getAttribute('data-ms-name')); });
+  });
+  $('pl-import').addEventListener('click', function () {
+    SiegNav.confirm('稼働費の「稼働場所」シート（社員・山口さん）と、パートナーの登録した場所から、場所と住所を取り込みます。もうある場所は、住所が空のときだけ入れます。自宅は入れません。', { title: '稼働費の場所から取り込みますか？', ok: '取り込む' }).then(function (ok) {
+      if (!ok) return;
+      var b = $('pl-import'); b.disabled = true; $('pl-msg').textContent = '取り込んでいます…';
+      GasClient.post(P.API, { action: 'masterImport', token: getToken() }, { retry: false, timeoutMs: 60000 }).then(function (r) {
+        if (r && r.expired) { setToken(''); showGate('合言葉を確かめられませんでした。入れ直してください。'); return; }
+        if (gasNotReady(r)) { $('pl-msg').textContent = 'まだ準備中です（日報の GAS の入れ替えがまだのようです）'; return; }
+        if (!r || !r.ok) { $('pl-msg').textContent = (r && r.error) || '取り込めませんでした'; return; }
+        useMasterResp(r);
+        var im = r.imported || {};
+        $('pl-msg').textContent = '✅ 新しく ' + (im.added || 0) + 'か所・住所を ' + (im.filled || 0) + 'か所入れました' + ((im.skipped || []).length ? '（開けなかった：' + im.skipped.join('・') + '）' : '');
+      }).catch(function () { $('pl-msg').textContent = 'つながりませんでした。もう一度押してください（2回押しても増えません）。'; })
+        .then(function () { b.disabled = !mem.ready; });
+    });
+  });
+  renderMaster();
 
   // ── 入口の合言葉 ──
   // 合言葉そのものは GAS（日報）のスクリプト プロパティ TEAM_PASS にだけあり、このページには書かない。

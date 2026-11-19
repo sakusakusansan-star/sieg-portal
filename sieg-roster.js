@@ -69,18 +69,55 @@
     });
     fromSheet = true;
   }
+  // ─── 取引先・場所の一覧（日報の GAS が名簿と一緒に返す。古い GAS・はじめての端末は下の初めの一覧） ───
+  var DEFAULT_CLIENTS = [
+    { name: '南国殖産', carrier: 'docomo', place: '近見', color: '#2E7D32' }, { name: 'ハイコム', carrier: 'SoftBank', place: '', color: '#E65100' },
+    { name: 'サンコミ', carrier: 'au', place: '', color: '#6A1B9A' }, { name: 'ダル', carrier: 'docomo', place: '', color: '#00838F' },
+    { name: 'NOON', carrier: '', place: '', color: '#AD1457' }, { name: '九情', carrier: 'au', place: '', color: '#1565C0' }];
+  var DEFAULT_PLACES = [{ name: '下通', noParen: true }, { name: 'ゆめタウン大牟田', noParen: true }].concat(
+    ['健軍', '松橋', '光の森', '大津', '麻生田', '八代', '八代中央', '玉名', '玉名中央', '熊本西', '東バイパス', '菊池', '上熊本', '近見']
+      .map(function (n) { return { name: n, shop: true, alias: n === '上熊本' ? ['上熊'] : [] }; }));
+  var CLIENTS = DEFAULT_CLIENTS, PLACES = DEFAULT_PLACES;
+  function validList(l) { return Object.prototype.toString.call(l) === '[object Array]' && l.every(function (x) { return x && typeof x.name === 'string' && x.name; }); }
+  function useMaster(c, pl) {
+    if (validList(c) && c.length) CLIENTS = c;
+    if (validList(pl)) PLACES = pl;
+  }
+  // 場所の名前をくらべる形（空白・全角英数・頭の会社名をのぞく）。「sb 玉名」「SB玉名」「玉名」は同じ（日報の GAS と同じ決まり）
+  var PREFIX = /^(?:ＳＢ|SB|ソフトバンク|ドコモ|docomo|ａｕ|au)[\s　・･]*/i;
+  function placeKey(v) {
+    var t = String(v == null ? '' : v).replace(/[Ａ-Ｚａ-ｚ０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/[\s　]+/g, '');
+    for (var i = 0; i < 3 && PREFIX.test(t); i++) { var t2 = t.replace(PREFIX, ''); if (!t2 || t2 === t) break; t = t2; }
+    return t.toLowerCase();
+  }
+  function findPlace(text) {
+    var k = placeKey(text);
+    if (!k) return null;
+    for (var i = 0; i < PLACES.length; i++) {
+      var p = PLACES[i];
+      if (p.hidden) continue;
+      if (placeKey(p.name) === k || (p.alias || []).some(function (a) { return placeKey(a) === k; })) return p;
+    }
+    return null;
+  }
+
   var cached = null;
   try { cached = JSON.parse(lsGet(CACHE_KEY) || 'null'); } catch (e) { cached = null; }
   if (cached && valid(cached.people)) useSheet(cached.people);
+  if (cached) useMaster(cached.clients, cached.places);
   var firstTime = !fromSheet;
   function sig(list) {
     return JSON.stringify((list || []).map(function (p) { return [p.name, p.group, p.full || '', p.carrier || '', (p.tools || []).join(), p.hidden || '']; }));
   }
   // 新しい名簿を端末に残す（みんなの状況で直したときも使う）。いま使っている名簿と、名前の顔ぶれが違えば true
-  function save(list) {
+  // extra に取引先・場所（clients・places）があれば一緒に残す
+  function save(list, extra) {
     if (!valid(list)) return false;
     var before = PEOPLE.map(function (p) { return p.name; }).join();
-    cached = { t: Date.now(), people: list };
+    cached = { t: Date.now(), people: list,
+      clients: extra && validList(extra.clients) ? extra.clients : (cached && cached.clients) || null,
+      places: extra && validList(extra.places) ? extra.places : (cached && cached.places) || null };
+    useMaster(cached.clients, cached.places);
     lsSet(CACHE_KEY, JSON.stringify(cached));
     return before !== list.filter(function (p) { return !p.hidden; }).map(function (p) { return p.name; }).join();
   }
@@ -101,7 +138,7 @@
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (!j || !j.ok || !valid(j.people)) return null;   // 古い GAS（名簿に未対応）は、いまの名簿のまま
-        var namesChanged = save(j.people);
+        var namesChanged = save(j.people, j);
         return { people: j.people, changed: sig(j.people) !== before, namesChanged: namesChanged };
       })
       .catch(function () { return null; })
@@ -154,6 +191,18 @@
     fullName: function (name) { var p = find(name); return (p && p.full) || ''; },
     /** 獲得報告を開いたときのキャリア（決めていなければ ''） */
     carrier: function (name) { var p = find(name); return (p && p.carrier) || ''; },
+    /** 取引先の一覧（外したものをのぞく）。{ name, carrier, place, color } */
+    clients: function () { return CLIENTS.filter(function (c) { return !c.hidden; }).map(function (c) { return { name: c.name, carrier: c.carrier || '', place: c.place || '', color: c.color || '' }; }); },
+    /** 外したものも入れた取引先・場所（みんなの状況で直す用） */
+    allClients: function () { return CLIENTS.map(function (c) { return JSON.parse(JSON.stringify(c)); }); },
+    allPlaces: function () { return PLACES.map(function (p) { return JSON.parse(JSON.stringify(p)); }); },
+    /** 場所の一覧（外したものをのぞく）。{ name, alias, address, shop, store, noParen } */
+    places: function () { return PLACES.filter(function (p) { return !p.hidden; }).map(function (p) { return JSON.parse(JSON.stringify(p)); }); },
+    /** シフトの開催場所の書き方から、一覧の場所を探す（「sb 玉名」→ 玉名）。見つからなければ null */
+    findPlace: function (text) { var p = findPlace(text); return p ? JSON.parse(JSON.stringify(p)) : null; },
+    placeKey: placeKey,
+    /** 取引先の色（一覧に無ければ ''） */
+    clientColor: function (name) { for (var i = 0; i < CLIENTS.length; i++) if (CLIENTS[i].name === name) return CLIENTS[i].color || ''; return ''; },
     /** そのツールを使う人の名前（並びは PEOPLE の順） */
     forTool: function (id) {
       var t = TOOLS[id];

@@ -50,6 +50,18 @@
     return { left: left, state: 'past', label: '実施済み' };
   }
 
+  // キャンペーンの受付 → { state: 'before'|'on'|'soon'|'off', label }（終了日がなければ「受付中」のまま）
+  function campaign(start, end, today) {
+    if (start && daysBetween(today, start) > 0) return { state: 'before', label: md(start) + 'から（あと' + daysBetween(today, start) + '日）' };
+    if (end) {
+      var left = daysBetween(today, end);
+      if (left < 0) return { state: 'off', label: '受付終了' };
+      if (left <= 14) return { state: 'soon', label: left === 0 ? 'きょうで受付終了' : 'あと' + left + '日で受付終了', left: left };
+      return { state: 'on', label: '受付中（' + md(end) + 'まで）' };
+    }
+    return { state: 'on', label: '受付中' + (start ? '（' + md(start) + '〜）' : '') };
+  }
+
   // ─── ページの中で使う ───
   function paintUpdated(doc, today) {
     var el = doc.querySelector('.updated');
@@ -96,6 +108,21 @@
     cards.filter(function (c) { return c.classList.contains('past'); }).forEach(function (c) { list.insertBefore(c, foot); });
   }
 
+  function initCampaigns(doc, today) {
+    var list = Array.prototype.slice.call(doc.querySelectorAll('.camp[data-start]'));
+    if (!list.length) return;
+    var after = list[list.length - 1];   // 終わったものは、キャンペーンの並びの最後へ
+    list.forEach(function (c) {
+      var st = campaign(c.getAttribute('data-start'), c.getAttribute('data-end'), today), b = doc.createElement('span');
+      b.className = 'camp-state ' + st.state; b.textContent = st.label;
+      (c.querySelector('.camp-top') || c).appendChild(b);
+      if (st.state === 'off') c.classList.add('ended');
+    });
+    list.filter(function (c) { return c.classList.contains('ended'); }).forEach(function (c) {
+      if (c !== after) { after.parentNode.insertBefore(c, after.nextSibling); after = c; }
+    });
+  }
+
   function paintHours(doc, now) {
     var heads = doc.querySelectorAll('.carrier .c-head');
     if (!heads.length) return;
@@ -128,6 +155,11 @@
           if (c.state === 'past') return;
           if (!next || c.left < next.c.left) next = { c: c, date: n.getAttribute('data-date'), what: n.getAttribute('data-short') || '' };
         });
+        var camps = Array.prototype.map.call(page.querySelectorAll('.camp[data-start]'), function (n) { return campaign(n.getAttribute('data-start'), n.getAttribute('data-end'), today); });
+        var ending = camps.filter(function (c) { return c.state === 'soon'; }).sort(function (a, b) { return a.left - b.left; })[0];
+        var onCount = camps.filter(function (c) { return c.state === 'on' || c.state === 'soon'; }).length;
+        if (ending) parts.push('<span class="m-next soon">' + ending.label + 'のキャンペーンあり</span>');
+        else if (onCount) parts.push('<span class="m-next later">受付中のキャンペーン ' + onCount + '件</span>');
         if (next) parts.push('<span class="m-next ' + next.c.state + '">' + md(next.date) + (next.what ? ' ' + esc(next.what) : '') + ' ' + next.c.label + '</span>');
         var f = freshness(updatedOf((page.querySelector('.updated') || {}).textContent), today);
         if (f) parts.push('<span class="m-upd' + (f.stale ? ' stale' : '') + '">' + (f.stale ? '確認が必要かも・' : '') + '最終更新 ' + md(f.ymd) + '</span>');
@@ -137,13 +169,14 @@
   }
   function esc(v) { return String(v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-  global.SiegDocs = { freshness: freshness, parseHours: parseHours, openState: openState, countdown: countdown, jstNow: jstNow, STALE_DAYS: STALE_DAYS };
+  global.SiegDocs = { campaign: campaign, freshness: freshness, parseHours: parseHours, openState: openState, countdown: countdown, jstNow: jstNow, STALE_DAYS: STALE_DAYS };
 
   if (global.document) {
     var doc = global.document, today = jstNow().ymd;
     var run = function () {
       paintUpdated(doc, today);
       initNews(doc, today);
+      initCampaigns(doc, today);
       paintHours(doc);
       if (doc.querySelector('.carrier .c-hours')) setInterval(function () { paintHours(doc); }, 60000);
       initIndex(doc, today);

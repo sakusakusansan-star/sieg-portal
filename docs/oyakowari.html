@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>親子割・学割 2026-2027｜Sieg 資料置き場</title>
+<meta name="description" content="UQ親子応援割・ワイモバ親子割の条件と、割引の組み合わせごとの料金比較（UQ mobile とワイモバイル）。">
+<meta name="theme-color" content="#EFF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1015" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" href="../icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="../sieg-theme.css">
+<link rel="stylesheet" href="docs.css">
+<style>
+.sec-h { display: flex; align-items: center; gap: 8px; margin: 22px 0 10px; font-size: 15px; font-weight: 800; }
+.sec-h .n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--sg-primary); color: var(--sg-on-primary); font-size: 12px; }
+
+/* ── キャンペーン ── */
+.camp { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; margin-bottom: 10px; }
+.camp-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
+.camp-name { font-size: 17px; font-weight: 800; line-height: 1.45; }
+.camp-lead { margin-top: 4px; font-size: 14px; line-height: 1.65; }
+.camp-lead b { color: var(--sg-red); font-variant-numeric: tabular-nums; }
+.camp-state { display: inline-block; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.camp-state.on { background: var(--sg-green-tint); color: var(--sg-green); }
+.camp-state.soon { background: var(--sg-red-tint); color: var(--sg-red); }
+.camp-state.before { background: var(--sg-blue-tint); color: var(--sg-blue); }
+.camp-state.off { background: var(--sg-sunk); color: var(--muted2); }
+.camp.ended { opacity: .6; }
+.camp dl { display: grid; grid-template-columns: 4.8em 1fr; gap: 6px 10px; margin-top: 12px; font-size: 13px; line-height: 1.6; }
+.camp dt { color: var(--muted); font-weight: 700; }
+.camp dd { margin: 0; }
+.camp .note { margin-top: 10px; font-size: 12px; line-height: 1.65; padding: 9px 11px; border-radius: 0 8px 8px 0; background: var(--sg-amber-tint); border-left: 3px solid var(--sg-amber); }
+.camp .note b { color: var(--sg-amber); }
+
+/* ── くらべる ── */
+.pick { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 4px; }
+.pick-row { margin-bottom: 12px; }
+.pick-label { font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 6px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 3px; border-radius: 11px; background: var(--panel2); }
+.seg button { min-height: 44px; padding: 4px 6px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: 800 13px/1.3 var(--sg-font); cursor: pointer; }
+.seg button small { display: block; font-size: 10.5px; font-weight: 700; color: var(--muted2); }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.seg button[aria-pressed="true"] small { color: var(--muted); }
+.seg button:focus-visible { outline: 2px solid var(--sg-primary); outline-offset: 1px; }
+
+.result { margin-top: 12px; }
+.res-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.res-card { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 13px 12px 12px; }
+.res-card.rec { border: 2px solid var(--sg-primary); padding: 12px 11px 11px; }
+.res-card .rec-b { position: absolute; top: -10px; left: 10px; font-size: 10.5px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: var(--sg-primary); color: var(--sg-on-primary); }
+.res-brand { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; }
+.res-brand::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); flex-shrink: 0; }
+.res-plan { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.4; min-height: 2.8em; }
+.res-y1 { margin-top: 8px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.res-price { font-size: 28px; font-weight: 900; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+.res-price small { font-size: 13px; font-weight: 800; margin-left: 1px; }
+.res-y2 { margin-top: 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.res-y2 b { color: var(--text); }
+.cheap { color: var(--sg-red); }
+
+.diff { margin-top: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.diff-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 14px; font-size: 13px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.diff-row:first-child { border-top: 0; }
+.diff-row span { color: var(--muted); font-weight: 700; }
+.diff-row b { font-weight: 800; text-align: right; }
+.diff-row.total { background: var(--panel2); }
+.diff-row.total b { font-size: 16px; }
+.talk { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--sg-blue-tint); color: var(--text); font-size: 13.5px; line-height: 1.7; }
+.talk-h { font-size: 11px; font-weight: 800; color: var(--sg-blue); margin-bottom: 4px; }
+.talk ul { margin: 6px 0 0; padding-left: 1.1em; }
+.talk li { margin-top: 2px; }
+
+.points { display: grid; gap: 8px; }
+.point { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.65; }
+.point b { display: block; font-size: 14px; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="./">‹ 資料置き場</a>
+
+<div class="page-head">
+  <div class="eyebrow">資料置き場</div>
+  <h1>親子割・学割 2026-2027</h1>
+  <div class="lede">キャンペーンの条件と、割引の組み合わせごとの料金をくらべられます。金額は税込・月額です。</div>
+  <div class="updated">最終更新 2026-11-20　金額は2026年11月18日時点</div>
+</div>
+
+<!-- ═══ 1. キャンペーン ═══ -->
+<h2 class="sec-h"><span class="n">1</span>いま受付中のキャンペーン</h2>
+
+<div class="camp" data-start="2026-11-18">
+  <div class="camp-top"><span class="tag softbank">ワイモバイル</span></div>
+  <div class="camp-name">ワイモバ親子割</div>
+  <div class="camp-lead">5〜18歳の子と、同じ家族割引グループの家族が、<b>1年間 毎月1,100円</b>引き。</div>
+  <dl>
+    <dt>受付</dt><dd>2026年11月18日〜（終了日はまだ発表なし）</dd>
+    <dt>対象者</dt><dd>申し込み時に5〜18歳の使用者。同じ家族割引グループの家族の回線も対象</dd>
+    <dt>プラン</dt><dd>シンプル3 M・L（<b>Sは対象外</b>）</dd>
+    <dt>割引</dt><dd>申し込みの翌月から1年間、月1,100円</dd>
+    <dt>契約</dt><dd>新規・乗り換え（番号移行を含む）、機種変更を含むプラン変更</dd>
+  </dl>
+  <div class="note"><b>併用に注意：</b>超！おトク割（セット割なしで1年間 −1,100円）は、おうち割 光セット(A)・家族割引とは一緒に使えません。光セットや家族割がない人ほど差が大きくなります。</div>
+</div>
+
+<div class="camp" data-start="2026-11-19">
+  <div class="camp-top"><span class="tag au">UQ mobile</span></div>
+  <div class="camp-name">UQ親子応援割</div>
+  <div class="camp-lead">18歳以下の子と、同じセット割グループの家族が、<b>1年間 毎月1,100円</b>引き。</div>
+  <dl>
+    <dt>受付</dt><dd>2026年11月19日〜（終了日はまだ発表なし）</dd>
+    <dt>対象者</dt><dd>申し込み時に5〜18歳の使用者。同じ自宅セット割・家族セット割グループの家族も対象</dd>
+    <dt>プラン</dt><dd>コミコミプランバリュー・トクトクプラン2</dd>
+    <dt>割引</dt><dd>条件がそろった翌月から12か月、月1,100円</dd>
+    <dt>特典</dt><dd>コミコミプランバリューなら、3年間使える300GB（My UQ mobile で受け取り。提供月の翌々月まで）</dd>
+  </dl>
+  <div class="note"><b>注意：</b>親子応援割の間は、トクトクプラン2の「月5GB以下で −1,100円」は重ならない（2年目からは効く）。自宅セット割と家族セット割は両方あると自宅セット割になる。家族の au PAY ゴールドカード払いでもゴールドの割引になる。</div>
+</div>
+
+<!-- ═══ 2. くらべる ═══ -->
+<h2 class="sec-h"><span class="n">2</span>条件を選んでくらべる</h2>
+
+<div class="pick" id="pick">
+  <div class="pick-row">
+    <div class="pick-label" id="l-store">どちらのお店？</div>
+    <div class="seg" role="group" aria-labelledby="l-store" data-k="store">
+      <button type="button" data-v="ym">ソフトバンクのお店<small>ワイモバをすすめる</small></button>
+      <button type="button" data-v="uq">au のお店<small>UQをすすめる</small></button>
+    </div>
+  </div>
+  <div class="pick-row">
+    <div class="pick-label" id="l-use">使い方</div>
+    <div class="seg" role="group" aria-labelledby="l-use" data-k="use">
+      <button type="button" data-v="data">データ中心<small>30GB</small></button>
+      <button type="button" data-v="call">通話もする<small>35GB＋10分かけ放題</small></button>
+    </div>
+  </div>
+  <div class="pick-row">
+    <div class="pick-label" id="l-set">セット割</div>
+    <div class="seg" role="group" aria-labelledby="l-set" data-k="set">
+      <button type="button" data-v="none">なし<small>ひとり</small></button>
+      <button type="button" data-v="family">家族割<small>2回線目〜</small></button>
+      <button type="button" data-v="hikari">光セット<small>自宅セット割</small></button>
+    </div>
+  </div>
+  <div class="pick-row">
+    <div class="pick-label" id="l-pay">支払い</div>
+    <div class="seg" role="group" aria-labelledby="l-pay" data-k="pay">
+      <button type="button" data-v="gold">ゴールド<small>カード</small></button>
+      <button type="button" data-v="regular">レギュラー<small>カード</small></button>
+      <button type="button" data-v="none">カードなし<small>口座など</small></button>
+    </div>
+  </div>
+</div>
+
+<div class="result" id="result" aria-live="polite"></div>
+
+<!-- ═══ 3. 説明のポイント ═══ -->
+<h2 class="sec-h"><span class="n">3</span>説明のポイント</h2>
+<div class="points" id="points"></div>
+
+<div class="foot">
+  <h3>金額について</h3>
+  2026年11月18日時点の税込金額です。2年目以降は親子割・UQコミコミおトク割・ワイモバのカード割の増額が終わった後の金額です。2年の差額は「1年目×12か月＋2年目×12か月」で計算しています。<br>
+  キャンペーンは予告なく変わったり終わったりします。案内する前に各社の公式ページで確かめてください。<br><br>
+  <b>違っているところを見つけたら共有をお願いします。すぐ直します。</b>
+</div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // 料金（税込・月額）。[1年目, 2年目〜]。2026年11月18日時点（親子割を含む）
+  var PRICE = {
+    data: {
+      uq: { name: 'UQ mobile', plan: 'トクトクプラン2（〜30GB）', dot: 'var(--sg-au)',
+        none:   { gold: [2728, 3828], regular: [2728, 3828], none: [2948, 4048] },
+        family: { gold: [2178, 3278], regular: [2178, 3278], none: [2398, 3498] },
+        hikari: { gold: [1628, 2728], regular: [1628, 2728], none: [1848, 2948] } },
+      ym: { name: 'ワイモバイル', plan: 'シンプル3 M（30GB）', dot: 'var(--sg-softbank)',
+        none:   { gold: [1408, 3608], regular: [1628, 4048], none: [2178, 4378] },
+        family: { gold: [1408, 2508], regular: [1628, 2948], none: [2178, 3278] },
+        hikari: { gold: [858, 1958],  regular: [1078, 2398], none: [1628, 2728] } }
+    },
+    call: {
+      uq: { name: 'UQ mobile', plan: 'コミコミプランバリュー（35GB＋10分＋300GB）', dot: 'var(--sg-au)',
+        none:   { gold: [2068, 3168], regular: [2068, 3828], none: [2068, 3828] },
+        family: { gold: [2068, 3168], regular: [2068, 3828], none: [2068, 3828] },
+        hikari: { gold: [2068, 3168], regular: [2068, 3828], none: [2068, 3828] } },
+      ym: { name: 'ワイモバイル', plan: 'シンプル3 L（35GB）＋10分かけ放題', dot: 'var(--sg-softbank)',
+        none:   { gold: [2508, 4708], regular: [2728, 5148], none: [3278, 5478] },
+        family: { gold: [2508, 3608], regular: [2728, 4048], none: [3278, 4378] },
+        hikari: { gold: [1958, 3058], regular: [2178, 3498], none: [2728, 3828] } }
+    }
+  };
+  var KEY = 'siegOyakoPick';
+  var st = { store: 'ym', use: 'data', set: 'none', pay: 'gold' };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) Object.keys(st).forEach(function (k) { if (saved[k]) st[k] = saved[k]; }); } catch (e) {}
+
+  function yen(n) { return n.toLocaleString('ja-JP'); }
+  function el(id) { return document.getElementById(id); }
+
+  // 比べた結果（数字は表から。ここで計算するのは差だけ）
+  function compare(s) {
+    var tbl = PRICE[s.use], uq = tbl.uq[s.set][s.pay], ym = tbl.ym[s.set][s.pay];
+    var d1 = uq[0] - ym[0], d2 = uq[1] - ym[1];   // プラスならワイモバが安い
+    return { uq: uq, ym: ym, d1: d1, d2: d2, total: d1 * 12 + d2 * 12 };
+  }
+  function who(d) { return d > 0 ? 'ワイモバ' : 'UQ'; }
+  function diffText(d, unit) { return d === 0 ? '同じ' : who(d) + 'が' + unit + yen(Math.abs(d)) + '円安い'; }
+
+  function card(c, prices, other, rec) {
+    var cheap1 = prices[0] < other[0], cheap2 = prices[1] < other[1];
+    return '<div class="res-card' + (rec ? ' rec' : '') + '" style="--dot:' + c.dot + '">' + (rec ? '<span class="rec-b">このお店でおすすめ</span>' : '')
+      + '<div class="res-brand">' + c.name + '</div><div class="res-plan">' + c.plan + '</div>'
+      + '<div class="res-y1">1年目</div><div class="res-price' + (cheap1 ? ' cheap' : '') + '">' + yen(prices[0]) + '<small>円</small></div>'
+      + '<div class="res-y2">2年目〜 <b' + (cheap2 ? ' class="cheap"' : '') + '>' + yen(prices[1]) + '円</b></div></div>';
+  }
+
+  // お客さまへの一言（すすめる側から見て、言える強み）
+  function talk(s, r) {
+    var mine = s.store, lines = [];
+    var mineCheap1 = mine === 'ym' ? r.d1 > 0 : r.d1 < 0, mineCheapT = mine === 'ym' ? r.total > 0 : r.total < 0;
+    var name = mine === 'ym' ? 'ワイモバ' : 'UQ';
+    if (mineCheapT) lines.push('2年で <b>' + yen(Math.abs(r.total)) + '円</b> ' + name + 'のほうが安くなります。');
+    else if (mineCheap1) lines.push('1年目は ' + name + 'が月 <b>' + yen(Math.abs(r.d1)) + '円</b> 安いです（2年目からは差が縮みます）。');
+    else if (r.total === 0 && r.d1 === 0) lines.push('料金は同じなので、特典の差で選んでもらいましょう。');
+    if (mine === 'ym') {
+      if (s.set === 'none') lines.push('セット割がなくても、<b>超！おトク割</b>で1年間さらに月1,100円引き。光やでんきのセットがいりません。');
+      if (s.pay !== 'none') lines.push('PayPayカード払いで割引（ゴールドならさらに大きい）。');
+      if (s.set === 'hikari') lines.push('おうち割 光セット(A)で月1,650円引き。');
+      if (s.use === 'call' && !mineCheapT) lines.push('通話が多くない人には、データ中心（シンプル3 M）もくらべてみましょう。');
+    } else {
+      if (s.use === 'call') lines.push('コミコミは<b>光回線・家族の条件なし</b>で、親子割なら誰でも1年目2,068円。3年使える300GBつき。');
+      if (s.use === 'data') lines.push('トクトクプラン2は2年目から、月5GB以下の月は自動で1,100円引き。あまり使わない月が多い人に向きます。');
+      if (s.set === 'hikari') lines.push('自宅セット割は au ひかりだけでなく、<b>auでんき</b>でもOK。');
+      if (s.use === 'data' && !mineCheapT) lines.push('通話もする人なら、コミコミプランバリュー（1年目2,068円）のほうが有利になりやすいです。');
+    }
+    if (!mineCheapT && !mineCheap1) lines.push('この条件では' + (mine === 'ym' ? 'UQ' : 'ワイモバ') + 'のほうが安いので、金額より特典・使い方で話しましょう。');
+    return lines;
+  }
+
+  function render() {
+    document.querySelectorAll('.seg').forEach(function (g) {
+      var k = g.getAttribute('data-k');
+      g.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === st[k])); });
+    });
+    var tbl = PRICE[st.use], r = compare(st);
+    var cards = st.store === 'ym'
+      ? card(tbl.ym, r.ym, r.uq, true) + card(tbl.uq, r.uq, r.ym, false)
+      : card(tbl.uq, r.uq, r.ym, true) + card(tbl.ym, r.ym, r.uq, false);
+    el('result').innerHTML = '<div class="res-cards">' + cards + '</div>'
+      + '<div class="diff"><div class="diff-row"><span>1年目</span><b>' + diffText(r.d1, '月') + '</b></div>'
+      + '<div class="diff-row"><span>2年目〜</span><b>' + diffText(r.d2, '月') + '</b></div>'
+      + '<div class="diff-row total"><span>2年の合計</span><b>' + diffText(r.total, '') + '</b></div></div>'
+      + '<div class="talk"><div class="talk-h">お客さまへの一言</div><ul>' + talk(st, r).map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul></div>';
+    el('points').innerHTML = (st.store === 'ym' ? [
+      ['① カード払い割（1年目）', 'ワイモバ 550〜770円 ／ UQ 220円（トクトクプラン2）'],
+      ['② 光セット割', 'ワイモバ 1,650円 ／ UQ 1,100円'],
+      ['③ 家族割（2回線目〜）', 'ワイモバ 1,100円 ／ UQ 550円'],
+      ['④ 超！おトク割（セット割なし）', 'ワイモバ 1,100円（1年間） ／ UQ なし']
+    ] : [
+      ['① コミコミは条件なし', '光回線もカード払いもいらない。親子割なら誰でも1年目2,068円'],
+      ['② 300GB＋Pontaパス', 'コミコミは35GBとは別に3年使える300GB。Pontaパス（月548円相当）も無料'],
+      ['③ auでんきでもセット割', 'トクトクの自宅セット割は、光回線だけでなく auでんきでもOK'],
+      ['④ 2年目以降も安い', 'ワイモバは超！おトク割とカード割の増額が1年で終わる。UQは差が開く']
+    ]).map(function (p) { return '<div class="point"><b>' + p[0] + '</b>' + p[1] + '</div>'; }).join('');
+  }
+
+  el('pick').addEventListener('click', function (e) {
+    var b = e.target.closest('button'), g = b && b.closest('.seg');
+    if (!g) return;
+    st[g.getAttribute('data-k')] = b.getAttribute('data-v');
+    try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (err) {}
+    render();
+  });
+  render();
+  window.SiegOyako = { compare: compare, PRICE: PRICE };
+})();
+</script>
+<script src="docs.js"></script>
+</body>
+</html>

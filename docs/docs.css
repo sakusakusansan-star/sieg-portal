@@ -446,3 +446,83 @@ h1 { font-size: 23px; font-weight: 800; letter-spacing: .5px; margin-top: 6px; }
 /* 戻るリンクは各ツールの「‹ ポータル」（sieg-nav.js）と同じ形 */
 .back { min-height: 36px; padding: 0 14px 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700;
   color: var(--sg-ink); background: var(--sg-surface); border-color: var(--sg-hair); box-shadow: var(--sg-lift); }
+
+/* ═══ 古い資料のおしらせ・資料一覧の補足 ═══ */
+.stale-note {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 0 8px 8px 0;
+  border-left: 3px solid var(--sg-amber);
+  background: var(--sg-amber-tint);
+  color: var(--sg-amber);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.doc-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.doc-meta:empty { display: none; }
+.doc-meta span {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: 6px;
+  padding: 2px 7px;
+  background: var(--sg-sunk);
+  color: var(--muted);
+}
+.doc-meta .m-upd.stale { background: var(--sg-amber-tint); color: var(--sg-amber); }
+.doc-meta .m-next.soon { background: var(--sg-red-tint); color: var(--sg-red); }
+.doc-meta .m-next.later { background: var(--sg-blue-tint); color: var(--sg-blue); }
+
+/* ═══ 予約番号：いま受付中か ═══ */
+.c-open {
+  display: inline-block;
+  margin: -4px 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.c-open::before { content: '●'; margin-right: 5px; font-size: 9px; vertical-align: 1px; }
+.c-open.on { background: var(--sg-green-tint); color: var(--sg-green); }
+.c-open.soon { background: var(--sg-amber-tint); color: var(--sg-amber); }
+.c-open.off { background: var(--sg-sunk); color: var(--muted); }
+
+/* ═══ 料金改定のカード ═══ */
+.news-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
+.news-summary { width: 100%; text-align: left; background: none; border: 0; padding: 16px; cursor: pointer; font: inherit; color: inherit; display: block; position: relative; }
+.news-summary::after { content: '›'; position: absolute; right: 16px; top: 14px; font-size: 20px; color: var(--muted2); transition: transform .15s ease; }
+.news-card.open .news-summary::after { transform: rotate(90deg); }
+.news-summary:focus-visible { outline: 2px solid var(--sg-primary); outline-offset: -2px; border-radius: 14px; }
+.news-date { display: inline-block; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--sg-blue-tint); color: var(--sg-blue); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+.news-left { display: inline-block; margin-left: 6px; font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.news-left.soon { background: var(--sg-red-tint); color: var(--sg-red); }
+.news-left.later { background: var(--sg-sunk); color: var(--muted); }
+.news-left.past { background: var(--sg-sunk); color: var(--muted2); }
+.news-card.past { opacity: .7; }
+.news-title { display: block; font-size: 17px; font-weight: 800; margin: 0 26px 8px 0; line-height: 1.45; }
+.news-body { display: block; font-size: 14px; line-height: 1.7; color: var(--text); }
+.news-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px; background: var(--sg-sunk); color: var(--text); }
+.tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--dot, var(--muted2)); }
+.tag.docomo { --dot: var(--sg-docomo); }
+.tag.softbank { --dot: var(--sg-softbank); }
+.tag.au { --dot: var(--sg-au); }
+.tag.hikari { --dot: var(--sg-green); }
+.tag.mobile { --dot: var(--sg-blue); }
+.news-detail { display: none; padding: 0 16px 16px; }
+.news-card.open .news-detail { display: block; }
+.plan-wrap { overflow-x: auto; margin: 4px 0 12px; }
+.plan-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.plan-table th, .plan-table td { border: 1px solid var(--line); padding: 8px 9px; text-align: left; vertical-align: top; }
+.plan-table th { background: var(--panel2); font-weight: 800; }
+.plan-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.plan-table .up { color: var(--sg-red); font-weight: 800; }
+.plan-table .same { color: var(--sg-green); font-weight: 800; }
+.impact { padding: 11px 12px; border-radius: 0 8px 8px 0; background: var(--sg-amber-tint); border-left: 3px solid var(--sg-amber); font-size: 13px; line-height: 1.65; }
+.impact b { color: var(--sg-amber); }
+.links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.links a { font-size: 13px; font-weight: 700; color: var(--sg-blue); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.links a:active { background: var(--panel2); }
+.news-h { margin: 0; font: inherit; }

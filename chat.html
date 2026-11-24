@@ -58,6 +58,16 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .msg{align-self:flex-start;max-width:84%;background:var(--bub);border-radius:20px 20px 20px 6px;padding:11px 15px;font-size:15px;font-weight:700;line-height:1.6;box-shadow:var(--shadow);overflow-wrap:anywhere}
 .msg em{font-style:normal;color:var(--hot);font-weight:900}
 .msg small{display:block;font-size:12px;color:var(--mute);font-weight:700;margin-top:2px}
+/* 日報へのアドバイス（前回の約束・気づいたこと・やれてないこと・次はこれ） */
+.advs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.adv{display:block;padding:8px 11px;border-radius:12px;background:color-mix(in srgb,var(--line) 45%,transparent);font-size:13.5px;font-weight:700;line-height:1.6;color:var(--ink)}
+.adv b{display:block;font-size:11px;font-weight:900;color:var(--ink2);letter-spacing:.04em}
+.adv.next{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.adv.next b{color:var(--accent)}
+.adv.prev i{display:inline-block;margin-left:4px;font-style:normal;font-size:11.5px;font-weight:900;border-radius:999px;padding:0 8px;vertical-align:1px}
+.adv.prev.ok i{background:#2E9E63;color:#fff}
+.adv.prev.ng i{background:var(--hot);color:#fff}
+.adv.prev.na i{background:var(--line);color:var(--ink2)}
 .mine{align-self:flex-end;max-width:80%;background:var(--mine);color:#fff;border-radius:20px 20px 6px 20px;padding:10px 15px;font-size:14.5px;font-weight:700}
 .card{align-self:flex-start;width:min(88%,360px);background:var(--bub);border-radius:20px 20px 20px 6px;overflow:hidden;box-shadow:var(--shadow)}
 .card .top{background:linear-gradient(135deg,var(--accent),#6D63F0);color:#fff;padding:12px 15px}
@@ -121,6 +131,20 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function fmt(n) { return Number(n || 0).toLocaleString('ja-JP'); }
+  // アドバイスを分けて出す。前の形（hint だけ）の答えは、そのまま1行で
+  function adviceHtml(ch) {
+    var rows = [], box = function (cls, label, text) { return '<span class="adv ' + cls + '"><b>' + label + '</b>' + esc(text) + '</span>'; };
+    if (ch.prev && ch.prev.todo) {
+      var r = { 'できた': ['ok', 'できた'], 'まだ': ['ng', 'まだ'] }[ch.prev.result] || ['na', '日報からはわからなかった'];
+      rows.push('<span class="adv prev ' + r[0] + '"><b>前回やると言ったこと</b>' + esc(ch.prev.todo) + '<i>' + r[1] + '</i></span>');
+    }
+    if (ch.notice) rows.push(box('notice', '気づいたこと', ch.notice));
+    if (ch.undone) rows.push(box('undone', 'やれてないこと', ch.undone));
+    if (ch.next) rows.push(box('next', '次はこれ', ch.next));
+    if (ch.todo) rows.push('<small>つぎ やること：' + esc(ch.todo) + '（つぎの日報で みるね）</small>');
+    if (!ch.notice && !ch.undone && !ch.next && ch.hint) rows.push('<small>アドバイス：' + esc(ch.hint) + '</small>');
+    return rows.length ? '<span class="advs">' + rows.join('') + '</span>' : '';
+  }
   function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -264,9 +288,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
       else if (pw.pos === 1) out.push({ html: 'いま <em>1位</em> だよ！ すごい！' });
       else if (pw.above) out.push({ html: 'あと <em>' + fmt(pw.above.power - p + 1) + 'pt</em> で ' + esc(pw.above.name) + 'さんを ぬけるよ' });
     }
-    // 日報へのAIのひとこと（ほめる・のびた・ヒント）
+    // 日報へのAIのひとこと（ほめる・のびた・前回の約束・気づいたこと・やれてないこと・次はこれ）
     var ch = d.cheer && d.cheer.ok && d.cheer.text ? d.cheer : null;
-    if (ch) out.push({ html: esc(ch.text) + (ch.grow ? '<small>のびた：' + esc(ch.grow) + '</small>' : '') + (ch.hint ? '<small>アドバイス：' + esc(ch.hint) + '</small>' : '') });
+    if (ch) out.push({ html: esc(ch.text) + (ch.grow ? '<small>のびた：' + esc(ch.grow) + '</small>' : '') + adviceHtml(ch) });
     // 日報
     var needNippou = partner && canUse('nippou') && sh.today && !sent;
     if (partner && canUse('nippou') && sent) out.push({ html: 'にっぽう ありがと！ おつかれさま' });
